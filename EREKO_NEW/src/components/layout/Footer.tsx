@@ -1,0 +1,108 @@
+import React from 'react';
+import Link from 'next/link';
+import { Globe, MessageCircle, Camera, Video, Mail, Phone, MapPin } from 'lucide-react';
+
+export function Footer() {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <footer className="bg-foreground text-background mt-auto">
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
+          
+          {/* Brand & Contact */}
+          <div className="lg:col-span-2 space-y-6">
+            <div>
+              <img src="/logo.jpeg" alt="Ereko Logo" className="h-12 mb-2 rounded-full border-2 border-primary" />
+              <p className="text-muted text-sm max-w-sm">
+                The premium destination for authentic African groceries, fresh produce, and culturally rich culinary experiences in the UK.
+              </p>
+            </div>
+            
+            <div className="space-y-3 text-sm text-muted">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 flex-shrink-0 text-primary" />
+                <p>123 African Market Street,<br />London, SE1 4AA, United Kingdom</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 flex-shrink-0 text-primary" />
+                <p>+44 (0) 20 1234 5678</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 flex-shrink-0 text-primary" />
+                <p>hello@ereko.co.uk</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-2">
+              <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Globe className="w-5 h-5" />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+                <MessageCircle className="w-5 h-5" />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Camera className="w-5 h-5" />
+              </a>
+               <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Video className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Corporate Links */}
+          <div>
+            <h3 className="font-bold text-lg mb-6 border-b border-background/20 pb-2 inline-block">Company</h3>
+            <ul className="space-y-3 text-sm text-muted">
+              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link href="/careers" className="hover:text-primary transition-colors">Careers</Link></li>
+              <li><Link href="/press" className="hover:text-primary transition-colors">Press & Media</Link></li>
+              <li><Link href="/community" className="hover:text-primary transition-colors">Community Initiatives</Link></li>
+              <li><Link href="/sustainability" className="hover:text-primary transition-colors">Sustainability</Link></li>
+              <li><Link href="/blog" className="hover:text-primary transition-colors">The Ereko Blog</Link></li>
+            </ul>
+          </div>
+
+          {/* Support Links */}
+          <div>
+            <h3 className="font-bold text-lg mb-6 border-b border-background/20 pb-2 inline-block">Support</h3>
+            <ul className="space-y-3 text-sm text-muted">
+              <li><Link href="/help" className="hover:text-primary transition-colors">Help Center & FAQs</Link></li>
+              <li><Link href="/track" className="hover:text-primary transition-colors">Track Order</Link></li>
+              <li><Link href="/returns" className="hover:text-primary transition-colors">Returns & Refunds</Link></li>
+              <li><Link href="/shipping" className="hover:text-primary transition-colors">Shipping Info</Link></li>
+              <li><Link href="/loyalty" className="hover:text-primary transition-colors">Loyalty Program</Link></li>
+              <li><Link href="/vendors" className="hover:text-primary transition-colors">Sell on Ereko</Link></li>
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div>
+            <h3 className="font-bold text-lg mb-6 border-b border-background/20 pb-2 inline-block">Legal</h3>
+            <ul className="space-y-3 text-sm text-muted">
+              <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/food-safety" className="hover:text-primary transition-colors">Food Safety</Link></li>
+              <li><Link href="/accessibility" className="hover:text-primary transition-colors">Accessibility</Link></li>
+              <li><Link href="/modern-slavery" className="hover:text-primary transition-colors">Modern Slavery Statement</Link></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-16 pt-8 border-t border-background/20 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted">
+          <p>&copy; {currentYear} Ereko Ltd. All rights reserved.</p>
+          <div className="flex gap-4">
+             {/* Payment Icons Placeholder */}
+             <div className="flex gap-2 opacity-50 grayscale hover:grayscale-0 transition-all">
+                <div className="w-10 h-6 bg-background rounded"></div>
+                <div className="w-10 h-6 bg-background rounded"></div>
+                <div className="w-10 h-6 bg-background rounded"></div>
+                <div className="w-10 h-6 bg-background rounded"></div>
+             </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}

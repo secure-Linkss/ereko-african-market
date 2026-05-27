@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+:root {
+  --background: 36 20% 98%;      /* Premium Warm Cream Background */
+  --foreground: 24 12% 12%;      /* Rich Charcoal-Brown Text */
+
+  --card: 36 20% 99%;
+  --card-foreground: 24 12% 12%;
+
+  --popover: 36 20% 99%;
+  --popover-foreground: 24 12% 12%;
+
+  --primary: 138 36% 27%;        /* Rich Culturally Grounded Forest Green */
+  --primary-foreground: 36 20% 98%;
+
+  --secondary: 22 79% 44%;      /* Earthy Spicy Terracotta */
+  --secondary-foreground: 36 20% 98%;
+
+  --muted: 36 10% 90%;           /* Soft Warm Grey */
+  --muted-foreground: 24 10% 40%;
+
+  --accent: 38 92% 50%;          /* Warm Savory Palm Gold */
+  --accent-foreground: 24 12% 12%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 36 10% 86%;
+  --input: 36 10% 86%;
+  --ring: 138 36% 27%;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 24 11% 11%;      /* Deep Premium African Cacao Dark background */
+  --foreground: 36 20% 98%;
+
+  --card: 24 11% 14%;
+  --card-foreground: 36 20% 98%;
+
+  --popover: 24 11% 14%;
+  --popover-foreground: 36 20% 98%;
+
+  --primary: 138 36% 36%;        /* High Contrast Emerald-Forest Green */
+  --primary-foreground: 36 20% 98%;
+
+  --secondary: 22 79% 52%;      /* Terracotta Spice Orange */
+  --secondary-foreground: 36 20% 98%;
+
+  --muted: 24 11% 20%;
+  --muted-foreground: 36 10% 70%;
+
+  --accent: 38 92% 50%;          /* Warm spicy gold */
+  --accent-foreground: 24 11% 11%;
+
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 24 11% 20%;
+  --input: 24 11% 20%;
+  --ring: 138 36% 36%;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Base styles for premium UI feel */
+.glassmorphism {
+  background: rgba(250, 248, 245, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(36, 10, 86, 0.08);
+}
+.dark .glassmorphism {
+  background: rgba(30, 27, 24, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}

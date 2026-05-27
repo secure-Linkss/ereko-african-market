@@ -1,0 +1,34 @@
+{
+  "common": {
+    "title": "Ereko African Market",
+    "tagline": "Premium African Grocery, Specialty Food & Cargo Platform",
+    "searchPlaceholder": "Search groceries, ingredients, recipes...",
+    "cart": "Cart",
+    "wishlist": "Wishlist",
+    "account": "Account",
+    "deliveryETA": "Est. Delivery",
+    "checkout": "Checkout",
+    "contact": "Contact",
+    "address": "Address",
+    "payment": "Payment"
+  },
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "recipes": "Recipes & Content Hub",
+    "cargo": "Cargo/Freight Shipping",
+    "about": "About Us",
+    "contactUs": "Contact Us",
+    "faqs": "FAQs"
+  },
+  "home": {
+    "heroTitle": "Authentic Ingredients of Home, Delivered Well.",
+    "heroSubtitle": "Premium fresh produce, chilled/frozen goods, meats, and regional African specialties directly to your doorstep in the UK.",
+    "ctaShop": "Shop Groceries",
+    "ctaCargo": "Book Cargo Shipping",
+    "bestsellers": "Bestsellers",
+    "newIn": "New Arrivals",
+    "festive": "Festive & Holiday Highlights",
+    "frozen": "Frozen Essentials"
+  }
+}
