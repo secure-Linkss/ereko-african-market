@@ -5,11 +5,13 @@ import { CheckoutService } from './checkout.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { PaymentsModule } from '../payments/payments.module';
 
+const hasRedis = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
+
 @Module({
   imports: [
     PrismaModule,
     PaymentsModule,
-    BullModule.registerQueue({ name: 'orders' }),
+    ...(hasRedis ? [BullModule.registerQueue({ name: 'orders' })] : []),
   ],
   controllers: [CheckoutController],
   providers: [CheckoutService],

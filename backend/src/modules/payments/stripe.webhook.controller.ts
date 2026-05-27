@@ -7,6 +7,7 @@ import {
   Logger,
   HttpCode,
   HttpStatus,
+  Optional,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -27,7 +28,7 @@ export class StripeWebhookController {
     private readonly paymentsService: PaymentsService,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    @InjectQueue('orders') private readonly ordersQueue: Queue,
+    @Optional() @InjectQueue('orders') private readonly ordersQueue: Queue | null,
   ) {}
 
   @Post()
@@ -119,17 +120,21 @@ export class StripeWebhookController {
     });
 
     // Enqueue order.placed job → triggers loyalty award + email notification
-    await this.ordersQueue.add(
-      'order.placed',
-      {
-        orderId: order.id,
-        userId: order.userId,
-        totalMinor: order.totalMinor,
-        email: order.email,
-        orderNumber: order.orderNumber,
-      },
-      { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, jobId: `order.placed:${order.id}` },
-    );
+    if (this.ordersQueue) {
+      await this.ordersQueue.add(
+        'order.placed',
+        {
+          orderId: order.id,
+          userId: order.userId,
+          totalMinor: order.totalMinor,
+          email: order.email,
+          orderNumber: order.orderNumber,
+        },
+        { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, jobId: `order.placed:${order.id}` },
+      );
+    } else {
+      this.logger.warn(`Queue unavailable — post-processing for order ${order.orderNumber} skipped`);
+    }
 
     // Clear the user's cart
     if (order.userId) {

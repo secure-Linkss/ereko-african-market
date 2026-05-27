@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, DynamicModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -32,6 +32,50 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { TeamModule } from './modules/team/team.module';
 import { SeoModule } from './modules/seo/seo.module';
 
+const hasRedis = (): boolean =>
+  !!(process.env.REDIS_URL || process.env.REDIS_HOST);
+
+function buildCacheModule(): DynamicModule {
+  if (hasRedis()) {
+    return CacheModule.registerAsync({
+      isGlobal: true,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        store: redisStore as any,
+        host: config.get<string>('redis.host') ?? 'localhost',
+        port: config.get<number>('redis.port') ?? 6379,
+        password: config.get<string>('redis.password'),
+        db: config.get<number>('redis.db') ?? 0,
+        ttl: 300,
+      }),
+    });
+  }
+  return CacheModule.register({ isGlobal: true, ttl: 300 });
+}
+
+function buildBullModule(): DynamicModule[] {
+  if (!hasRedis()) return [];
+  return [
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        redis: {
+          host: config.get<string>('redis.host'),
+          port: config.get<number>('redis.port'),
+          password: config.get<string>('redis.password'),
+          db: config.get<number>('redis.db'),
+        },
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 2000 },
+          removeOnComplete: 100,
+          removeOnFail: 500,
+        },
+      }),
+    }),
+  ];
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -52,36 +96,8 @@ import { SeoModule } from './modules/seo/seo.module';
       }),
     }),
 
-    CacheModule.registerAsync({
-      isGlobal: true,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        store: redisStore as any,
-        host: config.get<string>('redis.host') ?? 'localhost',
-        port: config.get<number>('redis.port') ?? 6379,
-        password: config.get<string>('redis.password'),
-        db: config.get<number>('redis.db') ?? 0,
-        ttl: 300,
-      }),
-    }),
-
-    BullModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        redis: {
-          host: config.get<string>('redis.host'),
-          port: config.get<number>('redis.port'),
-          password: config.get<string>('redis.password'),
-          db: config.get<number>('redis.db'),
-        },
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 2000 },
-          removeOnComplete: 100,
-          removeOnFail: 500,
-        },
-      }),
-    }),
+    buildCacheModule(),
+    ...buildBullModule(),
 
     EventEmitterModule.forRoot({ wildcard: true }),
     ScheduleModule.forRoot(),

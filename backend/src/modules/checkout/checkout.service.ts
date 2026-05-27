@@ -5,6 +5,7 @@
   ConflictException,
   Logger,
   InternalServerErrorException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
@@ -85,7 +86,7 @@ export class CheckoutService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly paymentsService: PaymentsService,
-    @InjectQueue('orders') private readonly ordersQueue: Queue,
+    @Optional() @InjectQueue('orders') private readonly ordersQueue: Queue | null,
   ) {}
 
   // â”€â”€â”€ Delivery slots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -450,17 +451,21 @@ export class CheckoutService {
 
     // Queue order.placed job (loyalty, notification) if paid
     if (updatedOrder.status === OrderStatus.PAID) {
-      await this.ordersQueue.add(
-        'order.placed',
-        {
-          orderId: order.id,
-          userId: order.userId,
-          totalMinor: order.totalMinor,
-          email: order.email,
-          orderNumber: order.orderNumber,
-        },
-        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
-      );
+      if (this.ordersQueue) {
+        await this.ordersQueue.add(
+          'order.placed',
+          {
+            orderId: order.id,
+            userId: order.userId,
+            totalMinor: order.totalMinor,
+            email: order.email,
+            orderNumber: order.orderNumber,
+          },
+          { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+        );
+      } else {
+        this.logger.warn(`Queue unavailable — order ${order.orderNumber} post-processing skipped`);
+      }
 
       // Clear the cart
       if (order.userId) {

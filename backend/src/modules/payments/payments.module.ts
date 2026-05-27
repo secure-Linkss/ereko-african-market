@@ -6,11 +6,13 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { OrdersProcessor } from './orders.processor';
 import { NotificationsModule } from '../notifications/notifications.module';
 
+const hasRedis = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
+
 @Module({
   imports: [
     PrismaModule,
     NotificationsModule,
-    BullModule.registerQueue({ name: 'orders' }),
+    ...(hasRedis ? [BullModule.registerQueue({ name: 'orders' })] : []),
   ],
   controllers: [StripeWebhookController],
   providers: [PaymentsService, OrdersProcessor],

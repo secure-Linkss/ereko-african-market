@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -10,7 +10,7 @@ export class WebhooksService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
+    @Optional() @InjectQueue('webhooks') private readonly webhooksQueue: Queue | null,
   ) {}
 
   async dispatch(eventType: string, payload: Record<string, unknown>): Promise<void> {
@@ -31,10 +31,14 @@ export class WebhooksService {
         },
       });
 
-      await this.webhooksQueue.add('deliver', { eventId: event.id }, {
-        attempts: 5,
-        backoff: { type: 'exponential', delay: 5000 },
-      });
+      if (this.webhooksQueue) {
+        await this.webhooksQueue.add('deliver', { eventId: event.id }, {
+          attempts: 5,
+          backoff: { type: 'exponential', delay: 5000 },
+        });
+      } else {
+        this.logger.warn(`Webhook queue unavailable — event ${event.id} stored but not dispatched`);
+      }
     }
   }
 
