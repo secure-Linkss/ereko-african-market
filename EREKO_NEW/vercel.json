@@ -71,7 +71,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://api.ereko.market/api/v1/:path*"
+      "destination": "https://api-ereko-market.vercel.app/api/v1/:path*"
     },
     {
       "source": "/sitemap.xml",

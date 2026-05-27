@@ -61,7 +61,7 @@ export const API_ENDPOINTS = {
 
 // Create Axios Instance
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.ereko.market",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "",
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
