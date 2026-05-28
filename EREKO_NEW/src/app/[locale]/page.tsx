@@ -69,8 +69,8 @@ export default function HomePage() {
           </div>
         </div>
         <div className="flex-1 w-full max-w-lg">
-          <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-muted">
-            <img src="/logo.jpeg" alt="EREKO African Market" className="object-cover w-full h-full" />
+          <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-amber-50 to-orange-50">
+            <img src="/hero-african-market.svg" alt="African lady selling fresh food at Ereko Market" className="w-full h-full object-cover" />
           </div>
         </div>
       </section>

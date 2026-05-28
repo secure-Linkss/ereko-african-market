@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500" fill="none">
+  <!-- Sky background -->
+  <rect width="600" height="500" fill="#FFF8F0"/>
+
+  <!-- Sun -->
+  <circle cx="480" cy="80" r="55" fill="#FFD166" opacity="0.3"/>
+  <circle cx="480" cy="80" r="38" fill="#FFD166" opacity="0.5"/>
+  <circle cx="480" cy="80" r="24" fill="#FFD166"/>
+
+  <!-- Ground / market floor -->
+  <ellipse cx="300" cy="440" rx="280" ry="30" fill="#C8A882" opacity="0.4"/>
+  <rect x="0" y="420" width="600" height="80" fill="#D4A96A" opacity="0.25" rx="4"/>
+
+  <!-- Stall canopy / awning -->
+  <path d="M80 160 Q300 120 520 160 L540 200 Q300 165 60 200 Z" fill="#2D6A2D"/>
+  <path d="M80 160 Q300 120 520 160" stroke="#FFD166" stroke-width="4" fill="none"/>
+  <!-- Canopy fringe -->
+  <path d="M80 200 Q90 215 100 200 Q110 215 120 200 Q130 215 140 200 Q150 215 160 200 Q170 215 180 200 Q190 215 200 200 Q210 215 220 200 Q230 215 240 200 Q250 215 260 200 Q270 215 280 200 Q290 215 300 200 Q310 215 320 200 Q330 215 340 200 Q350 215 360 200 Q370 215 380 200 Q390 215 400 200 Q410 215 420 200 Q430 215 440 200 Q450 215 460 200 Q470 215 480 200 Q490 215 500 200 Q510 215 520 200 Q530 215 540 200" stroke="#FFD166" stroke-width="2.5" fill="none"/>
+
+  <!-- Market table / stall -->
+  <rect x="110" y="300" width="380" height="22" rx="4" fill="#8B4513"/>
+  <rect x="120" y="322" width="360" height="100" rx="2" fill="#A0522D" opacity="0.7"/>
+  <!-- Table legs -->
+  <rect x="130" y="322" width="12" height="85" rx="3" fill="#6B3A2A"/>
+  <rect x="458" y="322" width="12" height="85" rx="3" fill="#6B3A2A"/>
+
+  <!-- Products on table -->
+  <!-- Bag of rice -->
+  <ellipse cx="175" cy="296" rx="38" ry="12" fill="#F5E6C8"/>
+  <path d="M137 296 Q175 270 213 296 L213 315 Q175 330 137 315 Z" fill="#F5E6C8" stroke="#D4B896" stroke-width="1.5"/>
+  <text x="175" y="308" text-anchor="middle" font-family="Arial" font-size="9" font-weight="bold" fill="#8B6914">RICE</text>
+
+  <!-- Palm oil bottle -->
+  <rect x="228" y="260" width="28" height="40" rx="4" fill="#E85D04"/>
+  <rect x="232" y="255" width="20" height="10" rx="2" fill="#CC4A00"/>
+  <ellipse cx="242" cy="255" rx="10" ry="5" fill="#CC4A00"/>
+  <rect x="235" y="265" width="14" height="8" rx="1" fill="#FFD166" opacity="0.8"/>
+
+  <!-- Yam tubers -->
+  <ellipse cx="290" cy="292" rx="20" ry="14" fill="#C8965A" transform="rotate(-15 290 292)"/>
+  <ellipse cx="315" cy="288" rx="18" ry="12" fill="#BF8A4E" transform="rotate(10 315 288)"/>
+  <ellipse cx="305" cy="302" rx="16" ry="11" fill="#D4A86A" transform="rotate(-5 305 302)"/>
+
+  <!-- Plantains -->
+  <path d="M345 295 Q360 278 375 285 Q380 290 370 300 Q355 310 345 295Z" fill="#F4D03F" stroke="#D4AC0D" stroke-width="1"/>
+  <path d="M360 290 Q375 273 390 280 Q395 285 385 295 Q370 305 360 290Z" fill="#F4D03F" stroke="#D4AC0D" stroke-width="1"/>
+  <path d="M375 286 Q390 270 405 277 Q410 282 400 292 Q385 302 375 286Z" fill="#F7DC6F" stroke="#D4AC0D" stroke-width="1"/>
+
+  <!-- Spice pile -->
+  <ellipse cx="455" cy="300" rx="28" ry="10" fill="#C0392B"/>
+  <path d="M427 300 Q455 280 483 300 L483 310 Q455 320 427 310 Z" fill="#E74C3C"/>
+  <text x="455" y="306" text-anchor="middle" font-family="Arial" font-size="8" fill="#FFE5E5">SPICE</text>
+
+  <!-- Main character: African lady -->
+  <!-- Body / dress (vibrant ankara fabric) -->
+  <path d="M270 200 Q250 210 240 240 Q235 270 238 320 L310 320 Q308 270 305 240 Q295 210 280 200 Z" fill="#E85D04"/>
+  <!-- Ankara pattern on dress -->
+  <circle cx="255" cy="255" r="5" fill="#FFD166" opacity="0.7"/>
+  <circle cx="268" cy="270" r="4" fill="#2D6A2D" opacity="0.6"/>
+  <circle cx="295" cy="250" r="5" fill="#FFD166" opacity="0.7"/>
+  <circle cx="282" cy="280" r="4" fill="#2D6A2D" opacity="0.6"/>
+  <path d="M248 240 Q270 245 292 240" stroke="#FFD166" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <path d="M245 260 Q270 266 295 260" stroke="#FFD166" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <path d="M243 280 Q270 287 297 280" stroke="#FFD166" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <!-- Dress bottom / skirt flare -->
+  <path d="M238 320 Q230 345 220 360 L320 360 Q310 345 310 320 Z" fill="#CC4A00"/>
+  <!-- Dress pattern on skirt -->
+  <path d="M228 335 Q270 342 312 335" stroke="#FFD166" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <!-- Feet / shoes -->
+  <ellipse cx="245" cy="365" rx="15" ry="6" fill="#2C1810"/>
+  <ellipse cx="295" cy="365" rx="15" ry="6" fill="#2C1810"/>
+
+  <!-- Arms -->
+  <!-- Left arm reaching down to basket -->
+  <path d="M250 218 Q232 245 228 270 Q224 285 230 290" stroke="#8B5E3C" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <!-- Right arm raised holding bowl -->
+  <path d="M300 215 Q318 200 325 185 Q328 175 322 168" stroke="#8B5E3C" stroke-width="14" stroke-linecap="round" fill="none"/>
+
+  <!-- Bowl of food (held up) -->
+  <ellipse cx="322" cy="162" rx="30" ry="10" fill="#D4A574"/>
+  <path d="M292 162 Q322 148 352 162 L348 172 Q322 162 296 172 Z" fill="#A0703C"/>
+  <!-- Food in bowl (egusi soup or jollof) -->
+  <ellipse cx="322" cy="160" rx="26" ry="8" fill="#E85D04" opacity="0.8"/>
+  <circle cx="312" cy="158" r="3" fill="#8B0000" opacity="0.6"/>
+  <circle cx="325" cy="161" r="2.5" fill="#8B0000" opacity="0.6"/>
+  <circle cx="335" cy="157" r="3" fill="#8B0000" opacity="0.6"/>
+
+  <!-- Basket in left hand area -->
+  <path d="M218 285 Q230 275 242 285 L244 310 Q230 318 216 310 Z" fill="#8B6914"/>
+  <!-- Basket weave lines -->
+  <path d="M218 290 Q230 287 242 290" stroke="#6B4F10" stroke-width="1" fill="none"/>
+  <path d="M217 298 Q230 295 243 298" stroke="#6B4F10" stroke-width="1" fill="none"/>
+  <path d="M216 306 Q230 303 244 306" stroke="#6B4F10" stroke-width="1" fill="none"/>
+  <!-- Items peeking from basket -->
+  <circle cx="224" cy="280" r="5" fill="#2D6A2D"/>
+  <circle cx="232" cy="276" r="6" fill="#F4D03F"/>
+  <circle cx="240" cy="280" r="5" fill="#E74C3C"/>
+
+  <!-- Neck -->
+  <rect x="269" y="192" width="22" height="16" rx="6" fill="#8B5E3C"/>
+
+  <!-- Head -->
+  <ellipse cx="280" cy="175" rx="32" ry="34" fill="#8B5E3C"/>
+  <!-- Ear -->
+  <ellipse cx="248" cy="178" rx="6" ry="9" fill="#7A5035"/>
+  <ellipse cx="312" cy="178" rx="6" ry="9" fill="#7A5035"/>
+  <!-- Earring -->
+  <circle cx="248" cy="184" r="4" fill="#FFD166"/>
+  <circle cx="312" cy="184" r="4" fill="#FFD166"/>
+
+  <!-- Face features -->
+  <!-- Eyes -->
+  <ellipse cx="268" cy="170" rx="6" ry="7" fill="#1A0A00"/>
+  <ellipse cx="292" cy="170" rx="6" ry="7" fill="#1A0A00"/>
+  <circle cx="270" cy="168" r="2" fill="white" opacity="0.8"/>
+  <circle cx="294" cy="168" r="2" fill="white" opacity="0.8"/>
+  <!-- Eyebrows -->
+  <path d="M261 161 Q268 157 275 161" stroke="#3D1C00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M285 161 Q292 157 299 161" stroke="#3D1C00" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Nose -->
+  <path d="M277 177 Q280 182 283 177" stroke="#5C3010" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <!-- Smile -->
+  <path d="M268 188 Q280 198 292 188" stroke="#5C3010" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Teeth hint -->
+  <path d="M270 190 Q280 195 290 190" stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+  <!-- Head wrap / gele -->
+  <path d="M248 155 Q260 135 280 128 Q300 135 312 155 Q300 145 280 142 Q260 145 248 155Z" fill="#FFD166"/>
+  <path d="M248 155 Q250 145 280 140 Q310 145 312 155 L318 150 Q308 130 280 125 Q252 130 242 150 Z" fill="#FFD166"/>
+  <!-- Gele knot/bow -->
+  <ellipse cx="305" cy="145" rx="18" ry="10" fill="#E8B400" transform="rotate(-20 305 145)"/>
+  <ellipse cx="315" cy="138" rx="12" ry="8" fill="#FFD166" transform="rotate(-15 315 138)"/>
+  <circle cx="308" cy="143" r="5" fill="#CC9900"/>
+  <!-- Gele pattern -->
+  <path d="M255 152 Q280 147 305 152" stroke="#CC9900" stroke-width="1.5" fill="none"/>
+
+  <!-- Price tag / sign -->
+  <rect x="390" y="230" width="130" height="65" rx="8" fill="white" stroke="#2D6A2D" stroke-width="2"/>
+  <rect x="390" y="230" width="130" height="24" rx="8" fill="#2D6A2D"/>
+  <path d="M390 246 L520 246" stroke="#2D6A2D" stroke-width="1" fill="none"/>
+  <text x="455" y="248" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="white">FRESH TODAY</text>
+  <text x="455" y="267" text-anchor="middle" font-family="Arial" font-size="11" fill="#2D6A2D" font-weight="bold">Authentic African</text>
+  <text x="455" y="282" text-anchor="middle" font-family="Arial" font-size="11" fill="#E85D04" font-weight="bold">Foods 🌍</text>
+
+  <!-- Decorative elements -->
+  <!-- Floating food icons around -->
+  <!-- Chilli -->
+  <path d="M80 240 Q75 225 85 215 Q90 210 92 218 Q86 228 88 240 Z" fill="#E74C3C"/>
+  <path d="M80 240 Q78 250 82 255 Q86 250 88 240 Z" fill="#E74C3C"/>
+  <path d="M84 215 Q88 205 84 200" stroke="#2D6A2D" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Leaf -->
+  <path d="M80 195 Q72 190 75 183 Q83 180 85 190 Z" fill="#2D6A2D"/>
+
+  <!-- Stars/sparkles -->
+  <text x="142" y="240" font-size="18" opacity="0.6">✨</text>
+  <text x="490" y="180" font-size="14" opacity="0.5">⭐</text>
+  <text x="170" y="180" font-size="12" opacity="0.4">🌿</text>
+</svg>

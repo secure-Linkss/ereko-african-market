@@ -22,29 +22,29 @@ export function Footer() {
             <div className="space-y-3 text-sm text-muted">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 flex-shrink-0 text-primary" />
-                <p>123 African Market Street,<br />London, SE1 4AA, United Kingdom</p>
+                <p>5 Broadway, Barking,<br />London, IG11 7LS, United Kingdom</p>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 flex-shrink-0 text-primary" />
-                <p>+44 (0) 20 1234 5678</p>
+                <a href="tel:02036337503" className="hover:text-primary transition-colors">020 3633 7503</a>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 flex-shrink-0 text-primary" />
-                <p>hello@ereko.co.uk</p>
+                <a href="mailto:hello@ereko.co.uk" className="hover:text-primary transition-colors">hello@ereko.co.uk</a>
               </div>
             </div>
 
             <div className="flex gap-4 pt-2">
-              <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
-                <Globe className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
-                <MessageCircle className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+              <a href="https://www.instagram.com/erekoafricanmarket/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
                 <Camera className="w-5 h-5" />
               </a>
-               <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+              <a href="https://www.facebook.com/erekoafricanmarket/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Globe className="w-5 h-5" />
+              </a>
+              <a href="https://twitter.com/erekomarket" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+                <MessageCircle className="w-5 h-5" />
+              </a>
+              <a href="https://www.tiktok.com/@erekoafricanmarket" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
                 <Video className="w-5 h-5" />
               </a>
             </div>

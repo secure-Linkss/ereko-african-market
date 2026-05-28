@@ -67,7 +67,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-semibold">Our Store</p>
-                  <p className="text-sm text-muted-foreground">123 African Market Street<br />London, SE1 4AA<br />United Kingdom</p>
+                  <p className="text-sm text-muted-foreground">5 Broadway, Barking<br />London, IG11 7LS<br />United Kingdom</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -86,8 +86,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-semibold">Phone</p>
-                  <a href="tel:+442012345678" className="text-sm text-primary hover:underline">+44 (0) 20 1234 5678</a>
-                  <p className="text-xs text-muted-foreground mt-0.5">Mon–Fri, 9am–6pm</p>
+                  <a href="tel:02036337503" className="text-sm text-primary hover:underline">020 3633 7503</a>
+                  <p className="text-xs text-muted-foreground mt-0.5">Mon–Sat, 9am–6pm</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -98,7 +98,7 @@ export default function ContactPage() {
                   <p className="font-semibold">Opening Hours</p>
                   <p className="text-sm text-muted-foreground">
                     Mon – Fri: 9:00am – 6:00pm<br />
-                    Saturday: 10:00am – 4:00pm<br />
+                    Saturday: 9:00am – 6:00pm<br />
                     Sunday: Closed
                   </p>
                 </div>
