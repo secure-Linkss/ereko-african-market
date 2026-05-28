@@ -237,7 +237,6 @@ export class CartService {
           variantId: item.variantId,
           quantity: item.quantity,
           unitPriceMinor: variantMap.get(item.variantId)!.priceAmountMinor,
-          createdAt: now,
           updatedAt: now,
         })),
       );
