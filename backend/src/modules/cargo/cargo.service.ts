@@ -1,10 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 import { CargoInquireDto, CargoEstimateDto, CargoUrgencyDto } from './cargo.dto';
 import { serializeCargoInquiry } from './cargo.serializer';
-import { CargoStatus, CargoUrgency } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
-// ─── Pricing constants (all amounts in pence/integer) ────────────────────────
+export enum CargoStatus {
+  INQUIRY = 'INQUIRY',
+  QUOTED = 'QUOTED',
+  BOOKED = 'BOOKED',
+  IN_TRANSIT = 'IN_TRANSIT',
+  DELIVERED = 'DELIVERED',
+  CLOSED = 'CLOSED',
+}
+
+export enum CargoUrgency {
+  standard = 'standard',
+  express = 'express',
+  super_express = 'super_express',
+}
 
 const TIER_NIGERIA_GHANA = new Set(['nigeria', 'ghana']);
 
@@ -34,13 +47,8 @@ const RATES: Record<'nigeria_ghana' | 'other_africa', CountryTierRates> = {
 };
 
 const VOLUME_SURCHARGE_THRESHOLD_CBM = 0.1;
-const VOLUME_SURCHARGE_FACTOR = 1.2; // +20%
+const VOLUME_SURCHARGE_FACTOR = 1.2;
 
-// ─── Utility helpers ─────────────────────────────────────────────────────────
-
-/**
- * Maps frontend urgency string (super-express) to Prisma enum (super_express).
- */
 function mapUrgencyToDb(urgency: CargoUrgencyDto): CargoUrgency {
   switch (urgency) {
     case CargoUrgencyDto.super_express:
@@ -52,9 +60,6 @@ function mapUrgencyToDb(urgency: CargoUrgencyDto): CargoUrgency {
   }
 }
 
-/**
- * Maps Prisma CargoUrgency enum to pricing key.
- */
 function urgencyToRateKey(urgency: CargoUrgency): keyof CountryTierRates {
   switch (urgency) {
     case CargoUrgency.super_express:
@@ -81,17 +86,12 @@ function calculateQuoteMinor(
 ): number {
   const rates = getTierRates(country, urgency);
   let baseAmount = Math.ceil(weightKg * rates.pencePerKg);
-
   if (volumeCbm && volumeCbm > VOLUME_SURCHARGE_THRESHOLD_CBM) {
     baseAmount = Math.ceil(baseAmount * VOLUME_SURCHARGE_FACTOR);
   }
-
   return baseAmount;
 }
 
-/**
- * Generates a tracking number in the format ERK-CRG-{8 random uppercase alphanumeric}.
- */
 function generateTrackingNumber(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let suffix = '';
@@ -101,17 +101,9 @@ function generateTrackingNumber(): string {
   return `ERK-CRG-${suffix}`;
 }
 
-const CARGO_INCLUDE = {
-  statusHistory: {
-    orderBy: { updatedAt: 'asc' as const },
-  },
-} as const;
-
-// ─── Service ─────────────────────────────────────────────────────────────────
-
 @Injectable()
 export class CargoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly supabase: SupabaseService) {}
 
   async inquire(dto: CargoInquireDto, userId?: string) {
     const dbUrgency = mapUrgencyToDb(dto.urgency);
@@ -122,38 +114,52 @@ export class CargoService {
       dbUrgency,
     );
     const trackingNumber = generateTrackingNumber();
+    const cargoId = uuidv4();
+    const now = new Date().toISOString();
 
-    const cargo = await this.prisma.cargoInquiry.create({
-      data: {
-        trackingNumber,
-        userId: userId ?? null,
-        senderName: dto.senderName,
-        senderEmail: dto.senderEmail,
-        senderPhone: dto.senderPhone,
-        recipientName: dto.recipientName,
-        recipientPhone: dto.recipientPhone,
-        recipientAddress: dto.recipientAddress,
-        recipientCity: dto.recipientCity,
-        recipientCountry: dto.recipientCountry,
-        weightEstKg: dto.weightEstKg,
-        volumeEstCbm: dto.volumeEstCbm ?? null,
-        itemDescription: dto.itemDescription,
-        urgency: dbUrgency,
-        status: CargoStatus.INQUIRY,
-        quoteAmountMinor,
-        statusHistory: {
-          create: [
-            {
-              status: CargoStatus.INQUIRY,
-              note: 'Inquiry received and quote generated',
-            },
-          ],
-        },
-      },
-      include: CARGO_INCLUDE,
+    await this.supabase.db.from('CargoInquiry').insert({
+      id: cargoId,
+      trackingNumber,
+      userId: userId ?? null,
+      senderName: dto.senderName,
+      senderEmail: dto.senderEmail,
+      senderPhone: dto.senderPhone,
+      recipientName: dto.recipientName,
+      recipientPhone: dto.recipientPhone,
+      recipientAddress: dto.recipientAddress,
+      recipientCity: dto.recipientCity,
+      recipientCountry: dto.recipientCountry,
+      weightEstKg: dto.weightEstKg,
+      volumeEstCbm: dto.volumeEstCbm ?? null,
+      itemDescription: dto.itemDescription,
+      urgency: dbUrgency,
+      status: CargoStatus.INQUIRY,
+      quoteAmountMinor,
+      createdAt: now,
+      updatedAt: now,
     });
 
-    return serializeCargoInquiry(cargo);
+    // CargoStatusHistory.updatedAt has @default(now()) — DB sets it automatically
+    await this.supabase.db.from('CargoStatusHistory').insert({
+      id: uuidv4(),
+      cargoId,
+      status: CargoStatus.INQUIRY,
+      note: 'Inquiry received and quote generated',
+    });
+
+    const { data: cargo } = await this.supabase.db
+      .from('CargoInquiry')
+      .select('*')
+      .eq('id', cargoId)
+      .single();
+
+    const { data: statusHistory } = await this.supabase.db
+      .from('CargoStatusHistory')
+      .select('*')
+      .eq('cargoId', cargoId)
+      .order('updatedAt', { ascending: true });
+
+    return serializeCargoInquiry({ ...cargo, statusHistory: statusHistory ?? [] });
   }
 
   async estimate(dto: CargoEstimateDto) {
@@ -177,17 +183,22 @@ export class CargoService {
   }
 
   async track(trackingNumber: string) {
-    const cargo = await this.prisma.cargoInquiry.findUnique({
-      where: { trackingNumber },
-      include: CARGO_INCLUDE,
-    });
+    const { data: cargo } = await this.supabase.db
+      .from('CargoInquiry')
+      .select('*')
+      .eq('trackingNumber', trackingNumber)
+      .single();
 
     if (!cargo) {
-      throw new NotFoundException(
-        `No shipment found with tracking number ${trackingNumber}`,
-      );
+      throw new NotFoundException(`No shipment found with tracking number ${trackingNumber}`);
     }
 
-    return serializeCargoInquiry(cargo);
+    const { data: statusHistory } = await this.supabase.db
+      .from('CargoStatusHistory')
+      .select('*')
+      .eq('cargoId', cargo.id)
+      .order('updatedAt', { ascending: true });
+
+    return serializeCargoInquiry({ ...cargo, statusHistory: statusHistory ?? [] });
   }
 }

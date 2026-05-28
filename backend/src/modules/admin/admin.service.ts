@@ -7,95 +7,33 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto } from './admin.dto';
+import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto, OrderStatus, ReturnStatus } from './admin.dto';
 import { serializeOrder } from '../orders/orders.serializer';
 import { encodeCursor, decodeCursor } from '../../common/utils/pagination.util';
-import { OrderStatus, ReturnStatus, WebhookEventStatus } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────
-
-/** Statuses that prevent a normal CANCELLED transition */
 const POST_SHIP_STATUSES: OrderStatus[] = [
   OrderStatus.SHIPPED,
   OrderStatus.OUT_FOR_DELIVERY,
   OrderStatus.DELIVERED,
 ];
 
-/** Full include for Order queries used by admin */
-const ORDER_INCLUDE = {
-  items: true,
-  events: {
-    orderBy: { createdAt: 'asc' as const },
-  },
-  addresses: true,
-  deliverySlotBooking: true,
-} as const;
-
-// ─── STATUS TRANSITION MAP ────────────────────────────────────────────────────
-
-/**
- * Allowed manual transitions (admin-initiated).
- * Automatic transitions (PENDING_PAYMENT → PAID) are handled by Stripe webhook.
- */
 const ALLOWED_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
-  [OrderStatus.PAID]: [
-    OrderStatus.ALLOCATED,
-    OrderStatus.ON_HOLD,
-    OrderStatus.CANCELLED,
-  ],
-  [OrderStatus.ALLOCATED]: [
-    OrderStatus.PICKING,
-    OrderStatus.ON_HOLD,
-    OrderStatus.CANCELLED,
-  ],
-  [OrderStatus.PICKING]: [
-    OrderStatus.PACKED,
-    OrderStatus.ON_HOLD,
-    OrderStatus.CANCELLED,
-  ],
-  [OrderStatus.PACKED]: [
-    OrderStatus.SHIPPED,
-    OrderStatus.ON_HOLD,
-    OrderStatus.CANCELLED,
-  ],
-  [OrderStatus.SHIPPED]: [
-    OrderStatus.OUT_FOR_DELIVERY,
-    OrderStatus.CANCELLED, // requires privilegedOverrideReason
-    OrderStatus.ON_HOLD,
-  ],
-  [OrderStatus.OUT_FOR_DELIVERY]: [
-    OrderStatus.DELIVERED,
-    OrderStatus.ON_HOLD,
-    OrderStatus.CANCELLED, // requires privilegedOverrideReason
-  ],
-  [OrderStatus.DELIVERED]: [
-    OrderStatus.RETURN_REQUESTED,
-    OrderStatus.DISPUTED,
-    OrderStatus.CANCELLED, // requires privilegedOverrideReason
-  ],
-  [OrderStatus.RETURN_REQUESTED]: [
-    OrderStatus.RETURNED,
-  ],
-  [OrderStatus.RETURNED]: [
-    OrderStatus.REFUNDED,
-  ],
-  [OrderStatus.ON_HOLD]: [
-    OrderStatus.PAID,
-    OrderStatus.ALLOCATED,
-    OrderStatus.PICKING,
-    OrderStatus.PACKED,
-    OrderStatus.CANCELLED,
-  ],
-  [OrderStatus.PENDING_PAYMENT]: [
-    OrderStatus.CANCELLED,
-    OrderStatus.ON_HOLD,
-  ],
+  [OrderStatus.PAID]: [OrderStatus.ALLOCATED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.ALLOCATED]: [OrderStatus.PICKING, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.PICKING]: [OrderStatus.PACKED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.PACKED]: [OrderStatus.SHIPPED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.SHIPPED]: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.CANCELLED, OrderStatus.ON_HOLD],
+  [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.DELIVERED]: [OrderStatus.RETURN_REQUESTED, OrderStatus.DISPUTED, OrderStatus.CANCELLED],
+  [OrderStatus.RETURN_REQUESTED]: [OrderStatus.RETURNED],
+  [OrderStatus.RETURNED]: [OrderStatus.REFUNDED],
+  [OrderStatus.ON_HOLD]: [OrderStatus.PAID, OrderStatus.ALLOCATED, OrderStatus.PICKING, OrderStatus.PACKED, OrderStatus.CANCELLED],
+  [OrderStatus.PENDING_PAYMENT]: [OrderStatus.CANCELLED, OrderStatus.ON_HOLD],
 };
-
-// ─── SERVICE ─────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class AdminService {
@@ -103,7 +41,7 @@ export class AdminService {
   private readonly stripe: Stripe;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
     private readonly inventory: InventoryService,
     private readonly webhooks: WebhooksService,
     private readonly config: ConfigService,
@@ -113,200 +51,198 @@ export class AdminService {
     });
   }
 
+  private async fetchOrderWithRelations(orderId: string): Promise<any | null> {
+    const { data: order } = await this.supabase.db
+      .from('Order')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (!order) return null;
+
+    const [{ data: items }, { data: events }, { data: addresses }, { data: slots }] =
+      await Promise.all([
+        this.supabase.db.from('OrderItem').select('*').eq('orderId', orderId),
+        this.supabase.db.from('OrderEvent').select('*').eq('orderId', orderId).order('createdAt', { ascending: true }),
+        this.supabase.db.from('OrderAddress').select('*').eq('orderId', orderId),
+        this.supabase.db.from('DeliverySlotBooking').select('*').eq('orderId', orderId).limit(1),
+      ]);
+
+    return {
+      ...order,
+      items: items ?? [],
+      events: events ?? [],
+      addresses: addresses ?? [],
+      deliverySlotBooking: slots?.[0] ?? null,
+    };
+  }
+
   // ─── DASHBOARD ─────────────────────────────────────────────────────────────
 
   async getDashboardStats() {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
+    const todayISO = todayStart.toISOString();
 
     const [
-      todayOrdersCount,
-      todayRevenueResult,
+      { count: todayOrdersCount },
+      { data: revenueData },
       lowStockItemsCount,
-      pendingRefundsCount,
-      activeDisputesCount,
-      webhookFailuresCount,
+      { count: pendingRefundsCount },
+      { count: activeDisputesCount },
+      { count: webhookFailuresCount },
     ] = await Promise.all([
-      this.prisma.order.count({
-        where: { placedAt: { gte: todayStart } },
-      }),
-
-      this.prisma.order.aggregate({
-        _sum: { totalMinor: true },
-        where: {
-          placedAt: { gte: todayStart },
-          status: {
-            notIn: [OrderStatus.CANCELLED, OrderStatus.PENDING_PAYMENT],
-          },
-        },
-      }),
-
+      this.supabase.db
+        .from('Order')
+        .select('id', { count: 'exact', head: true })
+        .gte('placedAt', todayISO),
+      this.supabase.db
+        .from('Order')
+        .select('totalMinor')
+        .gte('placedAt', todayISO)
+        .not('status', 'in', '(CANCELLED,PENDING_PAYMENT)'),
       this.inventory.countLowStock(),
-
-      this.prisma.return.count({
-        where: { status: ReturnStatus.PENDING_REVIEW },
-      }),
-
-      this.prisma.order.count({
-        where: { status: OrderStatus.DISPUTED },
-      }),
-
-      this.prisma.webhookEvent.count({
-        where: { status: { in: ['failed', 'retrying'] } },
-      }),
+      this.supabase.db
+        .from('Return')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', ReturnStatus.PENDING_REVIEW),
+      this.supabase.db
+        .from('Order')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', OrderStatus.DISPUTED),
+      this.supabase.db
+        .from('WebhookEvent')
+        .select('id', { count: 'exact', head: true })
+        .in('status', ['failed', 'retrying']),
     ]);
 
+    const todayRevenueMinor = (revenueData ?? []).reduce(
+      (sum: number, o: any) => sum + (o.totalMinor ?? 0),
+      0,
+    );
+
     return {
-      todayOrdersCount,
-      todayRevenueMinor: todayRevenueResult._sum.totalMinor ?? 0,
+      todayOrdersCount: todayOrdersCount ?? 0,
+      todayRevenueMinor,
       lowStockItemsCount,
-      pendingRefundsCount,
-      activeDisputesCount,
-      webhookFailuresCount,
+      pendingRefundsCount: pendingRefundsCount ?? 0,
+      activeDisputesCount: activeDisputesCount ?? 0,
+      webhookFailuresCount: webhookFailuresCount ?? 0,
     };
   }
 
   // ─── ORDERS ────────────────────────────────────────────────────────────────
 
-  async listOrders(
-    status?: OrderStatus,
-    limit = 20,
-    cursor?: string,
-    q?: string,
-  ) {
+  async listOrders(status?: OrderStatus, limit = 20, cursor?: string, q?: string) {
     const take = Math.min(Math.max(limit, 1), 100);
-    const cursorId = cursor ? decodeCursor(cursor) : undefined;
 
-    const where: Record<string, unknown> = {};
-    if (status) {
-      where.status = status;
-    }
-    if (q) {
-      where.OR = [
-        { orderNumber: { contains: q, mode: 'insensitive' } },
-        { email: { contains: q, mode: 'insensitive' } },
-      ];
+    let query = this.supabase.db
+      .from('Order')
+      .select('id, placedAt')
+      .order('placedAt', { ascending: false })
+      .limit(take + 1);
+
+    if (status) query = query.eq('status', status);
+    if (q) query = query.or(`orderNumber.ilike.%${q}%,email.ilike.%${q}%`);
+
+    if (cursor) {
+      const decoded = decodeCursor(cursor);
+      query = query.lt('placedAt', decoded);
     }
 
-    const orders = await this.prisma.order.findMany({
-      where,
-      take: take + 1,
-      skip: cursorId ? 1 : 0,
-      cursor: cursorId ? { id: cursorId } : undefined,
-      orderBy: { placedAt: 'desc' },
-      include: ORDER_INCLUDE,
-    });
+    const { data: orderRows } = await query;
+    const rows = orderRows ?? [];
 
     let nextCursor: string | null = null;
-    if (orders.length > take) {
-      orders.pop();
-      nextCursor = encodeCursor(orders[orders.length - 1].id);
+    if (rows.length > take) {
+      rows.pop();
+      nextCursor = encodeCursor(rows[rows.length - 1].placedAt);
     }
 
+    const orders = await Promise.all(rows.map((r: any) => this.fetchOrderWithRelations(r.id)));
+
     return {
-      orders: orders.map(serializeOrder),
+      orders: orders.filter(Boolean).map(serializeOrder),
       nextCursor,
     };
   }
 
-  async updateOrderStatus(
-    dto: UpdateOrderStatusDto,
-    actorId: string,
-    idempotencyKey: string,
-  ) {
+  async updateOrderStatus(dto: UpdateOrderStatusDto, actorId: string, idempotencyKey: string) {
     const { orderId, status, notes, carrierName, trackingNumber, privilegedOverrideReason } = dto;
 
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: ORDER_INCLUDE,
-    });
-    if (!order) {
-      throw new NotFoundException(`Order ${orderId} not found`);
-    }
+    const full = await this.fetchOrderWithRelations(orderId);
+    if (!full) throw new NotFoundException(`Order ${orderId} not found`);
 
-    // Validate status transition
-    const allowed = ALLOWED_TRANSITIONS[order.status] ?? [];
+    const allowed = ALLOWED_TRANSITIONS[full.status as OrderStatus] ?? [];
     if (!allowed.includes(status)) {
       throw new BadRequestException(
-        `Cannot transition order from ${order.status} to ${status}`,
+        `Cannot transition order from ${full.status} to ${status}`,
       );
     }
 
-    // Privileged override check — cancelling a shipped/delivered order
     if (
       status === OrderStatus.CANCELLED &&
-      POST_SHIP_STATUSES.includes(order.status) &&
+      POST_SHIP_STATUSES.includes(full.status as OrderStatus) &&
       !privilegedOverrideReason
     ) {
       throw new BadRequestException(
-        `Cancelling an order with status ${order.status} requires a privilegedOverrideReason`,
+        `Cancelling an order with status ${full.status} requires a privilegedOverrideReason`,
       );
     }
 
-    // SHIPPED requires tracking info
-    if (status === OrderStatus.SHIPPED) {
-      if (!trackingNumber || !carrierName) {
-        throw new BadRequestException(
-          'trackingNumber and carrierName are required when setting status to SHIPPED',
-        );
-      }
+    if (status === OrderStatus.SHIPPED && (!trackingNumber || !carrierName)) {
+      throw new BadRequestException(
+        'trackingNumber and carrierName are required when setting status to SHIPPED',
+      );
     }
 
-    const now = new Date();
-    const updateData: Record<string, unknown> = { status };
+    const now = new Date().toISOString();
+    const updateData: Record<string, unknown> = { status, updatedAt: now };
 
     if (status === OrderStatus.SHIPPED) {
       updateData.trackingNumber = trackingNumber;
       updateData.carrierName = carrierName;
       updateData.shippedAt = now;
     }
-    if (status === OrderStatus.DELIVERED) {
-      updateData.deliveredAt = now;
-    }
-    if (status === OrderStatus.CANCELLED) {
-      updateData.cancelledAt = now;
-    }
+    if (status === OrderStatus.DELIVERED) updateData.deliveredAt = now;
+    if (status === OrderStatus.CANCELLED) updateData.cancelledAt = now;
 
-    const [updated] = await this.prisma.$transaction([
-      this.prisma.order.update({
-        where: { id: orderId },
-        data: updateData,
-        include: ORDER_INCLUDE,
-      }),
-      this.prisma.orderEvent.create({
-        data: {
-          orderId,
-          eventType: `STATUS_CHANGED_TO_${status}`,
-          actorId,
-          payload: {
-            from: order.status,
-            to: status,
-            notes: notes ?? null,
-            carrierName: carrierName ?? null,
-            trackingNumber: trackingNumber ?? null,
-            privilegedOverrideReason: privilegedOverrideReason ?? null,
-            idempotencyKey,
-            timestamp: now.toISOString(),
-          },
-        },
-      }),
-    ]);
+    await this.supabase.db.from('Order').update(updateData).eq('id', orderId);
 
-    // Emit webhook for downstream consumers
+    // OrderEvent has NO updatedAt column
+    await this.supabase.db.from('OrderEvent').insert({
+      id: uuidv4(),
+      orderId,
+      eventType: `STATUS_CHANGED_TO_${status}`,
+      actorId,
+      payload: {
+        from: full.status,
+        to: status,
+        notes: notes ?? null,
+        carrierName: carrierName ?? null,
+        trackingNumber: trackingNumber ?? null,
+        privilegedOverrideReason: privilegedOverrideReason ?? null,
+        idempotencyKey,
+        timestamp: now,
+      },
+      createdAt: now,
+    });
+
     await this.webhooks
       .dispatch('order.status_changed', {
         orderId,
-        orderNumber: updated.orderNumber,
-        from: order.status,
+        orderNumber: full.orderNumber,
+        from: full.status,
         to: status,
         trackingNumber: trackingNumber ?? null,
         carrierName: carrierName ?? null,
-        timestamp: now.toISOString(),
+        timestamp: now,
       })
       .catch((err) =>
         this.logger.error(`Webhook dispatch failed for order ${orderId}: ${err.message}`),
       );
 
+    const updated = await this.fetchOrderWithRelations(orderId);
     return serializeOrder(updated);
   }
 
@@ -331,149 +267,143 @@ export class AdminService {
   // ─── RETURNS ───────────────────────────────────────────────────────────────
 
   async listReturns() {
-    const returns = await this.prisma.return.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        order: { select: { orderNumber: true, email: true } },
-        items: { select: { reasonCode: true } },
-      },
-    });
+    const { data: returns } = await this.supabase.db
+      .from('Return')
+      .select('id, orderId, status, refundAmountMinor, createdAt')
+      .order('createdAt', { ascending: false });
 
-    return returns.map((r) => ({
-      id: r.id,
-      orderNumber: r.order.orderNumber,
-      customerEmail: r.order.email,
-      status: r.status,
-      reasonCode: r.items[0]?.reasonCode ?? null,
-      refundAmountMinor: r.refundAmountMinor,
-      createdAt: r.createdAt.toISOString(),
-    }));
+    if (!returns?.length) return [];
+
+    const orderIds = returns.map((r: any) => r.orderId);
+    const returnIds = returns.map((r: any) => r.id);
+
+    const [{ data: orders }, { data: returnItems }] = await Promise.all([
+      this.supabase.db.from('Order').select('id, orderNumber, email').in('id', orderIds),
+      this.supabase.db.from('ReturnItem').select('returnId, reasonCode').in('returnId', returnIds),
+    ]);
+
+    const orderMap = new Map((orders ?? []).map((o: any) => [o.id, o]));
+    const firstItemByReturn = new Map<string, string>();
+    for (const item of returnItems ?? []) {
+      if (!firstItemByReturn.has(item.returnId)) {
+        firstItemByReturn.set(item.returnId, item.reasonCode);
+      }
+    }
+
+    return returns.map((r: any) => {
+      const order = orderMap.get(r.orderId) ?? {};
+      return {
+        id: r.id,
+        orderNumber: (order as any).orderNumber,
+        customerEmail: (order as any).email,
+        status: r.status,
+        reasonCode: firstItemByReturn.get(r.id) ?? null,
+        refundAmountMinor: r.refundAmountMinor,
+        createdAt: r.createdAt,
+      };
+    });
   }
 
-  async resolveReturn(
-    dto: ResolveReturnDto,
-    actorId: string,
-    idempotencyKey: string,
-  ) {
+  async resolveReturn(dto: ResolveReturnDto, actorId: string, idempotencyKey: string) {
     const { rmaId, action, reason, customRefundAmountMinor } = dto;
 
-    const rma = await this.prisma.return.findUnique({
-      where: { id: rmaId },
-      include: { order: true },
-    });
-    if (!rma) {
-      throw new NotFoundException(`Return ${rmaId} not found`);
-    }
+    const { data: rmaRows } = await this.supabase.db
+      .from('Return')
+      .select('id, orderId, status, refundAmountMinor')
+      .eq('id', rmaId)
+      .limit(1);
+
+    const rma = rmaRows?.[0];
+    if (!rma) throw new NotFoundException(`Return ${rmaId} not found`);
 
     if (rma.status !== ReturnStatus.PENDING_REVIEW) {
-      throw new ConflictException(
-        `Return ${rmaId} has already been resolved (status=${rma.status})`,
-      );
+      throw new ConflictException(`Return ${rmaId} has already been resolved (status=${rma.status})`);
     }
 
-    const now = new Date();
-    const newStatus =
-      action === 'approve' ? ReturnStatus.APPROVED : ReturnStatus.REJECTED;
+    const { data: orderRows } = await this.supabase.db
+      .from('Order')
+      .select('id, stripePaymentIntentId')
+      .eq('id', rma.orderId)
+      .limit(1);
+
+    const order = orderRows?.[0];
+    const now = new Date().toISOString();
+    const newStatus = action === 'approve' ? ReturnStatus.APPROVED : ReturnStatus.REJECTED;
 
     if (action === 'approve') {
       const refundAmount =
-        customRefundAmountMinor !== undefined
-          ? customRefundAmountMinor
-          : rma.refundAmountMinor;
+        customRefundAmountMinor !== undefined ? customRefundAmountMinor : rma.refundAmountMinor;
 
-      if (refundAmount > 0 && rma.order.stripePaymentIntentId) {
-        // Retrieve payment intent to get the charge ID
-        const paymentIntent = await this.stripe.paymentIntents.retrieve(
-          rma.order.stripePaymentIntentId,
-        );
-
-        const chargeId =
-          typeof paymentIntent.latest_charge === 'string'
-            ? paymentIntent.latest_charge
-            : paymentIntent.latest_charge?.id;
-
-        if (chargeId) {
-          await this.stripe.refunds.create({
-            charge: chargeId,
-            amount: refundAmount,
-            metadata: {
-              rmaId,
-              orderId: rma.orderId,
-              actorId,
-              idempotencyKey,
-            },
-          });
-
-          this.logger.log(
-            `Stripe refund created: rmaId=${rmaId} amount=${refundAmount} charge=${chargeId}`,
+      if (refundAmount > 0 && order?.stripePaymentIntentId) {
+        try {
+          const paymentIntent = await this.stripe.paymentIntents.retrieve(
+            order.stripePaymentIntentId,
           );
-        } else {
-          this.logger.warn(
-            `No charge found on payment intent ${rma.order.stripePaymentIntentId} for rmaId=${rmaId}`,
-          );
+          const chargeId =
+            typeof paymentIntent.latest_charge === 'string'
+              ? paymentIntent.latest_charge
+              : paymentIntent.latest_charge?.id;
+
+          if (chargeId) {
+            await this.stripe.refunds.create({
+              charge: chargeId,
+              amount: refundAmount,
+              metadata: { rmaId, orderId: rma.orderId, actorId, idempotencyKey },
+            });
+            this.logger.log(`Stripe refund created: rmaId=${rmaId} amount=${refundAmount} charge=${chargeId}`);
+          }
+        } catch (err) {
+          this.logger.error(`Stripe refund failed for rmaId=${rmaId}: ${err.message}`);
         }
       }
 
-      await this.prisma.$transaction([
-        this.prisma.return.update({
-          where: { id: rmaId },
-          data: {
-            status: newStatus,
-            resolvedAt: now,
-            resolvedBy: actorId,
-            resolveReason: reason ?? null,
-            customRefundMinor:
-              customRefundAmountMinor !== undefined ? customRefundAmountMinor : null,
-          },
-        }),
-        this.prisma.order.update({
-          where: { id: rma.orderId },
-          data: { status: OrderStatus.REFUNDED },
-        }),
-        this.prisma.orderEvent.create({
-          data: {
-            orderId: rma.orderId,
-            eventType: 'RETURN_APPROVED',
-            actorId,
-            payload: {
-              rmaId,
-              refundAmountMinor: customRefundAmountMinor ?? rma.refundAmountMinor,
-              reason: reason ?? null,
-              idempotencyKey,
-              timestamp: now.toISOString(),
-            },
-          },
-        }),
-      ]);
+      await this.supabase.db
+        .from('Return')
+        .update({
+          status: newStatus,
+          resolvedAt: now,
+          resolvedBy: actorId,
+          resolveReason: reason ?? null,
+          customRefundMinor: customRefundAmountMinor !== undefined ? customRefundAmountMinor : null,
+          updatedAt: now,
+        })
+        .eq('id', rmaId);
+
+      await this.supabase.db
+        .from('Order')
+        .update({ status: OrderStatus.REFUNDED, updatedAt: now })
+        .eq('id', rma.orderId);
+
+      await this.supabase.db.from('OrderEvent').insert({
+        id: uuidv4(),
+        orderId: rma.orderId,
+        eventType: 'RETURN_APPROVED',
+        actorId,
+        payload: {
+          rmaId,
+          refundAmountMinor: customRefundAmountMinor ?? rma.refundAmountMinor,
+          reason: reason ?? null,
+          idempotencyKey,
+          timestamp: now,
+        },
+        createdAt: now,
+      });
     } else {
-      await this.prisma.$transaction([
-        this.prisma.return.update({
-          where: { id: rmaId },
-          data: {
-            status: newStatus,
-            resolvedAt: now,
-            resolvedBy: actorId,
-            resolveReason: reason ?? null,
-          },
-        }),
-        this.prisma.orderEvent.create({
-          data: {
-            orderId: rma.orderId,
-            eventType: 'RETURN_REJECTED',
-            actorId,
-            payload: {
-              rmaId,
-              reason: reason ?? null,
-              idempotencyKey,
-              timestamp: now.toISOString(),
-            },
-          },
-        }),
-      ]);
+      await this.supabase.db
+        .from('Return')
+        .update({ status: newStatus, resolvedAt: now, resolvedBy: actorId, resolveReason: reason ?? null, updatedAt: now })
+        .eq('id', rmaId);
+
+      await this.supabase.db.from('OrderEvent').insert({
+        id: uuidv4(),
+        orderId: rma.orderId,
+        eventType: 'RETURN_REJECTED',
+        actorId,
+        payload: { rmaId, reason: reason ?? null, idempotencyKey, timestamp: now },
+        createdAt: now,
+      });
     }
 
-    this.logger.log(
-      `Return ${rmaId} ${action}d by admin ${actorId}`,
-    );
+    this.logger.log(`Return ${rmaId} ${action}d by admin ${actorId}`);
   }
 }

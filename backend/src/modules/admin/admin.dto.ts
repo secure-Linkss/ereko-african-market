@@ -6,9 +6,40 @@ import {
   IsString,
   Min,
 } from 'class-validator';
-import { OrderStatus, InventoryReasonCode } from '@prisma/client';
 
-// ─── ORDER STATUS ────────────────────────────────────────────────────────────
+export enum OrderStatus {
+  PENDING_PAYMENT = 'PENDING_PAYMENT',
+  PAID = 'PAID',
+  ALLOCATED = 'ALLOCATED',
+  PICKING = 'PICKING',
+  PACKED = 'PACKED',
+  SHIPPED = 'SHIPPED',
+  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+  DELIVERED = 'DELIVERED',
+  RETURN_REQUESTED = 'RETURN_REQUESTED',
+  RETURNED = 'RETURNED',
+  REFUNDED = 'REFUNDED',
+  ON_HOLD = 'ON_HOLD',
+  CANCELLED = 'CANCELLED',
+  PARTIALLY_SHIPPED = 'PARTIALLY_SHIPPED',
+  PARTIALLY_REFUNDED = 'PARTIALLY_REFUNDED',
+  DISPUTED = 'DISPUTED',
+}
+
+export enum ReturnStatus {
+  PENDING_REVIEW = 'PENDING_REVIEW',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export enum InventoryReasonCode {
+  receipt = 'receipt',
+  sale = 'sale',
+  return = 'return',
+  transfer_in = 'transfer_in',
+  transfer_out = 'transfer_out',
+  adjustment = 'adjustment',
+}
 
 export class UpdateOrderStatusDto {
   @ApiProperty({ description: 'Order ID being updated' })
@@ -35,15 +66,12 @@ export class UpdateOrderStatusDto {
   trackingNumber?: string;
 
   @ApiPropertyOptional({
-    description:
-      'Required when cancelling an order that is already SHIPPED or DELIVERED',
+    description: 'Required when cancelling an order that is already SHIPPED or DELIVERED',
   })
   @IsOptional()
   @IsString()
   privilegedOverrideReason?: string;
 }
-
-// ─── INVENTORY ADJUSTMENT ────────────────────────────────────────────────────
 
 export class AdjustInventoryDto {
   @ApiProperty({ description: 'Warehouse ID to adjust stock in' })
@@ -54,16 +82,11 @@ export class AdjustInventoryDto {
   @IsString()
   variantId: string;
 
-  @ApiProperty({
-    description: 'Adjustment quantity — positive to add, negative to remove',
-  })
+  @ApiProperty({ description: 'Adjustment quantity — positive to add, negative to remove' })
   @IsInt()
   adjustmentQty: number;
 
-  @ApiProperty({
-    enum: InventoryReasonCode,
-    description: 'Reason code for the ledger entry',
-  })
+  @ApiProperty({ enum: InventoryReasonCode, description: 'Reason code for the ledger entry' })
   @IsEnum(InventoryReasonCode)
   reasonCode: InventoryReasonCode;
 
@@ -72,8 +95,6 @@ export class AdjustInventoryDto {
   @IsString()
   notes?: string;
 }
-
-// ─── RESOLVE RETURN ──────────────────────────────────────────────────────────
 
 export class ResolveReturnDto {
   @ApiProperty({ description: 'Return (RMA) ID' })
@@ -90,8 +111,7 @@ export class ResolveReturnDto {
   reason?: string;
 
   @ApiPropertyOptional({
-    description:
-      'Override refund amount in pence — defaults to Return.refundAmountMinor when absent',
+    description: 'Override refund amount in pence — defaults to Return.refundAmountMinor when absent',
     minimum: 0,
   })
   @IsOptional()

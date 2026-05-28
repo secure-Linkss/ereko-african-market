@@ -30,8 +30,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.interceptor';
 import { AdminService } from './admin.service';
-import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto } from './admin.dto';
-import { OrderStatus } from '@prisma/client';
+import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto, OrderStatus } from './admin.dto';
 import { Request } from 'express';
 import { Req } from '@nestjs/common';
 

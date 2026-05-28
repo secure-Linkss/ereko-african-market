@@ -1,10 +1,4 @@
-import { CargoInquiry, CargoStatusHistory } from '@prisma/client';
-
-type RawCargoInquiry = CargoInquiry & {
-  statusHistory: CargoStatusHistory[];
-};
-
-export function serializeCargoInquiry(cargo: RawCargoInquiry) {
+export function serializeCargoInquiry(cargo: any) {
   return {
     id: cargo.id,
     trackingNumber: cargo.trackingNumber ?? undefined,
@@ -22,21 +16,18 @@ export function serializeCargoInquiry(cargo: RawCargoInquiry) {
     urgency: serializeUrgency(cargo.urgency),
     status: cargo.status,
     quoteAmountMinor: cargo.quoteAmountMinor ?? undefined,
-    bookingDate: cargo.bookingDate?.toISOString() ?? undefined,
-    shipmentDate: cargo.shipmentDate?.toISOString() ?? undefined,
-    estimatedDeliveryDate: cargo.estimatedDeliveryDate?.toISOString() ?? undefined,
-    statusHistory: cargo.statusHistory.map((h) => ({
+    bookingDate: cargo.bookingDate ?? undefined,
+    shipmentDate: cargo.shipmentDate ?? undefined,
+    estimatedDeliveryDate: cargo.estimatedDeliveryDate ?? undefined,
+    statusHistory: (cargo.statusHistory ?? []).map((h: any) => ({
       status: h.status,
       note: h.note ?? undefined,
-      updatedAt: h.updatedAt.toISOString(),
+      updatedAt: h.updatedAt,
     })),
-    createdAt: cargo.createdAt.toISOString(),
+    createdAt: cargo.createdAt,
   };
 }
 
-/**
- * Maps DB enum (super_express) back to the frontend-facing string (super-express).
- */
 function serializeUrgency(urgency: string): string {
   if (urgency === 'super_express') return 'super-express';
   return urgency;

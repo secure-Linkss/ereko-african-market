@@ -1,6 +1,20 @@
-import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { StaffRole } from '@prisma/client';
+
+export enum StaffRole {
+  owner = 'owner',
+  admin = 'admin',
+  fulfillment = 'fulfillment',
+  support = 'support',
+  marketing = 'marketing',
+  viewer = 'viewer',
+}
+
+export enum TeamMemberStatus {
+  active = 'active',
+  invited = 'invited',
+  suspended = 'suspended',
+}
 
 export class InviteTeamMemberDto {
   @ApiProperty({ example: 'staff@ereko.market' })

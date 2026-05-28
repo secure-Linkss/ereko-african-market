@@ -1,7 +1,8 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
+import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -9,27 +10,34 @@ export class WebhooksService {
   private readonly logger = new Logger(WebhooksService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
     @Optional() @InjectQueue('webhooks') private readonly webhooksQueue: Queue | null,
   ) {}
 
   async dispatch(eventType: string, payload: Record<string, unknown>): Promise<void> {
-    const endpoints = await this.prisma.webhookEndpoint.findMany({
-      where: {
-        isActive: true,
-        events: { has: eventType },
-      },
-    });
+    const { data: endpoints } = await this.supabase.db
+      .from('WebhookEndpoint')
+      .select('id, url, secret, events')
+      .eq('isActive', true)
+      .contains('events', [eventType]);
 
-    for (const endpoint of endpoints) {
-      const event = await this.prisma.webhookEvent.create({
-        data: {
+    for (const endpoint of endpoints ?? []) {
+      const now = new Date().toISOString();
+      const { data: event } = await this.supabase.db
+        .from('WebhookEvent')
+        .insert({
+          id: uuidv4(),
           endpointId: endpoint.id,
           eventType,
-          payload: payload as any,
+          payload,
           status: 'pending',
-        },
-      });
+          attempts: 0,
+          createdAt: now,
+        })
+        .select('id')
+        .single();
+
+      if (!event) continue;
 
       if (this.webhooksQueue) {
         await this.webhooksQueue.add('deliver', { eventId: event.id }, {

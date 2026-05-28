@@ -1,89 +1,114 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { SupabaseService } from '../../supabase/supabase.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SeoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly supabase: SupabaseService) {}
 
   async getSeoConfig(pageKey: string) {
-    return this.prisma.seoConfig.findUnique({ where: { pageKey } });
+    const { data } = await this.supabase.db
+      .from('SeoConfig')
+      .select('*')
+      .eq('pageKey', pageKey)
+      .single();
+    return data;
   }
 
-  async upsertSeoConfig(pageKey: string, data: {
-    metaTitle: string;
-    metaDescription: string;
-    ogTitle?: string;
-    ogDescription?: string;
-    ogImage?: string;
-    canonicalUrl?: string;
-    structuredData?: object;
-  }, actorId: string) {
-    return this.prisma.seoConfig.upsert({
-      where: { pageKey },
-      create: { pageKey, ...data, updatedBy: actorId },
-      update: { ...data, updatedBy: actorId },
-    });
+  async upsertSeoConfig(
+    pageKey: string,
+    data: {
+      metaTitle: string;
+      metaDescription: string;
+      ogTitle?: string;
+      ogDescription?: string;
+      ogImage?: string;
+      canonicalUrl?: string;
+      structuredData?: object;
+    },
+    actorId: string,
+  ) {
+    const now = new Date().toISOString();
+    const { data: result } = await this.supabase.db
+      .from('SeoConfig')
+      .upsert(
+        { id: uuidv4(), pageKey, ...data, updatedBy: actorId, updatedAt: now },
+        { onConflict: 'pageKey' },
+      )
+      .select('*')
+      .single();
+    return result;
   }
 
   async generateSitemap(baseUrl: string): Promise<string> {
-    const [products, recipes, categories] = await Promise.all([
-      this.prisma.product.findMany({
-        where: { isPublished: true, deletedAt: null },
-        select: { slug: true, updatedAt: true },
-        orderBy: { updatedAt: 'desc' },
-      }),
-      this.prisma.recipe.findMany({
-        where: { isPublished: true },
-        select: { slug: true, updatedAt: true },
-        orderBy: { updatedAt: 'desc' },
-      }),
-      this.prisma.category.findMany({
-        where: { isActive: true },
-        select: { slug: true, updatedAt: true },
-      }),
+    const [{ data: products }, { data: recipes }, { data: categories }] = await Promise.all([
+      this.supabase.db
+        .from('Product')
+        .select('slug, updatedAt')
+        .eq('isPublished', true)
+        .is('deletedAt', null)
+        .order('updatedAt', { ascending: false }),
+      this.supabase.db
+        .from('Recipe')
+        .select('slug, updatedAt')
+        .eq('isPublished', true)
+        .order('updatedAt', { ascending: false }),
+      this.supabase.db
+        .from('Category')
+        .select('slug, updatedAt')
+        .eq('isActive', true),
     ]);
 
+    const today = new Date().toISOString().split('T')[0];
+
     const staticPages = [
-      { url: '/', changefreq: 'daily', priority: '1.0', lastmod: new Date().toISOString().split('T')[0] },
-      { url: '/shop', changefreq: 'daily', priority: '0.9', lastmod: new Date().toISOString().split('T')[0] },
-      { url: '/recipes', changefreq: 'weekly', priority: '0.8', lastmod: new Date().toISOString().split('T')[0] },
-      { url: '/cargo', changefreq: 'monthly', priority: '0.7', lastmod: new Date().toISOString().split('T')[0] },
-      { url: '/about', changefreq: 'monthly', priority: '0.5', lastmod: new Date().toISOString().split('T')[0] },
-      { url: '/contact', changefreq: 'monthly', priority: '0.5', lastmod: new Date().toISOString().split('T')[0] },
+      { url: '/', changefreq: 'daily', priority: '1.0', lastmod: today },
+      { url: '/shop', changefreq: 'daily', priority: '0.9', lastmod: today },
+      { url: '/recipes', changefreq: 'weekly', priority: '0.8', lastmod: today },
+      { url: '/cargo', changefreq: 'monthly', priority: '0.7', lastmod: today },
+      { url: '/about', changefreq: 'monthly', priority: '0.5', lastmod: today },
+      { url: '/contact', changefreq: 'monthly', priority: '0.5', lastmod: today },
     ];
 
+    const toDate = (v: string) => (v ? v.split('T')[0] : today);
+
     const urls = [
-      ...staticPages.map(p => `
+      ...staticPages.map(
+        (p) => `
   <url>
     <loc>${baseUrl}${p.url}</loc>
     <lastmod>${p.lastmod}</lastmod>
     <changefreq>${p.changefreq}</changefreq>
     <priority>${p.priority}</priority>
-  </url>`),
-
-      ...categories.map(c => `
+  </url>`,
+      ),
+      ...(categories ?? []).map(
+        (c: any) => `
   <url>
     <loc>${baseUrl}/shop/${c.slug}</loc>
-    <lastmod>${c.updatedAt.toISOString().split('T')[0]}</lastmod>
+    <lastmod>${toDate(c.updatedAt)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>`),
-
-      ...products.map(p => `
+  </url>`,
+      ),
+      ...(products ?? []).map(
+        (p: any) => `
   <url>
     <loc>${baseUrl}/products/${p.slug}</loc>
-    <lastmod>${p.updatedAt.toISOString().split('T')[0]}</lastmod>
+    <lastmod>${toDate(p.updatedAt)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>`),
-
-      ...recipes.map(r => `
+  </url>`,
+      ),
+      ...(recipes ?? []).map(
+        (r: any) => `
   <url>
     <loc>${baseUrl}/recipes/${r.slug}</loc>
-    <lastmod>${r.updatedAt.toISOString().split('T')[0]}</lastmod>
+    <lastmod>${toDate(r.updatedAt)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
-  </url>`),
+  </url>`,
+      ),
     ];
 
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -103,7 +128,8 @@ ${urls.join('')}
       alternateName: 'EREKO African Food Store',
       url: baseUrl,
       logo: `${baseUrl}/logo.png`,
-      description: 'The UK\'s premier African food marketplace. Shop authentic West African, East African, and Pan-African groceries online with free delivery over £55.',
+      description:
+        "The UK's premier African food marketplace. Shop authentic West African, East African, and Pan-African groceries online with free delivery over £55.",
       address: {
         '@type': 'PostalAddress',
         streetAddress: 'London',
@@ -128,7 +154,6 @@ ${urls.join('')}
   getProductSchema(product: any, baseUrl: string) {
     const variant = product.variants?.[0];
     const image = product.images?.[0];
-
     return {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -136,16 +161,19 @@ ${urls.join('')}
       description: product.descriptionShort,
       image: image?.url,
       brand: { '@type': 'Brand', name: product.brand ?? 'EREKO' },
-      offers: variant ? {
-        '@type': 'Offer',
-        price: (variant.priceAmountMinor / 100).toFixed(2),
-        priceCurrency: variant.currency ?? 'GBP',
-        availability: variant.stockOnHand > 0
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-        url: `${baseUrl}/products/${product.slug}`,
-        seller: { '@type': 'Organization', name: 'EREKO Market' },
-      } : undefined,
+      offers: variant
+        ? {
+            '@type': 'Offer',
+            price: (variant.priceAmountMinor / 100).toFixed(2),
+            priceCurrency: variant.currency ?? 'GBP',
+            availability:
+              variant.stockOnHand > 0
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+            url: `${baseUrl}/products/${product.slug}`,
+            seller: { '@type': 'Organization', name: 'EREKO Market' },
+          }
+        : undefined,
       countryOfOrigin: product.originCountry,
     };
   }

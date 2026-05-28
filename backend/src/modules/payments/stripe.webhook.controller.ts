@@ -15,9 +15,15 @@ import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { PaymentsService } from './payments.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { OrderStatus } from '@prisma/client';
+import { SupabaseService } from '../../supabase/supabase.service';
 import Stripe from 'stripe';
+import { v4 as uuidv4 } from 'uuid';
+
+enum OrderStatus {
+  PAID = 'PAID',
+  PENDING_PAYMENT = 'PENDING_PAYMENT',
+  DISPUTED = 'DISPUTED',
+}
 
 @ApiTags('Webhooks')
 @Controller('webhooks/stripe')
@@ -26,7 +32,7 @@ export class StripeWebhookController {
 
   constructor(
     private readonly paymentsService: PaymentsService,
-    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
     private readonly config: ConfigService,
     @Optional() @InjectQueue('orders') private readonly ordersQueue: Queue | null,
   ) {}
@@ -45,7 +51,6 @@ export class StripeWebhookController {
       throw new BadRequestException('Webhook not configured');
     }
 
-    // NestJS rawBody: true option stores the raw buffer on req
     const rawBody = req.body as Buffer;
     if (!rawBody || !Buffer.isBuffer(rawBody)) {
       throw new BadRequestException('Raw body unavailable — ensure route receives raw body');
@@ -65,15 +70,12 @@ export class StripeWebhookController {
       case 'payment_intent.succeeded':
         await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
         break;
-
       case 'payment_intent.payment_failed':
         await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
         break;
-
       case 'charge.dispute.created':
         await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
         break;
-
       default:
         this.logger.debug(`Unhandled Stripe event type: ${event.type}`);
     }
@@ -81,13 +83,14 @@ export class StripeWebhookController {
     return { received: true };
   }
 
-  // ─── Event handlers ─────────────────────────────────────────────────────────
-
   private async handlePaymentIntentSucceeded(pi: Stripe.PaymentIntent) {
-    const order = await this.prisma.order.findUnique({
-      where: { stripePaymentIntentId: pi.id },
-    });
+    const { data: orderRows } = await this.supabase.db
+      .from('Order')
+      .select('id, status, userId, totalMinor, email, orderNumber')
+      .eq('stripePaymentIntentId', pi.id)
+      .limit(1);
 
+    const order = orderRows?.[0];
     if (!order) {
       this.logger.warn(`No order found for PaymentIntent ${pi.id}`);
       return;
@@ -98,28 +101,21 @@ export class StripeWebhookController {
       return;
     }
 
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: OrderStatus.PAID,
-        stripePaymentStatus: pi.status,
-        paidAt: new Date(),
-      },
+    const now = new Date().toISOString();
+    await this.supabase.db
+      .from('Order')
+      .update({ status: OrderStatus.PAID, stripePaymentStatus: pi.status, paidAt: now, updatedAt: now })
+      .eq('id', order.id);
+
+    // OrderEvent has NO updatedAt column
+    await this.supabase.db.from('OrderEvent').insert({
+      id: uuidv4(),
+      orderId: order.id,
+      eventType: 'payment.succeeded',
+      payload: { paymentIntentId: pi.id, amount: pi.amount, currency: pi.currency },
+      createdAt: now,
     });
 
-    await this.prisma.orderEvent.create({
-      data: {
-        orderId: order.id,
-        eventType: 'payment.succeeded',
-        payload: {
-          paymentIntentId: pi.id,
-          amount: pi.amount,
-          currency: pi.currency,
-        },
-      },
-    });
-
-    // Enqueue order.placed job → triggers loyalty award + email notification
     if (this.ordersQueue) {
       await this.ordersQueue.add(
         'order.placed',
@@ -136,92 +132,104 @@ export class StripeWebhookController {
       this.logger.warn(`Queue unavailable — post-processing for order ${order.orderNumber} skipped`);
     }
 
-    // Clear the user's cart
     if (order.userId) {
-      await this.prisma.cart.deleteMany({ where: { userId: order.userId } });
+      await this.supabase.db.from('Cart').delete().eq('userId', order.userId);
     }
 
     this.logger.log(`Order ${order.orderNumber} marked PAID via webhook`);
   }
 
   private async handlePaymentIntentFailed(pi: Stripe.PaymentIntent) {
-    const order = await this.prisma.order.findUnique({
-      where: { stripePaymentIntentId: pi.id },
-    });
+    const { data: orderRows } = await this.supabase.db
+      .from('Order')
+      .select('id, orderNumber, stripePaymentIntentId')
+      .eq('stripePaymentIntentId', pi.id)
+      .limit(1);
 
+    const order = orderRows?.[0];
     if (!order) {
       this.logger.warn(`No order found for failed PaymentIntent ${pi.id}`);
       return;
     }
 
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: {
-        stripePaymentStatus: pi.status,
+    const now = new Date().toISOString();
+    await this.supabase.db
+      .from('Order')
+      .update({ stripePaymentStatus: pi.status, updatedAt: now })
+      .eq('id', order.id);
+
+    await this.supabase.db.from('OrderEvent').insert({
+      id: uuidv4(),
+      orderId: order.id,
+      eventType: 'payment.failed',
+      payload: {
+        paymentIntentId: pi.id,
+        lastPaymentError: pi.last_payment_error?.message ?? null,
+        declineCode: pi.last_payment_error?.decline_code ?? null,
       },
+      createdAt: now,
     });
 
-    await this.prisma.orderEvent.create({
-      data: {
-        orderId: order.id,
-        eventType: 'payment.failed',
-        payload: {
-          paymentIntentId: pi.id,
-          lastPaymentError: pi.last_payment_error?.message ?? null,
-          declineCode: pi.last_payment_error?.decline_code ?? null,
-        },
-      },
-    });
+    // Release stock reservations
+    const { data: items } = await this.supabase.db
+      .from('OrderItem')
+      .select('variantId, quantity')
+      .eq('orderId', order.id);
 
-    // Release stock reservation
-    const orderWithItems = await this.prisma.order.findUnique({
-      where: { id: order.id },
-      include: { items: true },
-    });
-
-    if (orderWithItems) {
-      await this.prisma.$transaction(
-        orderWithItems.items.map((item) =>
-          this.prisma.productVariant.update({
-            where: { id: item.variantId },
-            data: { stockReserved: { decrement: item.quantity } },
-          }),
-        ),
-      );
+    for (const item of items ?? []) {
+      const { data: variant } = await this.supabase.db
+        .from('ProductVariant')
+        .select('id, stockReserved')
+        .eq('id', item.variantId)
+        .single();
+      if (variant) {
+        await this.supabase.db
+          .from('ProductVariant')
+          .update({ stockReserved: Math.max(0, variant.stockReserved - item.quantity), updatedAt: now })
+          .eq('id', item.variantId);
+      }
     }
 
     this.logger.warn(`Payment failed for order ${order.orderNumber}: ${pi.last_payment_error?.message}`);
   }
 
   private async handleDisputeCreated(dispute: Stripe.Dispute) {
-    const order = await this.prisma.order.findFirst({
-      where: { stripePaymentIntentId: dispute.payment_intent as string },
-    });
+    const piId = typeof dispute.payment_intent === 'string'
+      ? dispute.payment_intent
+      : (dispute.payment_intent?.id ?? null);
 
+    if (!piId) return;
+
+    const { data: orderRows } = await this.supabase.db
+      .from('Order')
+      .select('id, orderNumber')
+      .eq('stripePaymentIntentId', piId)
+      .limit(1);
+
+    const order = orderRows?.[0];
     if (!order) {
       this.logger.warn(`No order found for disputed charge ${dispute.id}`);
       return;
     }
 
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: { status: OrderStatus.DISPUTED },
-    });
+    const now = new Date().toISOString();
+    await this.supabase.db
+      .from('Order')
+      .update({ status: OrderStatus.DISPUTED, updatedAt: now })
+      .eq('id', order.id);
 
-    await this.prisma.orderEvent.create({
-      data: {
-        orderId: order.id,
-        eventType: 'dispute.created',
-        payload: {
-          disputeId: dispute.id,
-          amount: dispute.amount,
-          reason: dispute.reason,
-          status: dispute.status,
-          paymentIntentId: typeof dispute.payment_intent === 'string'
-            ? dispute.payment_intent
-            : (dispute.payment_intent?.id ?? null),
-        },
+    await this.supabase.db.from('OrderEvent').insert({
+      id: uuidv4(),
+      orderId: order.id,
+      eventType: 'dispute.created',
+      payload: {
+        disputeId: dispute.id,
+        amount: dispute.amount,
+        reason: dispute.reason,
+        status: dispute.status,
+        paymentIntentId: piId,
       },
+      createdAt: now,
     });
 
     this.logger.warn(`Dispute created for order ${order.orderNumber}: dispute=${dispute.id}`);

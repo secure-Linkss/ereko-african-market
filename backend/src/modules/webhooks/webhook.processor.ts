@@ -1,7 +1,7 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
 
@@ -9,16 +9,25 @@ import * as crypto from 'crypto';
 export class WebhookProcessor {
   private readonly logger = new Logger(WebhookProcessor.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly supabase: SupabaseService) {}
 
   @Process('deliver')
   async deliverWebhook(job: Job<{ eventId: string }>) {
-    const event = await this.prisma.webhookEvent.findUnique({
-      where: { id: job.data.eventId },
-      include: { endpoint: true },
-    });
+    const { data: event } = await this.supabase.db
+      .from('WebhookEvent')
+      .select('id, endpointId, eventType, payload, status, createdAt, attempts')
+      .eq('id', job.data.eventId)
+      .single();
 
     if (!event || event.status === 'delivered') return;
+
+    const { data: endpoint } = await this.supabase.db
+      .from('WebhookEndpoint')
+      .select('url, secret')
+      .eq('id', event.endpointId)
+      .single();
+
+    if (!endpoint) return;
 
     const body = JSON.stringify({
       id: event.id,
@@ -30,7 +39,7 @@ export class WebhookProcessor {
     const timestamp = Math.floor(Date.now() / 1000);
     const signedPayload = `${timestamp}.${body}`;
     const signature = crypto
-      .createHmac('sha256', event.endpoint.secret)
+      .createHmac('sha256', endpoint.secret)
       .update(signedPayload)
       .digest('hex');
 
@@ -39,7 +48,7 @@ export class WebhookProcessor {
     let status: 'delivered' | 'failed' | 'retrying' = 'failed';
 
     try {
-      const response = await axios.post(event.endpoint.url, body, {
+      const response = await axios.post(endpoint.url, body, {
         headers: {
           'Content-Type': 'application/json',
           'Ereko-Signature': `t=${timestamp},v1=${signature}`,
@@ -57,22 +66,25 @@ export class WebhookProcessor {
       status = job.attemptsMade < 4 ? 'retrying' : 'failed';
     }
 
-    await this.prisma.webhookEvent.update({
-      where: { id: event.id },
-      data: {
+    await this.supabase.db
+      .from('WebhookEvent')
+      .update({
         status,
-        attempts: { increment: 1 },
-        lastAttemptAt: new Date(),
-        responseStatus,
-        responseBody,
-        nextRetryAt: status === 'retrying'
-          ? new Date(Date.now() + Math.pow(2, job.attemptsMade) * 5000)
-          : null,
-      },
-    });
+        attempts: (event.attempts ?? 0) + 1,
+        lastAttemptAt: new Date().toISOString(),
+        responseStatus: responseStatus ?? null,
+        responseBody: responseBody ?? null,
+        nextRetryAt:
+          status === 'retrying'
+            ? new Date(Date.now() + Math.pow(2, job.attemptsMade) * 5000).toISOString()
+            : null,
+      })
+      .eq('id', event.id);
 
     if (status === 'failed' && job.attemptsMade >= 4) {
-      this.logger.warn(`Webhook delivery failed permanently: eventId=${event.id} endpoint=${event.endpoint.url}`);
+      this.logger.warn(
+        `Webhook delivery failed permanently: eventId=${event.id} endpoint=${endpoint.url}`,
+      );
     }
   }
 }
