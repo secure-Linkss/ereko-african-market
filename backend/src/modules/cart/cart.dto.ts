@@ -22,10 +22,11 @@ export class CartItemInputDto {
   @IsPositive()
   quantity: number;
 
-  @ApiProperty({ description: 'Unit price in minor currency units (pence)' })
+  @ApiPropertyOptional({ description: 'Client-side price hint (pence) — server always uses DB price for security' })
+  @IsOptional()
   @IsInt()
   @Min(0)
-  unitPriceMinor: number;
+  unitPriceMinor?: number;
 }
 
 export class SyncCartDto {
