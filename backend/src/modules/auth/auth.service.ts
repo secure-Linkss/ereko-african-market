@@ -86,7 +86,6 @@ export class AuthService {
       userAgent: req.headers['user-agent']?.slice(0, 512) ?? null,
       ipAddress: this.extractIp(req),
       createdAt: now,
-      updatedAt: now,
     });
 
     if (error) {
@@ -404,7 +403,6 @@ export class AuthService {
       tokenHash,
       expiresAt,
       createdAt: now,
-      updatedAt: now,
     });
 
     const frontendUrl = this.configService.get<string>('frontend.url');
@@ -611,7 +609,6 @@ export class AuthService {
       tokenHash,
       expiresAt,
       createdAt: now,
-      updatedAt: now,
     });
 
     const frontendUrl = this.configService.get<string>('frontend.url');

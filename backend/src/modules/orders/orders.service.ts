@@ -149,7 +149,6 @@ export class OrdersService {
         reasonCode: item.reasonCode,
         customerNote: item.customerNote ?? null,
         createdAt: now,
-        updatedAt: now,
       })),
     );
 
