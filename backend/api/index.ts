@@ -31,6 +31,22 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
+  // Vercel uses extended:false query parser — bracket notation like filter[in_stock]=true
+  // is NOT auto-parsed into nested objects. This middleware converts it before validation.
+  expressApp.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    const q = req.query as Record<string, any>;
+    for (const rawKey of Object.keys(q)) {
+      const m = rawKey.match(/^(\w+)\[(\w+)\]$/);
+      if (m) {
+        const [, parent, child] = m;
+        if (!q[parent] || typeof q[parent] !== 'object') q[parent] = {};
+        (q[parent] as Record<string, any>)[child] = q[rawKey];
+        delete q[rawKey];
+      }
+    }
+    next();
+  });
+
   app.enableCors({
     origin: origins,
     credentials: true,
