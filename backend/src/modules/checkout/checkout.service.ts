@@ -1,4 +1,4 @@
-﻿import {
+import {
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -6,8 +6,9 @@
   Logger,
   InternalServerErrorException,
   Optional,
+  UnprocessableEntityException,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -18,10 +19,8 @@ import {
   AddressDto,
 } from './checkout.dto';
 import { PaymentsService } from '../payments/payments.service';
-import { OrderStatus, DeliveryMethod, Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
-const STOCK_RESERVE_MINUTES = 15;
 const FREE_SHIPPING_THRESHOLD = 5500;
 const STANDARD_SHIPPING = 399;
 
@@ -36,7 +35,7 @@ function generateOrderNumber(): string {
   return `ERK-${dateStr}-${rand}`;
 }
 
-function serializeOrder(order: any) {
+function serializeOrderLocal(order: any) {
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -83,45 +82,44 @@ export class CheckoutService {
   private readonly logger = new Logger(CheckoutService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
     private readonly config: ConfigService,
     private readonly paymentsService: PaymentsService,
     @Optional() @InjectQueue('orders') private readonly ordersQueue: Queue | null,
   ) {}
 
-  // â”€â”€â”€ Delivery slots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Delivery slots ─────────────────────────────────────────────────────────
 
   async getDeliverySlots(postcode: string) {
     const postcodeArea = postcode.trim().toUpperCase().split(' ')[0];
 
-    const templates = await this.prisma.deliverySlotTemplate.findMany({
-      where: {
-        isActive: true,
-        OR: [{ postcodeArea: null }, { postcodeArea: { startsWith: postcodeArea.slice(0, 2) } }],
-      },
-    });
+    const { data: templates } = await this.supabase.db
+      .from('DeliverySlotTemplate')
+      .select('*')
+      .eq('isActive', true);
 
-    const slots: {
-      date: string;
-      slotStart: string;
-      slotEnd: string;
-      priceMinor: number;
-    }[] = [];
-
+    const slots: { date: string; slotStart: string; slotEnd: string; priceMinor: number }[] = [];
     const now = new Date();
+
     for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
       const target = new Date(now);
       target.setDate(now.getDate() + dayOffset);
-      const dayOfWeek = target.getDay(); // 0=Sun, 6=Sat
+      const dayOfWeek = target.getDay();
       const dateStr = target.toISOString().slice(0, 10);
 
-      const matchedTemplates = templates.filter((t) => t.dayOfWeek === dayOfWeek);
+      const matchedTemplates = (templates ?? []).filter(
+        (t: any) => t.dayOfWeek === dayOfWeek && (!t.postcodeArea || postcodeArea.startsWith(t.postcodeArea.slice(0, 2))),
+      );
+
       for (const tmpl of matchedTemplates) {
-        // Check booking capacity
-        const existingBookings = await this.prisma.deliverySlotBooking.count({
-          where: { date: dateStr, slotStart: tmpl.slotStart, slotEnd: tmpl.slotEnd },
-        });
-        if (existingBookings >= tmpl.capacity) continue;
+        const { count } = await this.supabase.db
+          .from('DeliverySlotBooking')
+          .select('id', { count: 'exact', head: true })
+          .eq('date', dateStr)
+          .eq('slotStart', tmpl.slotStart)
+          .eq('slotEnd', tmpl.slotEnd);
+
+        if ((count ?? 0) >= tmpl.capacity) continue;
 
         slots.push({
           date: dateStr,
@@ -135,63 +133,163 @@ export class CheckoutService {
     return slots;
   }
 
-  // â”€â”€â”€ Start checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Start checkout ─────────────────────────────────────────────────────────
 
   async startCheckout(dto: StartCheckoutDto, userId?: string) {
-    const cart = await this.prisma.cart.findUnique({
-      where: { id: dto.cartId },
-      include: {
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: {
-                  include: { images: { orderBy: { position: 'asc' } } },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const { data: cartRows } = await this.supabase.db
+      .from('Cart')
+      .select('*')
+      .eq('id', dto.cartId)
+      .limit(1);
 
-    if (!cart) {
-      throw new NotFoundException('Cart not found');
-    }
-
-    if (cart.items.length === 0) {
-      throw new BadRequestException('Cannot checkout an empty cart');
-    }
-
-    // Verify cart ownership
+    const cart = cartRows?.[0];
+    if (!cart) throw new NotFoundException('Cart not found');
     if (userId && cart.userId && cart.userId !== userId) {
       throw new ConflictException('Cart does not belong to this user');
     }
 
-    // Reserve stock for each item (15-minute hold)
-    const stockReservedUntil = new Date(Date.now() + STOCK_RESERVE_MINUTES * 60 * 1000);
+    const { data: cartItems } = await this.supabase.db
+      .from('CartItem')
+      .select('id, variantId, quantity, unitPriceMinor')
+      .eq('cartId', cart.id);
 
-    await this.prisma.$transaction(async (tx) => {
-      for (const item of cart.items) {
-        const variant = item.variant;
-        const available = variant.stockOnHand - variant.stockReserved;
+    if (!cartItems || cartItems.length === 0) {
+      throw new BadRequestException('Cannot checkout an empty cart');
+    }
 
-        if (item.quantity > available) {
-          throw new UnprocessableEntityError(
-            `Insufficient stock for ${variant.sku}. Available: ${available}`,
-          );
-        }
+    const variantIds = cartItems.map((i: any) => i.variantId);
+    const { data: variants } = await this.supabase.db
+      .from('ProductVariant')
+      .select('id, productId, sku, name, stockOnHand, stockReserved, priceAmountMinor, taxClassId, isActive')
+      .in('id', variantIds);
 
-        await tx.productVariant.update({
-          where: { id: variant.id },
-          data: { stockReserved: { increment: item.quantity } },
-        });
+    const productIds = [...new Set((variants ?? []).map((v: any) => v.productId))];
+    const { data: products } = await this.supabase.db
+      .from('Product')
+      .select('id, title, slug, storageType')
+      .in('id', productIds);
+    const { data: images } = await this.supabase.db
+      .from('ProductImage')
+      .select('productId, url, position')
+      .in('productId', productIds)
+      .order('position', { ascending: true });
+
+    const variantMap = new Map((variants ?? []).map((v: any) => [v.id, v]));
+    const productMap = new Map((products ?? []).map((p: any) => [p.id, p]));
+    const imageMap = new Map<string, string>();
+    for (const img of images ?? []) {
+      if (!imageMap.has(img.productId)) imageMap.set(img.productId, img.url);
+    }
+
+    // Reserve stock
+    for (const item of cartItems) {
+      const variant = variantMap.get(item.variantId);
+      if (!variant) throw new BadRequestException(`Variant ${item.variantId} not found`);
+      const available = variant.stockOnHand - variant.stockReserved;
+      if (item.quantity > available) {
+        throw new UnprocessableEntityException(`Insufficient stock for ${variant.sku}. Available: ${available}`);
       }
-    });
+      await this.supabase.db
+        .from('ProductVariant')
+        .update({ stockReserved: variant.stockReserved + item.quantity, updatedAt: new Date().toISOString() })
+        .eq('id', variant.id);
+    }
 
     const deliverySlots = await this.getDeliverySlots(dto.postcode);
 
-    // Build serialized cart for response
+    // Generate unique order number
+    let orderNumber = '';
+    let attempts = 0;
+    do {
+      orderNumber = generateOrderNumber();
+      attempts++;
+      if (attempts > 10) throw new InternalServerErrorException('Failed to generate order number');
+      const { data: existing } = await this.supabase.db
+        .from('Order')
+        .select('id')
+        .eq('orderNumber', orderNumber)
+        .limit(1);
+      if (!existing || existing.length === 0) break;
+    } while (true);
+
+    let userRecord: any = null;
+    if (userId) {
+      const { data: users } = await this.supabase.db
+        .from('User')
+        .select('firstName, lastName')
+        .eq('id', userId)
+        .limit(1);
+      userRecord = users?.[0] ?? null;
+    }
+
+    const taxMinor = cart.taxMinor;
+    const subtotal = cart.subtotalMinor;
+    const discount = cart.discountMinor + cart.loyaltyDiscountMinor;
+    const discountedSubtotal = Math.max(0, subtotal - discount);
+    const shipping = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
+    const total = discountedSubtotal + shipping;
+    const now = new Date().toISOString();
+    const orderId = uuidv4();
+
+    const { data: newOrder, error: orderErr } = await this.supabase.db
+      .from('Order')
+      .insert({
+        id: orderId,
+        orderNumber,
+        userId: userId ?? null,
+        email: dto.email,
+        status: 'PENDING_PAYMENT',
+        currency: cart.currency,
+        subtotalMinor: subtotal,
+        discountMinor: discount,
+        shippingMinor: shipping,
+        taxMinor,
+        totalMinor: total,
+        promoCode: cart.promoCode,
+        loyaltyPointsRedeemed: cart.loyaltyPointsRedeemed,
+        loyaltyPointsEarned: 0,
+        deliveryMethod: 'standard',
+        placedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .select('*')
+      .single();
+
+    if (orderErr || !newOrder) {
+      throw new InternalServerErrorException(`Failed to create order: ${orderErr?.message}`);
+    }
+
+    // Create order items
+    await this.supabase.db.from('OrderItem').insert(
+      cartItems.map((item: any) => {
+        const variant = variantMap.get(item.variantId) ?? {};
+        const product = productMap.get(variant.productId) ?? {};
+        return {
+          id: uuidv4(),
+          orderId,
+          variantId: item.variantId,
+          sku: variant.sku ?? '',
+          title: product.title ?? '',
+          variantName: variant.name ?? '',
+          quantity: item.quantity,
+          priceAmountMinor: item.unitPriceMinor,
+          productSlug: product.slug ?? '',
+          productImage: imageMap.get(product.id) ?? '',
+          createdAt: now,
+        };
+      }),
+    );
+
+    // Create checkout started event
+    await this.supabase.db.from('OrderEvent').insert({
+      id: uuidv4(),
+      orderId,
+      eventType: 'checkout.started',
+      payload: { postcode: dto.postcode, cartId: dto.cartId },
+      createdAt: now,
+    });
+
     const serializedCart = {
       id: cart.id,
       userId: cart.userId,
@@ -206,130 +304,54 @@ export class CheckoutService {
       loyaltyPointsRedeemed: cart.loyaltyPointsRedeemed,
       loyaltyDiscountMinor: cart.loyaltyDiscountMinor,
       expiresAt: cart.expiresAt,
-      items: cart.items.map((item) => {
-        const variant = item.variant;
-        const product = variant.product;
-        const primaryImage = product.images[0];
+      items: cartItems.map((item: any) => {
+        const variant = variantMap.get(item.variantId) ?? {};
+        const product = productMap.get(variant.productId) ?? {};
         return {
           id: item.id,
           variantId: item.variantId,
           quantity: item.quantity,
           unitPriceMinor: item.unitPriceMinor,
-          sku: variant.sku,
-          title: product.title,
-          variantName: variant.name,
-          productSlug: product.slug,
-          productImage: primaryImage?.url ?? '',
-          storageType: product.storageType,
+          sku: variant.sku ?? '',
+          title: product.title ?? '',
+          variantName: variant.name ?? '',
+          productSlug: product.slug ?? '',
+          productImage: imageMap.get(product.id) ?? '',
+          storageType: product.storageType ?? 'ambient',
           availableStock: Math.max(0, variant.stockOnHand - variant.stockReserved),
         };
       }),
     };
 
-    // Create a pending order
-    let orderNumber: string;
-    let attempts = 0;
-    do {
-      orderNumber = generateOrderNumber();
-      attempts++;
-      if (attempts > 10) throw new InternalServerErrorException('Failed to generate order number');
-    } while (
-      await this.prisma.order.findUnique({ where: { orderNumber } })
-    );
-
-    // Derive email and name from user or dto
-    const userRecord = userId
-      ? await this.prisma.user.findUnique({ where: { id: userId } })
-      : null;
-
-    const email = dto.email;
-    const firstName = dto.firstName ?? userRecord?.firstName ?? '';
-    const lastName = dto.lastName ?? userRecord?.lastName ?? '';
-
-    const taxMinor = cart.taxMinor;
-    const subtotal = cart.subtotalMinor;
-    const discount = cart.discountMinor + cart.loyaltyDiscountMinor;
-    const discountedSubtotal = Math.max(0, subtotal - discount);
-    const shipping = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
-    const total = discountedSubtotal + shipping;
-
-    const order = await this.prisma.order.create({
-      data: {
-        orderNumber,
-        userId: userId ?? null,
-        email,
-        status: OrderStatus.PENDING_PAYMENT,
-        currency: cart.currency,
-        subtotalMinor: subtotal,
-        discountMinor: discount,
-        shippingMinor: shipping,
-        taxMinor,
-        totalMinor: total,
-        promoCode: cart.promoCode,
-        loyaltyPointsRedeemed: cart.loyaltyPointsRedeemed,
-        deliveryMethod: DeliveryMethod.standard,
-        items: {
-          create: cart.items.map((item) => ({
-            variantId: item.variantId,
-            sku: item.variant.sku,
-            title: item.variant.product.title,
-            variantName: item.variant.name,
-            quantity: item.quantity,
-            priceAmountMinor: item.unitPriceMinor,
-            productSlug: item.variant.product.slug,
-            productImage: item.variant.product.images[0]?.url ?? '',
-          })),
-        },
-        events: {
-          create: [
-            {
-              eventType: 'checkout.started',
-              payload: {
-                postcode: dto.postcode,
-                cartId: dto.cartId,
-                stockReservedUntil: stockReservedUntil.toISOString(),
-              },
-            },
-          ],
-        },
-      },
-      include: {
-        items: true,
-        events: true,
-        addresses: true,
-        deliverySlotBooking: true,
-      },
-    });
-
     return {
-      orderId: order.id,
-      orderNumber: order.orderNumber,
+      orderId,
+      orderNumber,
       cart: serializedCart,
-      stockReservedUntil,
+      stockReservedUntil: new Date(Date.now() + 15 * 60 * 1000),
       availableDeliverySlots: deliverySlots,
     };
   }
 
-  // â”€â”€â”€ Create payment intent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Create payment intent ──────────────────────────────────────────────────
 
   async createPaymentIntent(dto: PaymentIntentDto, userId?: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: dto.orderId },
-    });
+    const { data: orders } = await this.supabase.db
+      .from('Order')
+      .select('*')
+      .eq('id', dto.orderId)
+      .limit(1);
 
+    const order = orders?.[0];
     if (!order) throw new NotFoundException('Order not found');
     if (userId && order.userId && order.userId !== userId) {
       throw new ConflictException('Order does not belong to this user');
     }
-    if (order.status !== OrderStatus.PENDING_PAYMENT) {
+    if (order.status !== 'PENDING_PAYMENT') {
       throw new BadRequestException('Order is not in a payable state');
     }
 
-    // Idempotent: reuse existing payment intent if already created
     if (order.stripePaymentIntentId) {
-      const existing = await this.paymentsService.retrievePaymentIntent(
-        order.stripePaymentIntentId,
-      );
+      const existing = await this.paymentsService.retrievePaymentIntent(order.stripePaymentIntentId);
       if (existing && existing.status !== 'canceled') {
         return {
           clientSecret: existing.client_secret,
@@ -342,21 +364,14 @@ export class CheckoutService {
     const paymentIntent = await this.paymentsService.createPaymentIntent({
       amount: order.totalMinor,
       currency: order.currency.toLowerCase(),
-      metadata: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        userId: order.userId ?? 'guest',
-      },
+      metadata: { orderId: order.id, orderNumber: order.orderNumber, userId: order.userId ?? 'guest' },
       paymentMethodTypes: [this.mapPaymentMethod(dto.paymentMethod)],
     });
 
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: {
-        stripePaymentIntentId: paymentIntent.id,
-        stripePaymentStatus: paymentIntent.status,
-      },
-    });
+    await this.supabase.db
+      .from('Order')
+      .update({ stripePaymentIntentId: paymentIntent.id, stripePaymentStatus: paymentIntent.status, updatedAt: new Date().toISOString() })
+      .eq('id', order.id);
 
     return {
       clientSecret: paymentIntent.client_secret,
@@ -365,134 +380,118 @@ export class CheckoutService {
     };
   }
 
-  // â”€â”€â”€ Confirm order â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Confirm order ──────────────────────────────────────────────────────────
 
   async confirmOrder(dto: ConfirmOrderDto, userId?: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: dto.orderId },
-      include: {
-        items: true,
-        events: true,
-        addresses: true,
-        deliverySlotBooking: true,
-      },
-    });
+    const { data: orders } = await this.supabase.db
+      .from('Order')
+      .select('*')
+      .eq('id', dto.orderId)
+      .limit(1);
 
+    const order = orders?.[0];
     if (!order) throw new NotFoundException('Order not found');
     if (userId && order.userId && order.userId !== userId) {
       throw new ConflictException('Order does not belong to this user');
     }
 
-    // Verify payment intent is paid
-    if (order.stripePaymentIntentId) {
-      const pi = await this.paymentsService.retrievePaymentIntent(
-        order.stripePaymentIntentId,
-      );
-      if (pi && pi.status !== 'succeeded') {
-        // Payment may not have completed yet â€” webhook will handle it
-        // We still create addresses and booking, marking as pending
-      }
-    }
+    const now = new Date().toISOString();
 
-    // Upsert shipping address
-    const shippingAddr = await this.upsertOrderAddress(
-      order.id,
-      'shipping',
-      dto.shippingAddress,
-    );
+    await this.upsertOrderAddress(order.id, 'shipping', dto.shippingAddress);
 
-    // Upsert billing address
-    const billingAddrData = dto.billingAddressSameAsShipping
-      ? dto.shippingAddress
-      : dto.billingAddress;
-
-    let billingAddr: Awaited<ReturnType<typeof this.upsertOrderAddress>> | undefined;
+    const billingAddrData = dto.billingAddressSameAsShipping ? dto.shippingAddress : dto.billingAddress;
     if (billingAddrData) {
-      billingAddr = await this.upsertOrderAddress(order.id, 'billing', billingAddrData);
+      await this.upsertOrderAddress(order.id, 'billing', billingAddrData);
     }
 
-    // Book delivery slot if provided
-    let slotBooking: Awaited<ReturnType<typeof this.prisma.deliverySlotBooking.upsert>> | undefined;
     if (dto.deliverySlot) {
-      slotBooking = await this.prisma.deliverySlotBooking.upsert({
-        where: { orderId: order.id },
-        create: {
+      const { data: existingSlot } = await this.supabase.db
+        .from('DeliverySlotBooking')
+        .select('id')
+        .eq('orderId', order.id)
+        .limit(1);
+
+      if (existingSlot?.[0]) {
+        await this.supabase.db
+          .from('DeliverySlotBooking')
+          .update({ date: dto.deliverySlot.date, slotStart: dto.deliverySlot.slotStart, slotEnd: dto.deliverySlot.slotEnd })
+          .eq('id', existingSlot[0].id);
+      } else {
+        await this.supabase.db.from('DeliverySlotBooking').insert({
+          id: uuidv4(),
           orderId: order.id,
           date: dto.deliverySlot.date,
           slotStart: dto.deliverySlot.slotStart,
           slotEnd: dto.deliverySlot.slotEnd,
           priceMinor: 0,
-        },
-        update: {
-          date: dto.deliverySlot.date,
-          slotStart: dto.deliverySlot.slotStart,
-          slotEnd: dto.deliverySlot.slotEnd,
-        },
-      });
+          createdAt: now,
+        });
+      }
     }
 
-    // Update order delivery method and status
-    const updatedOrder = await this.prisma.order.update({
-      where: { id: order.id },
-      data: {
-        deliveryMethod: dto.deliveryMethod,
-        status: order.stripePaymentStatus === 'succeeded'
-          ? OrderStatus.PAID
-          : OrderStatus.PENDING_PAYMENT,
-        paidAt: order.stripePaymentStatus === 'succeeded' ? new Date() : undefined,
-      },
-      include: {
-        items: true,
-        events: true,
-        addresses: true,
-        deliverySlotBooking: true,
-      },
-    });
+    const newStatus = order.stripePaymentStatus === 'succeeded' ? 'PAID' : 'PENDING_PAYMENT';
+    const paidAt = order.stripePaymentStatus === 'succeeded' ? now : null;
 
-    // Queue order.placed job (loyalty, notification) if paid
-    if (updatedOrder.status === OrderStatus.PAID) {
+    await this.supabase.db
+      .from('Order')
+      .update({ deliveryMethod: dto.deliveryMethod, status: newStatus, paidAt, updatedAt: now })
+      .eq('id', order.id);
+
+    if (newStatus === 'PAID') {
       if (this.ordersQueue) {
         await this.ordersQueue.add(
           'order.placed',
-          {
-            orderId: order.id,
-            userId: order.userId,
-            totalMinor: order.totalMinor,
-            email: order.email,
-            orderNumber: order.orderNumber,
-          },
+          { orderId: order.id, userId: order.userId, totalMinor: order.totalMinor, email: order.email, orderNumber: order.orderNumber },
           { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
         );
       } else {
         this.logger.warn(`Queue unavailable — order ${order.orderNumber} post-processing skipped`);
       }
 
-      // Clear the cart
       if (order.userId) {
-        await this.prisma.cart.deleteMany({ where: { userId: order.userId } });
+        await this.supabase.db.from('Cart').delete().eq('userId', order.userId);
       }
     }
 
+    const { data: updatedOrders } = await this.supabase.db
+      .from('Order')
+      .select('*')
+      .eq('id', order.id)
+      .limit(1);
+
+    const updatedOrder = updatedOrders?.[0];
+
+    const [{ data: items }, { data: events }, { data: addresses }, { data: slots }] = await Promise.all([
+      this.supabase.db.from('OrderItem').select('*').eq('orderId', order.id),
+      this.supabase.db.from('OrderEvent').select('*').eq('orderId', order.id).order('createdAt', { ascending: true }),
+      this.supabase.db.from('OrderAddress').select('*').eq('orderId', order.id),
+      this.supabase.db.from('DeliverySlotBooking').select('*').eq('orderId', order.id).limit(1),
+    ]);
+
     return {
-      order: serializeOrder(updatedOrder),
-      success: updatedOrder.status === OrderStatus.PAID,
+      order: serializeOrderLocal({
+        ...updatedOrder,
+        items: items ?? [],
+        events: events ?? [],
+        addresses: addresses ?? [],
+        deliverySlotBooking: slots?.[0] ?? null,
+      }),
+      success: newStatus === 'PAID',
     };
   }
 
-  // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Helpers ────────────────────────────────────────────────────────────────
 
-  private async upsertOrderAddress(
-    orderId: string,
-    type: 'shipping' | 'billing',
-    addr: AddressDto,
-  ) {
-    // OrderAddress has two FK relations on orderId (shipping + billing)
-    // We delete and recreate to keep it simple
-    const existing = await this.prisma.orderAddress.findFirst({
-      where: { orderId, type },
-    });
+  private async upsertOrderAddress(orderId: string, type: 'shipping' | 'billing', addr: AddressDto): Promise<void> {
+    const now = new Date().toISOString();
+    const { data: existing } = await this.supabase.db
+      .from('OrderAddress')
+      .select('id')
+      .eq('orderId', orderId)
+      .eq('type', type)
+      .limit(1);
 
-    const data = {
+    const data: Record<string, any> = {
       orderId,
       type,
       firstName: addr.firstName,
@@ -504,16 +503,14 @@ export class CheckoutService {
       postcode: addr.postcode,
       countryCode: addr.countryCode ?? 'GB',
       phone: addr.phone ?? null,
+      createdAt: now,
     };
 
-    if (existing) {
-      return this.prisma.orderAddress.update({
-        where: { id: existing.id },
-        data,
-      });
+    if (existing?.[0]) {
+      await this.supabase.db.from('OrderAddress').update(data).eq('id', existing[0].id);
+    } else {
+      await this.supabase.db.from('OrderAddress').insert({ id: uuidv4(), ...data });
     }
-
-    return this.prisma.orderAddress.create({ data });
   }
 
   private mapPaymentMethod(method: string): string {
@@ -527,12 +524,3 @@ export class CheckoutService {
     return mapping[method] ?? 'card';
   }
 }
-
-// Custom error class for stock issues
-class UnprocessableEntityError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'UnprocessableEntityError';
-  }
-}
-

@@ -10,7 +10,7 @@
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DeliveryMethod } from '@prisma/client';
+enum DeliveryMethod { standard = 'standard', express = 'express', click_and_collect = 'click_and_collect', same_day = 'same_day' }
 
 export enum PaymentMethodEnum {
   card = 'card',
