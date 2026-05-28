@@ -28,6 +28,23 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
+  // Rewrite bracket-notation query params before NestJS validation.
+  // Vercel serverless uses extended:false so filter[in_stock] isn't parsed as nested.
+  // This middleware converts { 'filter[key]': val } → { filter: { key: val } } early.
+  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    const q = req.query as Record<string, any>;
+    for (const rawKey of Object.keys(q)) {
+      const m = rawKey.match(/^(\w+)\[(\w+)\]$/);
+      if (m) {
+        const [, parent, child] = m;
+        if (!q[parent] || typeof q[parent] !== 'object') q[parent] = {};
+        (q[parent] as Record<string, any>)[child] = q[rawKey];
+        delete q[rawKey];
+      }
+    }
+    next();
+  });
+
   app.enableCors({
     origin: origins,
     credentials: true,
@@ -40,7 +57,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false, // Vercel serverless doesn't parse bracket notation as nested — silently ignore unknown params
+      forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),
