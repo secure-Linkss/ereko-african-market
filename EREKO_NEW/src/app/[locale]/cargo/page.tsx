@@ -4,35 +4,43 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Ship, Plane, Package, Search, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Ship, Plane, Package, Search, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cargoInquirySchema, type CargoInquiryFormData } from '@/lib/validation/schemas';
 import { useParams } from 'next/navigation';
+import { useCreateCargoInquiry, useTrackConsignment } from '@/services/cargo';
 
 export default function CargoPortalPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
-  const [trackingStatus, setTrackingStatus] = useState<null | 'QUOTED' | 'BOOKED' | 'IN_TRANSIT' | 'DELIVERED'>(null);
+  const [trackingEnabled, setTrackingEnabled] = useState(false);
+  const [inquirySent, setInquirySent] = useState(false);
+  const [inquiryError, setInquiryError] = useState('');
 
-  const { register, handleSubmit, formState: { errors } } = useForm<CargoInquiryFormData>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<CargoInquiryFormData>({
     resolver: zodResolver(cargoInquirySchema),
-    defaultValues: {
-        urgency: 'standard'
-    }
+    defaultValues: { urgency: 'standard' }
   });
 
+  const inquiryMutation = useCreateCargoInquiry();
+  const { data: trackingData, isLoading: trackingLoading, isError: trackingError } = useTrackConsignment(trackingNumber, trackingEnabled);
+
   const handleTrack = () => {
-      if (trackingNumber.length > 5) {
-          setTrackingStatus('IN_TRANSIT');
-      } else {
-          setTrackingStatus(null);
-      }
+    if (trackingNumber.trim().length > 3) {
+      setTrackingEnabled(true);
+    }
   };
 
-  const onSubmit = (data: CargoInquiryFormData) => {
-      console.log('Cargo Inquiry Submitted', data);
-      alert('Inquiry received. A representative will contact you with a quote within 24 hours.');
-  };
+  async function onSubmit(data: CargoInquiryFormData) {
+    setInquiryError('');
+    try {
+      await inquiryMutation.mutateAsync(data);
+      setInquirySent(true);
+      reset();
+    } catch (err: any) {
+      setInquiryError(err?.response?.data?.detail ?? err?.message ?? 'Failed to submit. Please try again.');
+    }
+  }
 
   return (
     <main className="flex-1 w-full bg-muted/20">
@@ -69,7 +77,7 @@ export default function CargoPortalPage() {
                             <Button size="lg" onClick={handleTrack}><Search className="w-5 h-5" /></Button>
                         </div>
                         
-                        {trackingStatus === 'IN_TRANSIT' && (
+                        {trackingEnabled && !trackingLoading && trackingData && (
                             <div className="pt-6 mt-6 border-t border-border animate-in fade-in">
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="font-bold text-lg">Shipment ERK-12345</h3>
@@ -194,8 +202,19 @@ export default function CargoPortalPage() {
                             </div>
                         </div>
 
+                        {inquiryError && (
+                          <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">{inquiryError}</div>
+                        )}
+                        {inquirySent && (
+                          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 text-sm rounded-lg border border-emerald-200 flex items-center gap-3">
+                            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                            Inquiry received! A representative will contact you within 24 hours with a quote.
+                          </div>
+                        )}
                         <div className="pt-6 flex justify-end">
-                            <Button type="submit" size="lg" className="w-full md:w-auto px-12 text-lg h-14">Get Quote <ChevronRight className="w-5 h-5 ml-2" /></Button>
+                            <Button type="submit" size="lg" className="w-full md:w-auto px-12 text-lg h-14" disabled={inquiryMutation.isPending || inquirySent}>
+                              {inquiryMutation.isPending ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Sending...</> : <>Get Quote <ChevronRight className="w-5 h-5 ml-2" /></>}
+                            </Button>
                         </div>
                     </form>
                 </CardContent>
