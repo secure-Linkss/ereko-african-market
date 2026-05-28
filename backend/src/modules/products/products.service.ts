@@ -106,8 +106,12 @@ export class ProductsService {
         q = q.order('createdAt', { ascending: false });
     }
 
-    // Cursor pagination via range
-    const cursorId = cursor ? decodeCursor(cursor) : undefined;
+    // Cursor pagination: cursor stores the createdAt of the last row
+    if (cursor) {
+      const decodedTs = decodeCursor(cursor);
+      q = q.lt('createdAt', decodedTs);
+    }
+
     const pageSize = limit + 1;
     q = q.limit(pageSize);
 
@@ -120,12 +124,22 @@ export class ProductsService {
 
     const rows = data ?? [];
 
-    // Filter by category in memory if needed
+    // Filter by category slug — resolve slug to categoryId first
     let filtered = rows;
     if (filter?.category) {
-      filtered = rows.filter((r: any) =>
-        (r.ProductCategory ?? []).some((c: any) => c.categoryId === filter.category),
-      );
+      const { data: cat } = await this.supabase.db
+        .from('Category')
+        .select('id')
+        .eq('slug', filter.category)
+        .single();
+
+      if (cat) {
+        filtered = rows.filter((r: any) =>
+          (r.ProductCategory ?? []).some((c: any) => c.categoryId === cat.id),
+        );
+      } else {
+        filtered = [];
+      }
     }
 
     // In-stock filter
@@ -138,7 +152,7 @@ export class ProductsService {
     let nextCursor: string | null = null;
     if (filtered.length > limit) {
       const next = filtered.pop() as any;
-      nextCursor = encodeCursor(next.id);
+      nextCursor = encodeCursor(next.createdAt); // encode createdAt for cursor-based pagination
     }
 
     // Price sort in memory

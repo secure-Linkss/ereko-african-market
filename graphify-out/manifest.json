@@ -1,0 +1,1422 @@
+{
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\package.json": {
+    "mtime": 1780007290.1579473,
+    "ast_hash": "e9363e232bb83ef4a71f7de80be749ca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\bin\\bug-hunter": {
+    "mtime": 1780007289.3430524,
+    "ast_hash": "59065b5cd17395c3d3f9ba631b2b1358",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\evals\\evals.json": {
+    "mtime": 1780007289.570401,
+    "ast_hash": "0895cec9a66fc1cea740ef67d3653ceb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\coverage.schema.json": {
+    "mtime": 1780007289.730671,
+    "ast_hash": "2fc87410bc16743f891738d7f45d11b8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\experiment.schema.json": {
+    "mtime": 1780007289.7367115,
+    "ast_hash": "b14701918447afe76adacfd0eabb8f3e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\findings.schema.json": {
+    "mtime": 1780007289.7516093,
+    "ast_hash": "a81906b06344d58fd4cdaa240bf96989",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\fix-plan.schema.json": {
+    "mtime": 1780007289.767017,
+    "ast_hash": "7806182fd07dd0bbed5d0038715daa5e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\fix-report.schema.json": {
+    "mtime": 1780007289.7589965,
+    "ast_hash": "516c89635040b1009f4e2816e84c303a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\fix-strategy.schema.json": {
+    "mtime": 1780007289.7457025,
+    "ast_hash": "0f20ecc4810ace978f848f1a42499b2a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\recon.schema.json": {
+    "mtime": 1780007289.777774,
+    "ast_hash": "9e410a9aa9d5e7c20f3080df005be846",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\referee.schema.json": {
+    "mtime": 1780007289.7961023,
+    "ast_hash": "106f5a29fde751c8d03574aa5944d20c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\shared.schema.json": {
+    "mtime": 1780007289.7832718,
+    "ast_hash": "af91a7d94ecaac7a847e8f099dae169f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\skeptic.schema.json": {
+    "mtime": 1780007289.7882965,
+    "ast_hash": "c0d8c789573e8747ea332c07f1d6519e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\examples\\findings.invalid.json": {
+    "mtime": 1780007289.717875,
+    "ast_hash": "6254d14ad7a26099acdd686502f7fcfd",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\schemas\\examples\\findings.valid.json": {
+    "mtime": 1780007289.7245069,
+    "ast_hash": "3cdf237b73ce1d6d49ea3c15cd3429ec",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\scripts\\init-test-fixture.sh": {
+    "mtime": 1780007289.936474,
+    "ast_hash": "41f10b2a466acdad8065489b1b567cfa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\test-fixture\\auth.js": {
+    "mtime": 1780007290.0886083,
+    "ast_hash": "946134836556b1ecf72c091080e767d6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\test-fixture\\db.js": {
+    "mtime": 1780007290.0995173,
+    "ast_hash": "1761d4b45e5975210bb57fdc1b11fa19",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\test-fixture\\server.js": {
+    "mtime": 1780007290.1112988,
+    "ast_hash": "b82b6efff6ffe5cea17e062d5ac417dc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\test-fixture\\users.js": {
+    "mtime": 1780007290.1036668,
+    "ast_hash": "dbcab75956c1c8f89514a684d1a50f8f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.claude\\settings.json": {
+    "mtime": 1780007287.5902534,
+    "ast_hash": "5d6ecd96cf065b16e8bb9fbf5d7d8f0d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\nest-cli.json": {
+    "mtime": 1779410106.680967,
+    "ast_hash": "a0f3f2e05241f0aeac9f367061fe4e0b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\package.json": {
+    "mtime": 1779985215.7794373,
+    "ast_hash": "62c53888a4419215f65fca9e5c4d5e35",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\tsconfig.json": {
+    "mtime": 1779983559.5363936,
+    "ast_hash": "8bbc12b5ad8986b6535b1f726a434cbc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\vercel.json": {
+    "mtime": 1779983564.8878374,
+    "ast_hash": "6d907755a60fba0e9b4096de3b486620",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\api\\index.ts": {
+    "mtime": 1779983538.09054,
+    "ast_hash": "3f7ff6282b98588ee4f298063edcf63e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\docker\\postgres\\init.sql": {
+    "mtime": 1779410634.964407,
+    "ast_hash": "7214a61679d5922ef698c455f7fc4c05",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\prisma\\seed-more-products.ts": {
+    "mtime": 1779993830.8717434,
+    "ast_hash": "35849b50d3c373c8a9edcc5e96bc7926",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\prisma\\seed-products.ts": {
+    "mtime": 1779986909.9404514,
+    "ast_hash": "da4d31f38398071d334e1ec33ea75cf2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\prisma\\seed.ts": {
+    "mtime": 1779410553.915605,
+    "ast_hash": "2a763e1fb1b05bb9db874e98ac7df7d4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\app.module.ts": {
+    "mtime": 1779992157.7250934,
+    "ast_hash": "bbc2ee6eb1bc4b64907f2170b571b47d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\main.ts": {
+    "mtime": 1779986866.8140225,
+    "ast_hash": "4e14b4a9f24e0882bbf089b2a496bc2d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\decorators\\current-user.decorator.ts": {
+    "mtime": 1779410239.7337873,
+    "ast_hash": "c0ba255fba3632b1f84de2442a170901",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\decorators\\public.decorator.ts": {
+    "mtime": 1779410240.898582,
+    "ast_hash": "04ce66f12d6dcfdf76cc0f072fa90b45",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\decorators\\roles.decorator.ts": {
+    "mtime": 1779410241.9337647,
+    "ast_hash": "155f61ea03e3ef7d3d5e2fee554f8428",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\filters\\http-exception.filter.ts": {
+    "mtime": 1779986532.8107216,
+    "ast_hash": "f710ed63f5587df29ab5f66bea15b8e9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\guards\\admin.guard.ts": {
+    "mtime": 1779425960.5911682,
+    "ast_hash": "9e19503ff36a4f9f7f00dfb0bb878532",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\guards\\jwt-auth.guard.ts": {
+    "mtime": 1779410248.959247,
+    "ast_hash": "43c189023c048738dd20b0c96e705653",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\guards\\optional-jwt-auth.guard.ts": {
+    "mtime": 1779410491.2429578,
+    "ast_hash": "0915bb679eeb61a5305e3bbcd3c6d934",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\interceptors\\idempotency.interceptor.ts": {
+    "mtime": 1779410707.433102,
+    "ast_hash": "0a8964e181d4869457fd181c1c3e132a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\interceptors\\logging.interceptor.ts": {
+    "mtime": 1779410253.7653673,
+    "ast_hash": "122f3d6d9f7540f5504b4c7a40a358f5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\pipes\\parse-cursor.pipe.ts": {
+    "mtime": 1779410502.5038044,
+    "ast_hash": "671ff7ccb1f5ec3141259c5e72019b32",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\utils\\order-number.util.ts": {
+    "mtime": 1779410481.086775,
+    "ast_hash": "24410214521f7ae85ffe5f5ee95426e1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\utils\\pagination.util.ts": {
+    "mtime": 1779410491.2223477,
+    "ast_hash": "52373214bfa8fb2e163ef39ea59372f7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\utils\\serializer.util.ts": {
+    "mtime": 1779410367.8685403,
+    "ast_hash": "30dc57bb5f8c05017d46df2a25283c50",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\config\\configuration.ts": {
+    "mtime": 1779985313.8250747,
+    "ast_hash": "89e0ce91aa6180d1df1396b2252c4110",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\admin\\admin.controller.ts": {
+    "mtime": 1779990599.3447046,
+    "ast_hash": "584e95429c0e59d0ed6029fd1fd7af2f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\admin\\admin.dto.ts": {
+    "mtime": 1779990587.596307,
+    "ast_hash": "f47c235a3b56cb08988767f938d093cf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\admin\\admin.module.ts": {
+    "mtime": 1779992195.4966826,
+    "ast_hash": "b7bbf8b512f22dc9bd24e66cf242c8c5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\admin\\admin.service.ts": {
+    "mtime": 1779992185.684991,
+    "ast_hash": "2561bd2687e4665b5c588fddba7123ad",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\auth.controller.ts": {
+    "mtime": 1779425969.7484934,
+    "ast_hash": "d50c06bf71869c8e3be7d6b091ca8b74",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\auth.dto.ts": {
+    "mtime": 1779410343.0199006,
+    "ast_hash": "8d30553c42eb02a17556889d07318b6e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\auth.module.ts": {
+    "mtime": 1779410449.67673,
+    "ast_hash": "45ae2c207b455441dc4b8cd21b56f03a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\auth.service.ts": {
+    "mtime": 1779987422.836735,
+    "ast_hash": "27fdaccfa8780b6276459fdec4e0195d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\strategies\\jwt-refresh.strategy.ts": {
+    "mtime": 1779410364.2088466,
+    "ast_hash": "3484b814d1bb934aeaad2d7a5a1558c5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\strategies\\jwt.strategy.ts": {
+    "mtime": 1779986662.676124,
+    "ast_hash": "58fa203fa536b39c4ddbb14a5e1eb75e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cargo\\cargo.controller.ts": {
+    "mtime": 1779410603.4711282,
+    "ast_hash": "4e1cfae33994d14748e9b4abdbfd885a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cargo\\cargo.dto.ts": {
+    "mtime": 1779410525.5673318,
+    "ast_hash": "84bc7d24aa8e274eaf5ae4fd8a8c32e7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cargo\\cargo.module.ts": {
+    "mtime": 1779410570.8180065,
+    "ast_hash": "5ca6e67bea32b1ad02420d7f8267786f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cargo\\cargo.serializer.ts": {
+    "mtime": 1779989080.3131864,
+    "ast_hash": "efc94c4faecd1208106bcaeae81af5ca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cargo\\cargo.service.ts": {
+    "mtime": 1779990741.3152165,
+    "ast_hash": "45df6f3767cd132b7c824d5373c0ad56",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cart\\cart.controller.ts": {
+    "mtime": 1779410480.0609396,
+    "ast_hash": "68f540b901cc58349528e1f4d0ec7d20",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cart\\cart.dto.ts": {
+    "mtime": 1779410415.8018324,
+    "ast_hash": "abe7903d5abbcb58b59dc73f67fdf76d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cart\\cart.module.ts": {
+    "mtime": 1779986806.0554385,
+    "ast_hash": "7d084ece89e5ca8b704a2f4549f0458c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cart\\cart.serializer.ts": {
+    "mtime": 1779986748.8731382,
+    "ast_hash": "65a5255dbc1e9daca7cc7eab4246d199",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\cart\\cart.service.ts": {
+    "mtime": 1779988296.8717535,
+    "ast_hash": "a0e0ba774d6d5886632f9f1b546a38d9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\categories\\categories.controller.ts": {
+    "mtime": 1779410465.1744056,
+    "ast_hash": "162408b9f41648d3a46c53842c4e8977",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\categories\\categories.module.ts": {
+    "mtime": 1779410469.2997153,
+    "ast_hash": "21639f5eb8e5b4c7da8875caa91e5541",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\categories\\categories.service.ts": {
+    "mtime": 1779985323.4041047,
+    "ast_hash": "cdf17d0fbf6ae3a17bb6f453a0ea2581",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\checkout\\checkout.controller.ts": {
+    "mtime": 1779425988.44385,
+    "ast_hash": "26feecd00dd784511d45cce3da891fd2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\checkout\\checkout.dto.ts": {
+    "mtime": 1779988171.5106611,
+    "ast_hash": "9a7cb28e3d639803ff5802d3468c3aec",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\checkout\\checkout.module.ts": {
+    "mtime": 1779988154.9109347,
+    "ast_hash": "8fd1039f34d05401e93675ecaad9e2f2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\checkout\\checkout.service.ts": {
+    "mtime": 1779988146.833005,
+    "ast_hash": "0b50e592d68f4c498f999eddcf7c9b5d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\contact\\contact.controller.ts": {
+    "mtime": 1779992144.1867485,
+    "ast_hash": "7a72a5e6d97c72113ed655634514bd4e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\contact\\contact.dto.ts": {
+    "mtime": 1779992120.1355958,
+    "ast_hash": "0850b3ef53f3aac91a066d4785a516d7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\contact\\contact.module.ts": {
+    "mtime": 1779992148.5098417,
+    "ast_hash": "27a4f7072fc5e2dc6b635da94d0375a9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\contact\\contact.service.ts": {
+    "mtime": 1779992135.213182,
+    "ast_hash": "4bad919171c41a293359b4dbbcd94fc9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\inventory\\inventory.module.ts": {
+    "mtime": 1779990633.0971649,
+    "ast_hash": "030b1ebd879d25a6ec104974a2b58ea7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\inventory\\inventory.service.ts": {
+    "mtime": 1779990773.6757908,
+    "ast_hash": "471a2c54d52910a4901365df36e8b1ff",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\notifications\\email.templates.ts": {
+    "mtime": 1779410574.2509172,
+    "ast_hash": "31296ef8b87fc06d101136a24d577b76",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\notifications\\notifications.module.ts": {
+    "mtime": 1779410609.0066574,
+    "ast_hash": "2e03bc4c273dc88eba83c255bfc449ef",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\notifications\\notifications.service.ts": {
+    "mtime": 1779410601.4979727,
+    "ast_hash": "e37d29b83b8d85f8d0a83d556d088bca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\orders\\orders.controller.ts": {
+    "mtime": 1779410477.967423,
+    "ast_hash": "2f0ce9da0368417e07d4de3672645902",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\orders\\orders.dto.ts": {
+    "mtime": 1779410432.118853,
+    "ast_hash": "fcadc1f6c59b01042348cee7bb327276",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\orders\\orders.module.ts": {
+    "mtime": 1779410481.849691,
+    "ast_hash": "a459063cc9722cbc76ba4162683d45be",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\orders\\orders.serializer.ts": {
+    "mtime": 1779986820.6674254,
+    "ast_hash": "71095b98541e4fae2e357a6711943ca0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\orders\\orders.service.ts": {
+    "mtime": 1779987438.4539561,
+    "ast_hash": "af1087487f4877193488b2f5b92f5907",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\payments\\orders.processor.ts": {
+    "mtime": 1779990805.9517164,
+    "ast_hash": "df5eb17fbab20a4d797984b8b78bf94a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\payments\\payments.module.ts": {
+    "mtime": 1779990608.274125,
+    "ast_hash": "23fd4720c9852a643dd037ce9159a47d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\payments\\payments.service.ts": {
+    "mtime": 1779410601.234718,
+    "ast_hash": "e3c3a10d150b03b9bc8fdc2e0e8e095f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\payments\\stripe.webhook.controller.ts": {
+    "mtime": 1779990835.148252,
+    "ast_hash": "e00bb67b6e78b51da4300b436a17f2f0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.controller.ts": {
+    "mtime": 1779410636.2040596,
+    "ast_hash": "e6b5be651dc9755b8fec4284cfaa2e23",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.dto.ts": {
+    "mtime": 1779410583.041607,
+    "ast_hash": "a0b5e1eeb501ac1ae56c4ec10db070e1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.module.ts": {
+    "mtime": 1779410450.3385992,
+    "ast_hash": "660ab7122b7c44297ba22933dd0e0b08",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.serializer.ts": {
+    "mtime": 1779410404.9218183,
+    "ast_hash": "63f0655ca1dac8d8efcd43e4175065ef",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.service.ts": {
+    "mtime": 1779986876.042194,
+    "ast_hash": "c2fe9f48c1efc2334a31e0c2a2491b5f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\recipes\\recipes.controller.ts": {
+    "mtime": 1779410506.184667,
+    "ast_hash": "ae0953273ae0a6e98023f17d1737dc4b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\recipes\\recipes.dto.ts": {
+    "mtime": 1779410486.4755013,
+    "ast_hash": "66c4d1b56eeabba066c39067aa256df2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\recipes\\recipes.module.ts": {
+    "mtime": 1779410609.9219916,
+    "ast_hash": "24bd51c3d1fbccd7eb40a26ab3911381",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\recipes\\recipes.service.ts": {
+    "mtime": 1779990654.763493,
+    "ast_hash": "3782df17bd313fdcd9b2a26f4022d1c8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\search\\search.controller.ts": {
+    "mtime": 1779410507.5671542,
+    "ast_hash": "9ae0b847d280d56fc5168dcb7b993d6f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\search\\search.module.ts": {
+    "mtime": 1779410513.365463,
+    "ast_hash": "5c8044503c045ba6359caa0b9fa34625",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\search\\search.service.ts": {
+    "mtime": 1779985400.4999423,
+    "ast_hash": "69b48ae96f13fc34690f757ba0e464f3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\seo\\seo.controller.ts": {
+    "mtime": 1779425085.4026823,
+    "ast_hash": "52415c31a8f3bea876d30c7b9e55dcbe",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\seo\\seo.module.ts": {
+    "mtime": 1779425051.9465563,
+    "ast_hash": "f2c46cf781de62089218fd8c6220f19a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\seo\\seo.service.ts": {
+    "mtime": 1779993768.3792925,
+    "ast_hash": "12788bf6eaaefcbdbbc08538d1013e6e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\team\\team.controller.ts": {
+    "mtime": 1779425047.6213531,
+    "ast_hash": "bdf43d8be4b968db70d4ec28205be2ec",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\team\\team.dto.ts": {
+    "mtime": 1779990570.6914096,
+    "ast_hash": "467419af71d5e8789feef3a6b602fec5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\team\\team.module.ts": {
+    "mtime": 1779424993.7593381,
+    "ast_hash": "9d47fe04ff0236bbea7c591d0980dfb7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\team\\team.service.ts": {
+    "mtime": 1779990881.143124,
+    "ast_hash": "ce0df5fb6b212465bf9b318c342d9a2d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\users\\users.controller.ts": {
+    "mtime": 1779410516.7044985,
+    "ast_hash": "a0e5ecabc2348c60b0a4a723e1d55948",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\users\\users.dto.ts": {
+    "mtime": 1779410466.0686042,
+    "ast_hash": "95c40b9114d63200d544b94cab6e0bd6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\users\\users.module.ts": {
+    "mtime": 1779410520.2660587,
+    "ast_hash": "f3eb2901994d3dcf77b5bb6766f937aa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\users\\users.service.ts": {
+    "mtime": 1779986706.6912901,
+    "ast_hash": "3cf36713d9789edc682e6696f8bac354",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\webhooks\\webhook.processor.ts": {
+    "mtime": 1779990704.252256,
+    "ast_hash": "17accddeb8f32c91c8b097a34ee48dbb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\webhooks\\webhooks.module.ts": {
+    "mtime": 1779990624.805287,
+    "ast_hash": "18b03d5452ad7a6a21984369a0257cc6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\webhooks\\webhooks.service.ts": {
+    "mtime": 1779990691.6928718,
+    "ast_hash": "afc881959b6f3bb47b67728fdd25803b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\prisma\\prisma.module.ts": {
+    "mtime": 1779410225.6811123,
+    "ast_hash": "3505a1831c78f0a9475e4ce0f0092410",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\prisma\\prisma.service.ts": {
+    "mtime": 1779984343.5409768,
+    "ast_hash": "2a165e7126c3c696669d71a29f5be81e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\supabase\\supabase.module.ts": {
+    "mtime": 1779985231.87315,
+    "ast_hash": "32ad5dba04fcde6e144361fcb7c28c0e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\supabase\\supabase.service.ts": {
+    "mtime": 1779985227.6367645,
+    "ast_hash": "950760129a232db603b55c6d546a6e94",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\eslint.config.mjs": {
+    "mtime": 1779408669.5701137,
+    "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\next-env.d.ts": {
+    "mtime": 1779982014.7753274,
+    "ast_hash": "2a74d3909800ca5467fa83b0ab4a4890",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\next.config.ts": {
+    "mtime": 1779425299.597445,
+    "ast_hash": "c91344d41eb485e0bc6d0cf83ec02842",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\package.json": {
+    "mtime": 1779981738.7139175,
+    "ast_hash": "d36c304941713b66e5fcbb63c6cd5b13",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\postcss.config.mjs": {
+    "mtime": 1779408669.613577,
+    "ast_hash": "239f3ebf717465dc636818a1a619398d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\tsconfig.json": {
+    "mtime": 1779408669.6229553,
+    "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\vercel.json": {
+    "mtime": 1779982179.9534535,
+    "ast_hash": "9e5661f2a8309536b497599a07774544",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\messages\\en-gb.json": {
+    "mtime": 1779408677.3928733,
+    "ast_hash": "b10bd49975440507f919a9232ef13b6b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\middleware.ts": {
+    "mtime": 1779993360.4494915,
+    "ast_hash": "720e6db8b5c99c2d2f044f1cc0c87127",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\layout.tsx": {
+    "mtime": 1779408819.414219,
+    "ast_hash": "970f420919d8a27a801ac5b23603cc39",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\layout.tsx": {
+    "mtime": 1779425370.7378995,
+    "ast_hash": "1c4a84718606c219f503816ef50181ea",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\page.tsx": {
+    "mtime": 1779993699.4251807,
+    "ast_hash": "ab70b96564b913e25cffb5df23ba7754",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\(legal)\\[slug]\\page.tsx": {
+    "mtime": 1779408819.4356725,
+    "ast_hash": "1391038640a0f24be0f68fb8fd4c7a33",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\about\\page.tsx": {
+    "mtime": 1779992387.902821,
+    "ast_hash": "340e58c7dcc7d4923d2c38544a878120",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\account\\page.tsx": {
+    "mtime": 1779981708.6996949,
+    "ast_hash": "9e7274d1428a7de48f9b78156f60cad1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\admin\\page.tsx": {
+    "mtime": 1779992457.9669926,
+    "ast_hash": "d7d8c9c34f6839ec7638c492143fd43e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\cargo\\page.tsx": {
+    "mtime": 1779982281.38729,
+    "ast_hash": "8902178c60e554aa881a1ab0799ec868",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\cart\\page.tsx": {
+    "mtime": 1779992227.7632058,
+    "ast_hash": "6443ecd179eba106f259bc1d9dce4db4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\checkout\\page.tsx": {
+    "mtime": 1779981815.0202441,
+    "ast_hash": "2c1572a4ff0698ea136808a4fcf6f61a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\contact\\page.tsx": {
+    "mtime": 1779993754.3027678,
+    "ast_hash": "5c0d831b594201357430ab57b226848c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\help\\page.tsx": {
+    "mtime": 1779992420.0823896,
+    "ast_hash": "1dd08d6592026e23cae82044a6dc3c29",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\login\\page.tsx": {
+    "mtime": 1779916538.5123253,
+    "ast_hash": "f7d68aaf16695a548ec7b9d3729eb0c9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\product\\[slug]\\page.tsx": {
+    "mtime": 1779981634.1855104,
+    "ast_hash": "3aebd6bd0aae16f26acca6bd82263b70",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\recipes\\page.tsx": {
+    "mtime": 1779993413.3728104,
+    "ast_hash": "a5370199382478ed2e1213fb3b174715",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\recipes\\[slug]\\page.tsx": {
+    "mtime": 1779408819.515137,
+    "ast_hash": "328afa0be9f9167772e7a8ad1556ce43",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\shop\\page.tsx": {
+    "mtime": 1779992211.5832467,
+    "ast_hash": "17e886e33ddf4028cd362c895fe7bbaa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\app\\[locale]\\signup\\page.tsx": {
+    "mtime": 1779916566.3983653,
+    "ast_hash": "290a1e79508963f2f5324d77066050e5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\home\\CategoryGrid.tsx": {
+    "mtime": 1779425398.9877982,
+    "ast_hash": "a0cdd253fb74a97228c86b3962a8cac9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\home\\HeroSection.tsx": {
+    "mtime": 1779425243.902156,
+    "ast_hash": "a4931b3f884b1b69c8c767d42344b417",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\layout\\Footer.tsx": {
+    "mtime": 1779993716.3276753,
+    "ast_hash": "9d31e6106d88fc6501adf9bb1f90ed76",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\layout\\Header.tsx": {
+    "mtime": 1779994888.9953191,
+    "ast_hash": "c1c1dd6aa1dc3713c3543249206bdb46",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\layout\\LayoutWrapper.tsx": {
+    "mtime": 1779408819.5464084,
+    "ast_hash": "0bba6dc7f56831aaf7b01deeb1bdf39b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\products\\ProductCard.tsx": {
+    "mtime": 1779425278.2605126,
+    "ast_hash": "e38b3aaf166ff1b8e56f0a2532bc4503",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\shared\\QueryProvider.tsx": {
+    "mtime": 1779408819.5496817,
+    "ast_hash": "f22f5fc40d65a617db49a62f5da1f685",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\animations.tsx": {
+    "mtime": 1779425206.7597034,
+    "ast_hash": "6c3e2f1c1cbd19627da64f516eef64cc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Badge.tsx": {
+    "mtime": 1779408819.56218,
+    "ast_hash": "7a8d40673d2f0c918700faea3fe77042",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Button.tsx": {
+    "mtime": 1779408819.56218,
+    "ast_hash": "624b242dfabac9434c0ba32ad7744fb2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Card.tsx": {
+    "mtime": 1779408819.572773,
+    "ast_hash": "66b846813c1461b998fd92b464063dc7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Drawer.tsx": {
+    "mtime": 1779408819.5779314,
+    "ast_hash": "35aebded0fc5ae920d92e457d3d8176f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Input.tsx": {
+    "mtime": 1779408819.5779314,
+    "ast_hash": "b1066f10acbef0255e0e1b9dad39db3e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Modal.tsx": {
+    "mtime": 1779408819.5779314,
+    "ast_hash": "79abe6038e29a5f6da0579b1d3510c96",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Skeleton.tsx": {
+    "mtime": 1779408819.5779314,
+    "ast_hash": "ec678fb70072e9efc6ffac2125a5562d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\components\\ui\\Toast.tsx": {
+    "mtime": 1779408819.5935814,
+    "ast_hash": "c810e7280de51fff270dc52604d3ed71",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\i18n\\request.ts": {
+    "mtime": 1779408819.5996258,
+    "ast_hash": "141df58c0fe8d6cfb244b4b9f266749e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\lib\\utils.ts": {
+    "mtime": 1779408819.609641,
+    "ast_hash": "80d91b345608803959bb597ad8dd196d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\lib\\api\\client.ts": {
+    "mtime": 1779981986.6076708,
+    "ast_hash": "fa4566332ea1df28d6690b6d39022045",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\lib\\seo\\metadata.ts": {
+    "mtime": 1779425422.999975,
+    "ast_hash": "5eb6e33af906b887f8f8803f1b2b7fdf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\lib\\seo\\structured-data.ts": {
+    "mtime": 1779425352.9265742,
+    "ast_hash": "9732b27d1f112957b57688f20ee43264",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\lib\\validation\\schemas.ts": {
+    "mtime": 1779408819.6316512,
+    "ast_hash": "d00b4373d7484507bf9b7d233ac16baf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\services\\admin.ts": {
+    "mtime": 1779992321.9525208,
+    "ast_hash": "b0b1cede192f9d53f39e53d263d9deff",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\services\\auth.ts": {
+    "mtime": 1779408819.642344,
+    "ast_hash": "d1d49c2984890b5401013f7b23550ecf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\services\\cargo.ts": {
+    "mtime": 1779408819.6518528,
+    "ast_hash": "0e840afb060fdbc8ab98dca5a57d5a77",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\services\\checkout.ts": {
+    "mtime": 1779408819.6576679,
+    "ast_hash": "ed1e32ea2bc9e138b4eb07a544ebc694",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\services\\orders.ts": {
+    "mtime": 1779408819.6576679,
+    "ast_hash": "57d88611fbf6b74ead9fa15e850df350",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\services\\products.ts": {
+    "mtime": 1779981965.7218473,
+    "ast_hash": "5c21252e0385d13a5efb1403d642dbf8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\services\\recipes.ts": {
+    "mtime": 1779408819.6735609,
+    "ast_hash": "7f692d50f7c199aaf89ff740f936ddfe",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\store\\auth.ts": {
+    "mtime": 1779408819.6735609,
+    "ast_hash": "133b175e641754a2af06a602edc1969e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\store\\cart.ts": {
+    "mtime": 1779981595.3605108,
+    "ast_hash": "04688871ccb889c83f1c0cd23af125f8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\store\\notifications.ts": {
+    "mtime": 1779408819.6915965,
+    "ast_hash": "d5679376ef92d9cb19cb938b9abb69b2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\store\\search.ts": {
+    "mtime": 1779408819.6936052,
+    "ast_hash": "db807dc4b9e5ae46b4b99f14b177bd6b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\store\\wishlist.ts": {
+    "mtime": 1779408819.699843,
+    "ast_hash": "fdc4925490992f7a2d45f75badab4ced",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\src\\types\\index.ts": {
+    "mtime": 1779981729.5991035,
+    "ast_hash": "e88cff92a177dbdf7916fb6a7f4425c9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\CLAUDE.md": {
+    "mtime": 1780007287.573418,
+    "ast_hash": "8a6643a420fdad6bfb583523bc6cef16",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\CHANGELOG.md": {
+    "mtime": 1780007290.1212225,
+    "ast_hash": "51fe7db2948ef2b27412542d10271288",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\CODE_OF_CONDUCT.md": {
+    "mtime": 1780007290.1388366,
+    "ast_hash": "6f731f2c461af9b38fa57e2be3a8d8fe",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\CONTRIBUTING.md": {
+    "mtime": 1780007290.1259654,
+    "ast_hash": "a2f98804bb7f9fc5d89a7adf31cca42b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\llms-full.txt": {
+    "mtime": 1780007290.1519256,
+    "ast_hash": "32cce61ecc64b56cec38f8b35d423327",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\llms.txt": {
+    "mtime": 1780007290.1465764,
+    "ast_hash": "370e77cdc8c8f7743d1594aeba2ca820",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\README.md": {
+    "mtime": 1780007290.162904,
+    "ast_hash": "828d78124ec2af4905f81fee892d35f3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\SECURITY.md": {
+    "mtime": 1780007290.1674967,
+    "ast_hash": "1be0f1a01d15d470a203287f47ee2b91",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\SKILL.md": {
+    "mtime": 1780007290.1779382,
+    "ast_hash": "30dab694070ee48d698ddac1e07ea0ff",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\test.txt": {
+    "mtime": 1780007290.1704886,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\.github\\PULL_REQUEST_TEMPLATE.md": {
+    "mtime": 1780007289.3186495,
+    "ast_hash": "066f8c4a3f6fd11c34c20afc3166e08e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\.github\\ISSUE_TEMPLATE\\bug_report.md": {
+    "mtime": 1780007289.2851243,
+    "ast_hash": "6d09a63103406d3c90a35c69eaa6446e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\.github\\ISSUE_TEMPLATE\\false_positive.md": {
+    "mtime": 1780007289.27927,
+    "ast_hash": "d5f74f072bc37f8208cd8e229535b375",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\.github\\ISSUE_TEMPLATE\\feature_request.md": {
+    "mtime": 1780007289.2944474,
+    "ast_hash": "fc9b5a78f23e592f79137060dac1f66c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\.github\\workflows\\ci.yml": {
+    "mtime": 1780007289.3038094,
+    "ast_hash": "e85f6750f2fef8b9492470fa0ed0aa02",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\.github\\workflows\\publish.yml": {
+    "mtime": 1780007289.3128972,
+    "ast_hash": "c6aeda1bd8699257486a112006328289",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\agents\\openai.yaml": {
+    "mtime": 1780007289.3306015,
+    "ast_hash": "4b2a0ddf9cfd563b8634355ce54fe974",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\plans\\2026-03-11-structured-output-migration-plan.md": {
+    "mtime": 1780007289.369102,
+    "ast_hash": "78b6d50f4f9dd8e1eeed4a9a2a56579e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\plans\\2026-03-12-audit-bug-fixes-surgical-plan.md": {
+    "mtime": 1780007289.3627446,
+    "ast_hash": "16a3817c6bb31888f614a5e7c3c389ca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\plans\\2026-03-12-enterprise-security-pack-e2e-plan.md": {
+    "mtime": 1780007289.3573282,
+    "ast_hash": "22a3074ea1d98b6fd0e66d50f46c74c4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\plans\\2026-03-12-local-security-skills-integration-plan.md": {
+    "mtime": 1780007289.3830853,
+    "ast_hash": "d55c9e50c68ff8944d36334b9b4a22bc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\plans\\2026-03-12-pr-review-strategic-fix-flow.md": {
+    "mtime": 1780007289.3766606,
+    "ast_hash": "8b62610b3489fc5d3f746f069c69d6df",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\extended.md": {
+    "mtime": 1780007289.5926375,
+    "ast_hash": "fdd0ff62dfce359a7709cbd6189f8c67",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\fix-loop.md": {
+    "mtime": 1780007289.5821972,
+    "ast_hash": "db85e1768f1f3a595fe7a98328b4f2ed",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\fix-pipeline.md": {
+    "mtime": 1780007289.5851963,
+    "ast_hash": "240deb085247d0a894ccea87d9b4b147",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\large-codebase.md": {
+    "mtime": 1780007289.6052666,
+    "ast_hash": "47543f91a99d6e563e8993d988f8df07",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\local-sequential.md": {
+    "mtime": 1780007289.613227,
+    "ast_hash": "c8f730f681af5b94994ffb3bd2bb0456",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\loop-generic.md": {
+    "mtime": 1780007289.5980847,
+    "ast_hash": "a9556fe857138f2247c1a9421ff55957",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\loop.md": {
+    "mtime": 1780007289.627863,
+    "ast_hash": "a7baf4599474aa29edbbecc20a1d44af",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\parallel.md": {
+    "mtime": 1780007289.6418517,
+    "ast_hash": "0bd4a769dce263e7f5b4f3506c3d7cc1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\scaled.md": {
+    "mtime": 1780007289.6352563,
+    "ast_hash": "b902f8614ee92c5a32408ac2327b793c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\single-file.md": {
+    "mtime": 1780007289.6197548,
+    "ast_hash": "5d1f384c1d581fcff8d4a1f05511e179",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\modes\\small.md": {
+    "mtime": 1780007289.6478753,
+    "ast_hash": "c3b3a4747a3d91f5d046448806678991",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\doc-lookup.md": {
+    "mtime": 1780007289.6745348,
+    "ast_hash": "d81244c3be51e7ba196bd469fd052ae6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\fixer.md": {
+    "mtime": 1780007289.6805232,
+    "ast_hash": "071cd3d0dedbd54a61067984074fddc0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\hunter.md": {
+    "mtime": 1780007289.6903913,
+    "ast_hash": "25177f5127e3aa9a555d782af212b061",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\recon.md": {
+    "mtime": 1780007289.6975126,
+    "ast_hash": "ccfb79075600ade13fe3ad613411acb6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\referee.md": {
+    "mtime": 1780007289.685567,
+    "ast_hash": "c99121cdbdac47e88f73f92200ed1c4d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\skeptic.md": {
+    "mtime": 1780007289.703179,
+    "ast_hash": "d16aced44f36c5ddeccedb814bbc81e3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\threat-model.md": {
+    "mtime": 1780007289.707211,
+    "ast_hash": "1801faf072f35cb991a2c0d4778fe310",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\examples\\hunter-examples.md": {
+    "mtime": 1780007289.6685212,
+    "ast_hash": "4fd77e85d6eb74dac81b0999b104676e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\prompts\\examples\\skeptic-examples.md": {
+    "mtime": 1780007289.663318,
+    "ast_hash": "61ade2e2411abdf6e49716693b57e9be",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\README.md": {
+    "mtime": 1780007290.0755813,
+    "ast_hash": "d479a99b98617a355317e36cc82fc842",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\commit-security-scan\\SKILL.md": {
+    "mtime": 1780007290.001551,
+    "ast_hash": "6d68eb8cb1a25fac47998c5bbedee76f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\doc-lookup\\SKILL.md": {
+    "mtime": 1780007290.0100555,
+    "ast_hash": "7640e9566e63170dd8f1bf63826a9dcf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\fixer\\SKILL.md": {
+    "mtime": 1780007290.016974,
+    "ast_hash": "bcec2648458698fdc11a9922ae30d690",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\hunter\\SKILL.md": {
+    "mtime": 1780007290.02446,
+    "ast_hash": "7ffa112ecb664f0249942407757ce66d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\recon\\SKILL.md": {
+    "mtime": 1780007290.033469,
+    "ast_hash": "c1df4232e4bb2a3e26180f1ee335c623",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\referee\\SKILL.md": {
+    "mtime": 1780007290.039486,
+    "ast_hash": "1fc450618a7eef2da2db3f7d984f13f1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\security-review\\SKILL.md": {
+    "mtime": 1780007290.0471404,
+    "ast_hash": "247248d99f82719caf6c5c709cc386b6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\skeptic\\SKILL.md": {
+    "mtime": 1780007290.05295,
+    "ast_hash": "4c458c966a74f23ed01ecc3a43511776",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\threat-model-generation\\SKILL.md": {
+    "mtime": 1780007290.0626502,
+    "ast_hash": "7e797341a7168c14dad4bc6a13f2ef88",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\skills\\vulnerability-validation\\SKILL.md": {
+    "mtime": 1780007290.0702446,
+    "ast_hash": "3ae4036caf8628bbcdbb7feb835eba8a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\templates\\subagent-wrapper.md": {
+    "mtime": 1780007290.0825758,
+    "ast_hash": "3f1f82ed96576c9b8ffea0307cc0220e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\test-fixture\\EXPECTED_BUGS.md": {
+    "mtime": 1780007290.0939677,
+    "ast_hash": "5543fa18afc7764214c7ad3b1670cdbd",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\docker-compose.yml": {
+    "mtime": 1779410423.0635712,
+    "ast_hash": "37734e290267a66e6eede90667875f24",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\README.md": {
+    "mtime": 1779410539.0151598,
+    "ast_hash": "8b0b5f088acb8320ff6618f9e39251c9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\.github\\workflows\\ci.yml": {
+    "mtime": 1779410446.7986345,
+    "ast_hash": "8d5a1697a378a3a38c42ec72757d6bf6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\AGENTS.md": {
+    "mtime": 1779408669.5497787,
+    "ast_hash": "9e09241799026ac05be315a2f0b50055",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\CLAUDE.md": {
+    "mtime": 1779408669.5577734,
+    "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\README.md": {
+    "mtime": 1779408669.6168573,
+    "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\Ereko_PRD_v2.pdf": {
+    "mtime": 1779408669.563569,
+    "ast_hash": "3225ea03c7746601aef05141a2d1d262",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa2_home.png": {
+    "mtime": 1779993501.0257082,
+    "ast_hash": "60421bf2a9f611afa8ab6bfecaa8eef4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_about.png": {
+    "mtime": 1779993192.9172018,
+    "ast_hash": "e99e10c128fdd21f2d98b7214c3d321b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_cargo.png": {
+    "mtime": 1779993247.005679,
+    "ast_hash": "0d46e350feb1a1b39df442bf274c6048",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_cart.png": {
+    "mtime": 1779993229.180644,
+    "ast_hash": "68243220910d081acf38f78dfc56ed70",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_contact.png": {
+    "mtime": 1779993174.5393376,
+    "ast_hash": "6a126f6e89cab43933c08376f779dd2a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_help.png": {
+    "mtime": 1779993199.7861903,
+    "ast_hash": "eb229713a281fc55caecf7a7861596af",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_home.png": {
+    "mtime": 1779993120.265036,
+    "ast_hash": "88bfbedbf62e6a7f60b9a154462f4152",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_home_wide.png": {
+    "mtime": 1779993338.4469745,
+    "ast_hash": "60421bf2a9f611afa8ab6bfecaa8eef4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_login.png": {
+    "mtime": 1779993168.3914454,
+    "ast_hash": "4dade7d787357d7c1e8d97b33b815b74",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_recipes.png": {
+    "mtime": 1779993253.8459837,
+    "ast_hash": "88d07a1979d45140e243cdc90d28914a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_shop.png": {
+    "mtime": 1779993144.2881627,
+    "ast_hash": "f1f09fd9a69de170f08863e29323e2a8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_signup.png": {
+    "mtime": 1779993222.217731,
+    "ast_hash": "be78feb6362b158e083cbcaead00372a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\recipes_result.png": {
+    "mtime": 1779991352.589782,
+    "ast_hash": "50488db3cfe4e1ffff5017599332e245",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\2026-03-12-fix-plan-rollout.png": {
+    "mtime": 1780007289.4334478,
+    "ast_hash": "2d1128234cd01fe005fec134227fa9fb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\2026-03-12-hero-bug-hunter-overview.png": {
+    "mtime": 1780007289.4128325,
+    "ast_hash": "a731f825b9941bd26c50ca7400b2b7cb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\2026-03-12-machine-readable-artifacts.png": {
+    "mtime": 1780007289.4696975,
+    "ast_hash": "c9d48e873f23ab5daca1cce2559eeddf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\2026-03-12-pr-review-flow.png": {
+    "mtime": 1780007289.4504962,
+    "ast_hash": "9e52f4d98042d1570c5c084e97a2dbb2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\2026-03-12-security-pack.png": {
+    "mtime": 1780007289.5171719,
+    "ast_hash": "d8b6eeaa15078bffe257ccaf5fc59ed1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\adversarial-debate.png": {
+    "mtime": 1780007289.4845016,
+    "ast_hash": "982e4d98c3214ca088b2c438eb327725",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\doc-verify-fix-plan.png": {
+    "mtime": 1780007289.500552,
+    "ast_hash": "2c5134c3716f7322f46747ebeacfff7b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\hero.png": {
+    "mtime": 1780007289.5321,
+    "ast_hash": "55501f23b63bddc31e685414ee951d9c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\pipeline-overview.png": {
+    "mtime": 1780007289.5608442,
+    "ast_hash": "01997938b68372b6559bbf080a5b5b36",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\.agents\\skills\\bug-hunter\\docs\\images\\security-finding-card.png": {
+    "mtime": 1780007289.5457788,
+    "ast_hash": "e1e62030d2d1d9e21900020558b903a5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\logo_ereko.jpeg": {
+    "mtime": 1779408669.5701137,
+    "ast_hash": "cee80b34e8ec7e104ceda0f90d710d10",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\file.svg": {
+    "mtime": 1779408819.3093767,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\globe.svg": {
+    "mtime": 1779408819.3201973,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\hero-african-market.svg": {
+    "mtime": 1779993691.8637245,
+    "ast_hash": "33de92b14f24257004168f27e962fbe5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\img01.jpg": {
+    "mtime": 1779408819.3276198,
+    "ast_hash": "ccbfdcdf71165fe057a4b3716842a42c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\img02.jpg": {
+    "mtime": 1779408819.3321664,
+    "ast_hash": "337924cfb5d77b0c3e571527198936d7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\img03.jpg": {
+    "mtime": 1779408819.3415701,
+    "ast_hash": "ddbc7b1d24d71e5ce29f5d13c441263c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\img04.jpg": {
+    "mtime": 1779408819.3461328,
+    "ast_hash": "1545c29b7f1a38e2cf20164466e65d04",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\img05.jpg": {
+    "mtime": 1779408819.3498216,
+    "ast_hash": "03a0c2e32231ab27ea15f52c47fc61a4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\img06.jpg": {
+    "mtime": 1779408819.357955,
+    "ast_hash": "5f74d57c3f12648d273a6838022c81ab",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\logo.jpeg": {
+    "mtime": 1779408819.357955,
+    "ast_hash": "cee80b34e8ec7e104ceda0f90d710d10",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\logo_ereko.jpeg": {
+    "mtime": 1779408819.3687577,
+    "ast_hash": "cee80b34e8ec7e104ceda0f90d710d10",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\next.svg": {
+    "mtime": 1779408819.3759513,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\vercel.svg": {
+    "mtime": 1779408819.3814428,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\window.svg": {
+    "mtime": 1779408819.3869183,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\search_oluolu_pounded_yam.png": {
+    "mtime": 1780007308.3473563,
+    "ast_hash": "114bccf4d6f9c0436977ef5c6c274780",
+    "semantic_hash": ""
+  }
+}
