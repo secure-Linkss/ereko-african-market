@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req } from '@nestjs/common';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -52,7 +53,17 @@ export class ProductsController {
       },
     },
   })
-  async listProducts(@Query() query: ProductsQueryDto) {
+  async listProducts(@Query() query: ProductsQueryDto, @Req() req: Request) {
+    // Vercel serverless may not parse bracket notation into nested objects.
+    // Merge any flat bracket-notation keys (e.g., "filter[in_stock]") into the parsed DTO.
+    const raw = req.query as Record<string, string>;
+    if (!query.filter) query.filter = {} as any;
+    const f = query.filter as any;
+    if (!f.in_stock && raw['filter[in_stock]']) f.in_stock = raw['filter[in_stock]'];
+    if (!f.category && raw['filter[category]']) f.category = raw['filter[category]'];
+    if (!f.storage_types && raw['filter[storage_types]']) f.storage_types = raw['filter[storage_types]'];
+    if (!f.origins && raw['filter[origins]']) f.origins = raw['filter[origins]'];
+    if (!f.brands && raw['filter[brands]']) f.brands = raw['filter[brands]'];
     return this.productsService.listProducts(query);
   }
 

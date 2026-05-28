@@ -40,7 +40,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false, // Vercel serverless doesn't parse bracket notation as nested — silently ignore unknown params
       transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),
