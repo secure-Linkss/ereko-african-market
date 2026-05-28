@@ -12,6 +12,6 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Matches all routes except asset folders and next internal bundles
-  matcher: ["/", "/(en-gb)/:path*", "/((?!_next|_vercel|.*\\..*).*)"],
+  // Exclude _next, _vercel, api routes, and static files (anything with a dot)
+  matcher: ["/", "/(en-gb)/:path*", "/((?!_next|_vercel|api|.*\\..*).*)"],
 };
