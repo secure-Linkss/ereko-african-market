@@ -4,71 +4,28 @@ import {
   ConflictException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 import { UpdateProfileDto, CreateAddressDto, UpdateAddressDto } from './users.dto';
-import { LoyaltyTier } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
 const MAX_ADDRESSES = 10;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(UsersService.name);
 
-  // ─── Loyalty Tier ─────────────────────────────────────────────────────────
+  constructor(private readonly supabase: SupabaseService) {}
 
-  private computeTier(totalEarned: number): LoyaltyTier {
-    if (totalEarned >= 5000) return LoyaltyTier.Royalty;
-    if (totalEarned >= 2000) return LoyaltyTier.Elder;
-    if (totalEarned >= 500) return LoyaltyTier.Family;
-    return LoyaltyTier.Member;
+  private computeTier(totalEarned: number): string {
+    if (totalEarned >= 5000) return 'Royalty';
+    if (totalEarned >= 2000) return 'Elder';
+    if (totalEarned >= 500) return 'Family';
+    return 'Member';
   }
 
-  // ─── Profile ──────────────────────────────────────────────────────────────
-
-  async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { loyalty: true },
-    });
-
-    if (!user || user.deletedAt) {
-      throw new NotFoundException('User not found');
-    }
-
-    return this.formatUserProfile(user);
-  }
-
-  async updateProfile(userId: string, dto: UpdateProfileDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user || user.deletedAt) {
-      throw new NotFoundException('User not found');
-    }
-
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(dto.firstName !== undefined && { firstName: dto.firstName }),
-        ...(dto.lastName !== undefined && { lastName: dto.lastName }),
-        ...(dto.phone !== undefined && { phone: dto.phone }),
-        ...(dto.preferredLocale !== undefined && { preferredLocale: dto.preferredLocale }),
-        ...(dto.marketingEmailOptIn !== undefined && {
-          marketingEmailOptIn: dto.marketingEmailOptIn,
-        }),
-        ...(dto.marketingSmsOptIn !== undefined && {
-          marketingSmsOptIn: dto.marketingSmsOptIn,
-        }),
-      },
-      include: { loyalty: true },
-    });
-
-    return this.formatUserProfile(updated);
-  }
-
-  private formatUserProfile(user: any) {
+  private formatUserProfile(user: any, loyalty?: any) {
     return {
       id: user.id,
       email: user.email,
@@ -78,211 +35,287 @@ export class UsersService {
       preferredLocale: user.preferredLocale,
       marketingEmailOptIn: user.marketingEmailOptIn,
       marketingSmsOptIn: user.marketingSmsOptIn,
-      loyaltyTier: (user.loyalty?.tier ?? 'Member') as LoyaltyTier,
-      loyaltyPointsBalance: user.loyalty?.pointsBalance ?? 0,
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),
+      loyaltyTier: loyalty?.tier ?? 'Member',
+      loyaltyPointsBalance: loyalty?.pointsBalance ?? 0,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
-  // ─── Addresses ────────────────────────────────────────────────────────────
+  // ─── Profile ───────────────────────────────────────────────────────────────
+
+  async getProfile(userId: string) {
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, email, phone, firstName, lastName, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, deletedAt, createdAt, updatedAt')
+      .eq('id', userId)
+      .limit(1);
+
+    const user = users?.[0];
+    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+
+    const { data: loyaltyRows } = await this.supabase.db
+      .from('LoyaltyAccount')
+      .select('tier, pointsBalance')
+      .eq('userId', userId)
+      .limit(1);
+
+    return this.formatUserProfile(user, loyaltyRows?.[0]);
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, deletedAt')
+      .eq('id', userId)
+      .limit(1);
+
+    const user = users?.[0];
+    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+
+    const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
+    if (dto.firstName !== undefined) updates.firstName = dto.firstName;
+    if (dto.lastName !== undefined) updates.lastName = dto.lastName;
+    if (dto.phone !== undefined) updates.phone = dto.phone;
+    if (dto.preferredLocale !== undefined) updates.preferredLocale = dto.preferredLocale;
+    if (dto.marketingEmailOptIn !== undefined) updates.marketingEmailOptIn = dto.marketingEmailOptIn;
+    if (dto.marketingSmsOptIn !== undefined) updates.marketingSmsOptIn = dto.marketingSmsOptIn;
+
+    const { data: updated } = await this.supabase.db
+      .from('User')
+      .update(updates)
+      .eq('id', userId)
+      .select('id, email, phone, firstName, lastName, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, createdAt, updatedAt')
+      .single();
+
+    const { data: loyaltyRows } = await this.supabase.db
+      .from('LoyaltyAccount')
+      .select('tier, pointsBalance')
+      .eq('userId', userId)
+      .limit(1);
+
+    return this.formatUserProfile(updated, loyaltyRows?.[0]);
+  }
+
+  // ─── Addresses ─────────────────────────────────────────────────────────────
 
   async getAddresses(userId: string) {
-    return this.prisma.address.findMany({
-      where: { userId },
-      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
-    });
+    const { data } = await this.supabase.db
+      .from('Address')
+      .select('*')
+      .eq('userId', userId)
+      .order('isDefault', { ascending: false })
+      .order('createdAt', { ascending: false });
+
+    return data ?? [];
   }
 
   async createAddress(userId: string, dto: CreateAddressDto) {
-    const count = await this.prisma.address.count({ where: { userId } });
-    if (count >= MAX_ADDRESSES) {
-      throw new ForbiddenException(
-        `You can save a maximum of ${MAX_ADDRESSES} addresses. Please delete one before adding a new one.`,
-      );
+    const { count } = await this.supabase.db
+      .from('Address')
+      .select('id', { count: 'exact', head: true })
+      .eq('userId', userId);
+
+    if ((count ?? 0) >= MAX_ADDRESSES) {
+      throw new ForbiddenException(`You can save a maximum of ${MAX_ADDRESSES} addresses.`);
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      // If setting this as default, clear existing defaults of same type
-      if (dto.isDefault) {
-        await this.clearDefaultsForType(tx, userId, dto.type);
-      }
+    const now = new Date().toISOString();
 
-      return tx.address.create({
-        data: {
-          userId,
-          type: dto.type,
-          firstName: dto.firstName ?? null,
-          lastName: dto.lastName ?? null,
-          line1: dto.line1,
-          line2: dto.line2 ?? null,
-          city: dto.city,
-          region: dto.region ?? null,
-          postcode: dto.postcode,
-          countryCode: dto.countryCode,
-          phone: dto.phone ?? null,
-          isDefault: dto.isDefault ?? false,
-          validated: false,
-        },
-      });
-    });
+    if (dto.isDefault) {
+      await this.clearDefaultsForType(userId, dto.type);
+    }
+
+    const { data, error } = await this.supabase.db
+      .from('Address')
+      .insert({
+        id: uuidv4(),
+        userId,
+        type: dto.type,
+        firstName: dto.firstName ?? null,
+        lastName: dto.lastName ?? null,
+        line1: dto.line1,
+        line2: dto.line2 ?? null,
+        city: dto.city,
+        region: dto.region ?? null,
+        postcode: dto.postcode,
+        countryCode: dto.countryCode,
+        phone: dto.phone ?? null,
+        isDefault: dto.isDefault ?? false,
+        validated: false,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .select('*')
+      .single();
+
+    if (error) throw new BadRequestException(error.message);
+    return data;
   }
 
   async updateAddress(userId: string, addressId: string, dto: UpdateAddressDto) {
-    const address = await this.prisma.address.findUnique({ where: { id: addressId } });
+    const { data: rows } = await this.supabase.db
+      .from('Address')
+      .select('*')
+      .eq('id', addressId)
+      .limit(1);
 
-    if (!address || address.userId !== userId) {
-      throw new NotFoundException('Address not found');
+    const address = rows?.[0];
+    if (!address || address.userId !== userId) throw new NotFoundException('Address not found');
+
+    const newType = dto.type ?? address.type;
+    if (dto.isDefault === true) {
+      await this.clearDefaultsForType(userId, newType);
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const newType = dto.type ?? address.type;
+    const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
+    if (dto.type !== undefined) updates.type = dto.type;
+    if (dto.firstName !== undefined) updates.firstName = dto.firstName;
+    if (dto.lastName !== undefined) updates.lastName = dto.lastName;
+    if (dto.line1 !== undefined) updates.line1 = dto.line1;
+    if (dto.line2 !== undefined) updates.line2 = dto.line2;
+    if (dto.city !== undefined) updates.city = dto.city;
+    if (dto.region !== undefined) updates.region = dto.region;
+    if (dto.postcode !== undefined) updates.postcode = dto.postcode;
+    if (dto.countryCode !== undefined) updates.countryCode = dto.countryCode;
+    if (dto.phone !== undefined) updates.phone = dto.phone;
+    if (dto.isDefault !== undefined) updates.isDefault = dto.isDefault;
+    if (dto.line1 || dto.city || dto.postcode) updates.validated = false;
 
-      if (dto.isDefault === true) {
-        await this.clearDefaultsForType(tx, userId, newType);
-      }
+    const { data, error } = await this.supabase.db
+      .from('Address')
+      .update(updates)
+      .eq('id', addressId)
+      .select('*')
+      .single();
 
-      return tx.address.update({
-        where: { id: addressId },
-        data: {
-          ...(dto.type !== undefined && { type: dto.type }),
-          ...(dto.firstName !== undefined && { firstName: dto.firstName }),
-          ...(dto.lastName !== undefined && { lastName: dto.lastName }),
-          ...(dto.line1 !== undefined && { line1: dto.line1 }),
-          ...(dto.line2 !== undefined && { line2: dto.line2 }),
-          ...(dto.city !== undefined && { city: dto.city }),
-          ...(dto.region !== undefined && { region: dto.region }),
-          ...(dto.postcode !== undefined && { postcode: dto.postcode }),
-          ...(dto.countryCode !== undefined && { countryCode: dto.countryCode }),
-          ...(dto.phone !== undefined && { phone: dto.phone }),
-          ...(dto.isDefault !== undefined && { isDefault: dto.isDefault }),
-          // Mark as unvalidated if address fields change
-          ...(dto.line1 || dto.city || dto.postcode ? { validated: false } : {}),
-        },
-      });
-    });
+    if (error) throw new BadRequestException(error.message);
+    return data;
   }
 
   async deleteAddress(userId: string, addressId: string): Promise<void> {
-    const address = await this.prisma.address.findUnique({ where: { id: addressId } });
+    const { data: rows } = await this.supabase.db
+      .from('Address')
+      .select('*')
+      .eq('id', addressId)
+      .limit(1);
 
-    if (!address || address.userId !== userId) {
-      throw new NotFoundException('Address not found');
-    }
+    const address = rows?.[0];
+    if (!address || address.userId !== userId) throw new NotFoundException('Address not found');
 
-    await this.prisma.address.delete({ where: { id: addressId } });
+    await this.supabase.db.from('Address').delete().eq('id', addressId);
 
-    // If deleted address was default, promote the next most recent one
     if (address.isDefault) {
-      const next = await this.prisma.address.findFirst({
-        where: { userId, type: address.type },
-        orderBy: { createdAt: 'desc' },
-      });
-      if (next) {
-        await this.prisma.address.update({
-          where: { id: next.id },
-          data: { isDefault: true },
-        });
+      const { data: next } = await this.supabase.db
+        .from('Address')
+        .select('id')
+        .eq('userId', userId)
+        .eq('type', address.type)
+        .order('createdAt', { ascending: false })
+        .limit(1);
+
+      if (next?.[0]) {
+        await this.supabase.db
+          .from('Address')
+          .update({ isDefault: true })
+          .eq('id', next[0].id);
       }
     }
   }
 
   async setDefaultAddress(userId: string, addressId: string) {
-    const address = await this.prisma.address.findUnique({ where: { id: addressId } });
+    const { data: rows } = await this.supabase.db
+      .from('Address')
+      .select('*')
+      .eq('id', addressId)
+      .limit(1);
 
-    if (!address || address.userId !== userId) {
-      throw new NotFoundException('Address not found');
-    }
+    const address = rows?.[0];
+    if (!address || address.userId !== userId) throw new NotFoundException('Address not found');
 
-    return this.prisma.$transaction(async (tx) => {
-      await this.clearDefaultsForType(tx, userId, address.type);
-      return tx.address.update({
-        where: { id: addressId },
-        data: { isDefault: true },
-      });
-    });
+    await this.clearDefaultsForType(userId, address.type);
+
+    const { data, error } = await this.supabase.db
+      .from('Address')
+      .update({ isDefault: true })
+      .eq('id', addressId)
+      .select('*')
+      .single();
+
+    if (error) throw new BadRequestException(error.message);
+    return data;
   }
 
-  private async clearDefaultsForType(
-    tx: any,
-    userId: string,
-    type: string,
-  ): Promise<void> {
-    // 'both' type addresses should clear all overlapping types
-    const typesToClear =
-      type === 'both'
-        ? ['shipping', 'billing', 'both']
-        : [type, 'both'];
-
-    await tx.address.updateMany({
-      where: {
-        userId,
-        isDefault: true,
-        type: { in: typesToClear },
-      },
-      data: { isDefault: false },
-    });
+  private async clearDefaultsForType(userId: string, type: string): Promise<void> {
+    const typesToClear = type === 'both' ? ['shipping', 'billing', 'both'] : [type, 'both'];
+    await this.supabase.db
+      .from('Address')
+      .update({ isDefault: false })
+      .eq('userId', userId)
+      .eq('isDefault', true)
+      .in('type', typesToClear);
   }
 
-  // ─── Saved Cards ──────────────────────────────────────────────────────────
+  // ─── Saved Cards ───────────────────────────────────────────────────────────
 
   async getSavedCards(userId: string) {
-    return this.prisma.savedCard.findMany({
-      where: { userId },
-      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
-      select: {
-        id: true,
-        brand: true,
-        last4: true,
-        expMonth: true,
-        expYear: true,
-        isDefault: true,
-        createdAt: true,
-        // Never expose stripePaymentMethodId to the client directly
-      },
-    });
+    const { data } = await this.supabase.db
+      .from('SavedCard')
+      .select('id, brand, last4, expMonth, expYear, isDefault, createdAt')
+      .eq('userId', userId)
+      .order('isDefault', { ascending: false })
+      .order('createdAt', { ascending: false });
+
+    return data ?? [];
   }
 
   async deleteSavedCard(userId: string, cardId: string): Promise<void> {
-    const card = await this.prisma.savedCard.findUnique({ where: { id: cardId } });
+    const { data: rows } = await this.supabase.db
+      .from('SavedCard')
+      .select('*')
+      .eq('id', cardId)
+      .limit(1);
 
-    if (!card || card.userId !== userId) {
-      throw new NotFoundException('Card not found');
-    }
+    const card = rows?.[0];
+    if (!card || card.userId !== userId) throw new NotFoundException('Card not found');
 
-    await this.prisma.savedCard.delete({ where: { id: cardId } });
+    await this.supabase.db.from('SavedCard').delete().eq('id', cardId);
 
-    // Promote next card to default if needed
     if (card.isDefault) {
-      const next = await this.prisma.savedCard.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-      });
-      if (next) {
-        await this.prisma.savedCard.update({
-          where: { id: next.id },
-          data: { isDefault: true },
-        });
+      const { data: next } = await this.supabase.db
+        .from('SavedCard')
+        .select('id')
+        .eq('userId', userId)
+        .order('createdAt', { ascending: false })
+        .limit(1);
+
+      if (next?.[0]) {
+        await this.supabase.db
+          .from('SavedCard')
+          .update({ isDefault: true })
+          .eq('id', next[0].id);
       }
     }
   }
 
-  // ─── Loyalty ──────────────────────────────────────────────────────────────
+  // ─── Loyalty ───────────────────────────────────────────────────────────────
 
   async getLoyaltyAccount(userId: string) {
-    const loyalty = await this.prisma.loyaltyAccount.findUnique({
-      where: { userId },
-      include: {
-        transactions: {
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-        },
-      },
-    });
+    const { data: loyaltyRows } = await this.supabase.db
+      .from('LoyaltyAccount')
+      .select('id, userId, pointsBalance, tier, totalEarned, totalRedeemed, createdAt, updatedAt')
+      .eq('userId', userId)
+      .limit(1);
 
-    if (!loyalty) {
-      throw new NotFoundException('Loyalty account not found');
-    }
+    const loyalty = loyaltyRows?.[0];
+    if (!loyalty) throw new NotFoundException('Loyalty account not found');
+
+    const { data: txRows } = await this.supabase.db
+      .from('LoyaltyTransaction')
+      .select('id, points, type, description, createdAt')
+      .eq('loyaltyAccountId', loyalty.id)
+      .order('createdAt', { ascending: false })
+      .limit(20);
 
     return {
       id: loyalty.id,
@@ -291,28 +324,34 @@ export class UsersService {
       tier: loyalty.tier,
       totalEarned: loyalty.totalEarned,
       totalRedeemed: loyalty.totalRedeemed,
-      recentTransactions: loyalty.transactions.map((t) => ({
+      recentTransactions: (txRows ?? []).map((t) => ({
         id: t.id,
         points: t.points,
         type: t.type,
         description: t.description,
-        createdAt: t.createdAt.toISOString(),
+        createdAt: t.createdAt,
       })),
-      createdAt: loyalty.createdAt.toISOString(),
-      updatedAt: loyalty.updatedAt.toISOString(),
+      createdAt: loyalty.createdAt,
+      updatedAt: loyalty.updatedAt,
     };
   }
 
   async recalculateLoyaltyTier(userId: string): Promise<void> {
-    const loyalty = await this.prisma.loyaltyAccount.findUnique({ where: { userId } });
+    const { data: rows } = await this.supabase.db
+      .from('LoyaltyAccount')
+      .select('userId, totalEarned, tier')
+      .eq('userId', userId)
+      .limit(1);
+
+    const loyalty = rows?.[0];
     if (!loyalty) return;
 
     const newTier = this.computeTier(loyalty.totalEarned);
     if (newTier !== loyalty.tier) {
-      await this.prisma.loyaltyAccount.update({
-        where: { userId },
-        data: { tier: newTier },
-      });
+      await this.supabase.db
+        .from('LoyaltyAccount')
+        .update({ tier: newTier, updatedAt: new Date().toISOString() })
+        .eq('userId', userId);
     }
   }
 }

@@ -137,7 +137,7 @@ export class ProductsService {
 
     let nextCursor: string | null = null;
     if (filtered.length > limit) {
-      const next = filtered.pop()!;
+      const next = filtered.pop() as any;
       nextCursor = encodeCursor(next.id);
     }
 

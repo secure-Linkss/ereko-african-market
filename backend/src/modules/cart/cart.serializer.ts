@@ -1,17 +1,3 @@
-import { Cart, CartItem, ProductVariant, Product, ProductImage } from '@prisma/client';
-
-type CartItemWithVariant = CartItem & {
-  variant: ProductVariant & {
-    product: Product & {
-      images: ProductImage[];
-    };
-  };
-};
-
-type CartWithItems = Cart & {
-  items: CartItemWithVariant[];
-};
-
 export interface SerializedCartItem {
   id: string;
   variantId: string;
@@ -40,51 +26,46 @@ export interface SerializedCart {
   totalMinor: number;
   loyaltyPointsRedeemed: number;
   loyaltyDiscountMinor: number;
-  expiresAt: Date | null;
+  expiresAt: string | null;
 }
 
-export function serializeCartItem(item: CartItemWithVariant): SerializedCartItem {
-  const { variant } = item;
-  const product = variant.product;
-  const primaryImage = product.images
-    .sort((a, b) => a.position - b.position)
-    .find(() => true);
-
-  const availableStock = Math.max(
-    0,
-    variant.stockOnHand - variant.stockReserved,
-  );
+export function serializeCartItem(item: any): SerializedCartItem {
+  const variant = item.variant ?? {};
+  const product = variant.product ?? {};
+  const images: any[] = product.images ?? [];
+  const primaryImage = images.sort((a: any, b: any) => a.position - b.position)[0];
+  const availableStock = Math.max(0, (variant.stockOnHand ?? 0) - (variant.stockReserved ?? 0));
 
   return {
     id: item.id,
     variantId: item.variantId,
     quantity: item.quantity,
     unitPriceMinor: item.unitPriceMinor,
-    sku: variant.sku,
-    title: product.title,
-    variantName: variant.name,
-    productSlug: product.slug,
+    sku: variant.sku ?? '',
+    title: product.title ?? '',
+    variantName: variant.name ?? '',
+    productSlug: product.slug ?? '',
     productImage: primaryImage?.url ?? '',
-    storageType: product.storageType,
+    storageType: product.storageType ?? 'ambient',
     availableStock,
   };
 }
 
-export function serializeCart(cart: CartWithItems): SerializedCart {
+export function serializeCart(cart: any): SerializedCart {
   return {
     id: cart.id,
-    userId: cart.userId,
-    anonymousToken: cart.anonymousToken,
-    items: cart.items.map(serializeCartItem),
-    currency: cart.currency,
-    promoCode: cart.promoCode,
-    discountMinor: cart.discountMinor,
-    subtotalMinor: cart.subtotalMinor,
-    taxMinor: cart.taxMinor,
-    shippingMinor: cart.shippingMinor,
-    totalMinor: cart.totalMinor,
-    loyaltyPointsRedeemed: cart.loyaltyPointsRedeemed,
-    loyaltyDiscountMinor: cart.loyaltyDiscountMinor,
-    expiresAt: cart.expiresAt,
+    userId: cart.userId ?? null,
+    anonymousToken: cart.anonymousToken ?? null,
+    items: (cart.items ?? []).map(serializeCartItem),
+    currency: cart.currency ?? 'GBP',
+    promoCode: cart.promoCode ?? null,
+    discountMinor: cart.discountMinor ?? 0,
+    subtotalMinor: cart.subtotalMinor ?? 0,
+    taxMinor: cart.taxMinor ?? 0,
+    shippingMinor: cart.shippingMinor ?? 0,
+    totalMinor: cart.totalMinor ?? 0,
+    loyaltyPointsRedeemed: cart.loyaltyPointsRedeemed ?? 0,
+    loyaltyDiscountMinor: cart.loyaltyDiscountMinor ?? 0,
+    expiresAt: cart.expiresAt ?? null,
   };
 }

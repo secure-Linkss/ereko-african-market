@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import * as bcrypt from 'bcrypt';
 import { authenticator } from 'otplib';
@@ -20,7 +20,6 @@ import { Request, Response } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { LoginDto, SignupDto, MfaVerifyDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
-import { LoyaltyTier } from '@prisma/client';
 
 const BCRYPT_ROUNDS = 12;
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -31,23 +30,21 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly notificationsService: NotificationsService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  // ─── Rate Limiting (Redis-backed — works across multiple instances) ─────────
+  // ─── Rate Limiting ─────────────────────────────────────────────────────────
 
   private async checkRateLimit(key: string): Promise<void> {
     const cacheKey = `auth:rl:${key}`;
-    const current = await this.cache.get<number>(cacheKey) ?? 0;
-
+    const current = (await this.cache.get<number>(cacheKey)) ?? 0;
     if (current >= MAX_LOGIN_ATTEMPTS) {
       throw new ForbiddenException('Too many login attempts. Please wait 1 minute before trying again.');
     }
-
     await this.cache.set(cacheKey, current + 1, LOGIN_WINDOW_SECONDS);
   }
 
@@ -55,7 +52,7 @@ export class AuthService {
     await this.cache.del(`auth:rl:${key}`);
   }
 
-  // ─── Token Helpers ────────────────────────────────────────────────────────
+  // ─── Token Helpers ─────────────────────────────────────────────────────────
 
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
@@ -71,29 +68,31 @@ export class AuthService {
     );
   }
 
-  private async issueRefreshToken(
-    userId: string,
-    family: string,
-    req: Request,
-  ): Promise<string> {
+  private async issueRefreshToken(userId: string, family: string, req: Request): Promise<string> {
     const tokenId = uuidv4();
     const rawToken = uuidv4() + '.' + uuidv4();
     const tokenHash = this.hashToken(rawToken);
 
     const expiresIn = this.configService.get<string>('jwt.refreshExpiresIn') ?? '30d';
-    const expiresAt = new Date(Date.now() + this.parseExpiry(expiresIn));
+    const expiresAt = new Date(Date.now() + this.parseExpiry(expiresIn)).toISOString();
+    const now = new Date().toISOString();
 
-    await this.prisma.refreshToken.create({
-      data: {
-        id: tokenId,
-        userId,
-        tokenHash,
-        family,
-        expiresAt,
-        userAgent: req.headers['user-agent']?.slice(0, 512) ?? null,
-        ipAddress: this.extractIp(req),
-      },
+    const { error } = await this.supabase.db.from('RefreshToken').insert({
+      id: tokenId,
+      userId,
+      tokenHash,
+      family,
+      expiresAt,
+      userAgent: req.headers['user-agent']?.slice(0, 512) ?? null,
+      ipAddress: this.extractIp(req),
+      createdAt: now,
+      updatedAt: now,
     });
+
+    if (error) {
+      this.logger.error(`Failed to store refresh token: ${error.message}`);
+      throw new Error('Failed to create session');
+    }
 
     return rawToken;
   }
@@ -103,12 +102,7 @@ export class AuthService {
     if (!match) return 30 * 24 * 60 * 60 * 1000;
     const value = parseInt(match[1], 10);
     const unit = match[2];
-    const multipliers: Record<string, number> = {
-      s: 1000,
-      m: 60_000,
-      h: 3_600_000,
-      d: 86_400_000,
-    };
+    const multipliers: Record<string, number> = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
     return value * multipliers[unit];
   }
 
@@ -121,7 +115,6 @@ export class AuthService {
   private setRefreshCookie(res: Response, rawToken: string): void {
     const isProduction = this.configService.get<string>('nodeEnv') === 'production';
     const expiresIn = this.configService.get<string>('jwt.refreshExpiresIn') ?? '30d';
-
     res.cookie('refresh_token', rawToken, {
       httpOnly: true,
       secure: isProduction,
@@ -155,29 +148,32 @@ export class AuthService {
       preferredLocale: user.preferredLocale,
       marketingEmailOptIn: user.marketingEmailOptIn,
       marketingSmsOptIn: user.marketingSmsOptIn,
-      loyaltyTier: (user.loyalty?.tier ?? 'Member') as LoyaltyTier,
-      loyaltyPointsBalance: user.loyalty?.pointsBalance ?? 0,
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),
+      loyaltyTier: user.loyaltyTier ?? 'Member',
+      loyaltyPointsBalance: user.loyaltyPointsBalance ?? 0,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
-  // ─── Login ────────────────────────────────────────────────────────────────
+  // ─── Login ─────────────────────────────────────────────────────────────────
 
   async login(dto: LoginDto, req: Request, res: Response) {
     const rateLimitKey = `login:${dto.email}`;
-    this.checkRateLimit(rateLimitKey);
+    await this.checkRateLimit(rateLimitKey);
 
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-      include: { mfaCredential: true, loyalty: true },
-    });
-
-    // Magic link login
     if (dto.magicLink) {
       return this.loginWithMagicLink(dto.magicLink, req, res);
     }
 
+    const { data: users, error } = await this.supabase.db
+      .from('User')
+      .select('id, email, passwordHash, isActive, deletedAt, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
+      .eq('email', dto.email)
+      .limit(1);
+
+    if (error) throw new UnauthorizedException('Invalid credentials');
+
+    const user = users?.[0];
     if (!user || !user.isActive || user.deletedAt) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -191,10 +187,17 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    this.clearRateLimit(rateLimitKey);
+    await this.clearRateLimit(rateLimitKey);
 
     // Check MFA
-    if (user.mfaCredential?.enabled) {
+    const { data: mfaRows } = await this.supabase.db
+      .from('MfaCredential')
+      .select('enabled, secret')
+      .eq('userId', user.id)
+      .limit(1);
+
+    const mfa = mfaRows?.[0];
+    if (mfa?.enabled) {
       const mfaToken = await this.issueMfaToken(user.id);
       return { mfaRequired: true, mfaToken };
     }
@@ -204,41 +207,44 @@ export class AuthService {
     const rawRefreshToken = await this.issueRefreshToken(user.id, family, req);
     this.setRefreshCookie(res, rawRefreshToken);
 
-    return {
-      accessToken,
-      user: this.formatUserProfile(user),
-    };
+    return { accessToken, user: this.formatUserProfile(user) };
   }
 
   private async loginWithMagicLink(token: string, req: Request, res: Response) {
     const tokenHash = this.hashToken(token);
-    const magicLink = await this.prisma.magicLinkToken.findUnique({
-      where: { tokenHash },
-    });
 
-    if (!magicLink || magicLink.usedAt || magicLink.expiresAt < new Date()) {
+    const { data: links } = await this.supabase.db
+      .from('MagicLinkToken')
+      .select('*')
+      .eq('tokenHash', tokenHash)
+      .limit(1);
+
+    const magicLink = links?.[0];
+    if (!magicLink || magicLink.usedAt || new Date(magicLink.expiresAt) < new Date()) {
       throw new UnauthorizedException('Magic link is invalid or has expired');
     }
 
-    await this.prisma.magicLinkToken.update({
-      where: { id: magicLink.id },
-      data: { usedAt: new Date() },
-    });
+    await this.supabase.db
+      .from('MagicLinkToken')
+      .update({ usedAt: new Date().toISOString() })
+      .eq('id', magicLink.id);
 
-    const user = await this.prisma.user.findUnique({
-      where: { email: magicLink.email },
-      include: { loyalty: true },
-    });
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, email, isActive, deletedAt, emailVerified, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
+      .eq('email', magicLink.email)
+      .limit(1);
 
+    const user = users?.[0];
     if (!user || !user.isActive || user.deletedAt) {
       throw new UnauthorizedException('User account not found or inactive');
     }
 
     if (!user.emailVerified) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerified: true, emailVerifiedAt: new Date() },
-      });
+      await this.supabase.db
+        .from('User')
+        .update({ emailVerified: true, emailVerifiedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+        .eq('id', user.id);
     }
 
     const accessToken = await this.issueAccessToken(user.id, user.email);
@@ -246,17 +252,19 @@ export class AuthService {
     const rawRefreshToken = await this.issueRefreshToken(user.id, family, req);
     this.setRefreshCookie(res, rawRefreshToken);
 
-    return {
-      accessToken,
-      user: this.formatUserProfile(user),
-    };
+    return { accessToken, user: this.formatUserProfile(user) };
   }
 
-  // ─── Signup ───────────────────────────────────────────────────────────────
+  // ─── Signup ────────────────────────────────────────────────────────────────
 
   async signup(dto: SignupDto, req: Request, res: Response) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) {
+    const { data: existing } = await this.supabase.db
+      .from('User')
+      .select('id')
+      .eq('email', dto.email)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
       throw new ConflictException('An account with this email already exists');
     }
 
@@ -265,44 +273,55 @@ export class AuthService {
       passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     }
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          email: dto.email,
-          passwordHash,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          phone: dto.phone ?? null,
-        },
-      });
+    const now = new Date().toISOString();
+    const userId = uuidv4();
 
-      await tx.loyaltyAccount.create({
-        data: {
-          userId: newUser.id,
-          pointsBalance: 0,
-          tier: LoyaltyTier.Member,
-          totalEarned: 0,
-          totalRedeemed: 0,
-        },
-      });
+    const { data: newUser, error: userErr } = await this.supabase.db
+      .from('User')
+      .insert({
+        id: userId,
+        email: dto.email,
+        passwordHash,
+        firstName: dto.firstName ?? null,
+        lastName: dto.lastName ?? null,
+        phone: dto.phone ?? null,
+        isActive: true,
+        emailVerified: false,
+        preferredLocale: 'en',
+        marketingEmailOptIn: false,
+        marketingSmsOptIn: false,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .select('id, email, firstName, lastName, phone, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, createdAt, updatedAt')
+      .single();
 
-      return newUser;
+    if (userErr || !newUser) {
+      this.logger.error(`Signup user create error: ${userErr?.message}`);
+      throw new BadRequestException('Failed to create account');
+    }
+
+    // Create loyalty account
+    await this.supabase.db.from('LoyaltyAccount').insert({
+      id: uuidv4(),
+      userId,
+      pointsBalance: 0,
+      tier: 'Member',
+      totalEarned: 0,
+      totalRedeemed: 0,
+      createdAt: now,
+      updatedAt: now,
     });
 
-    const fullUser = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      include: { loyalty: true },
-    });
-
-    const accessToken = await this.issueAccessToken(user.id, user.email);
+    const accessToken = await this.issueAccessToken(userId, newUser.email);
     const family = uuidv4();
-    const rawRefreshToken = await this.issueRefreshToken(user.id, family, req);
+    const rawRefreshToken = await this.issueRefreshToken(userId, family, req);
     this.setRefreshCookie(res, rawRefreshToken);
 
-    return this.formatUserProfile(fullUser);
+    return this.formatUserProfile({ ...newUser, loyaltyTier: 'Member', loyaltyPointsBalance: 0 });
   }
 
-  // ─── MFA Verify ───────────────────────────────────────────────────────────
+  // ─── MFA Verify ────────────────────────────────────────────────────────────
 
   async verifyMfa(dto: MfaVerifyDto, req: Request, res: Response) {
     let payload: { sub: string; claim: string };
@@ -319,28 +338,30 @@ export class AuthService {
     }
 
     const userId = payload.sub;
-    const mfaCredential = await this.prisma.mfaCredential.findUnique({
-      where: { userId },
-    });
 
-    if (!mfaCredential || !mfaCredential.enabled) {
+    const { data: mfaRows } = await this.supabase.db
+      .from('MfaCredential')
+      .select('enabled, secret')
+      .eq('userId', userId)
+      .limit(1);
+
+    const mfaCredential = mfaRows?.[0];
+    if (!mfaCredential?.enabled) {
       throw new BadRequestException('MFA is not enabled for this account');
     }
 
-    const isValid = authenticator.verify({
-      token: dto.code,
-      secret: mfaCredential.secret,
-    });
-
+    const isValid = authenticator.verify({ token: dto.code, secret: mfaCredential.secret });
     if (!isValid) {
       throw new UnauthorizedException('Invalid MFA code');
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { loyalty: true },
-    });
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, email, isActive, deletedAt, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
+      .eq('id', userId)
+      .limit(1);
 
+    const user = users?.[0];
     if (!user || !user.isActive || user.deletedAt) {
       throw new UnauthorizedException('User account not found or inactive');
     }
@@ -350,41 +371,40 @@ export class AuthService {
     const rawRefreshToken = await this.issueRefreshToken(user.id, family, req);
     this.setRefreshCookie(res, rawRefreshToken);
 
-    const refreshExpiresIn = this.configService.get<string>('jwt.refreshExpiresIn');
-
-    return {
-      accessToken,
-      refreshToken: 'httpOnly cookie',
-      user: this.formatUserProfile(user),
-    };
+    return { accessToken, user: this.formatUserProfile(user) };
   }
 
-  // ─── Forgot Password ──────────────────────────────────────────────────────
+  // ─── Forgot Password ───────────────────────────────────────────────────────
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, email, isActive, deletedAt, firstName')
+      .eq('email', dto.email)
+      .limit(1);
 
-    // Always return success to prevent email enumeration
-    if (!user || !user.isActive || user.deletedAt) {
-      return;
-    }
+    const user = users?.[0];
+    if (!user || !user.isActive || user.deletedAt) return;
 
     // Invalidate existing tokens
-    await this.prisma.passwordResetToken.updateMany({
-      where: { userId: user.id, usedAt: null },
-      data: { usedAt: new Date() },
-    });
+    await this.supabase.db
+      .from('PasswordResetToken')
+      .update({ usedAt: new Date().toISOString() })
+      .eq('userId', user.id)
+      .is('usedAt', null);
 
     const rawToken = uuidv4() + '-' + uuidv4();
     const tokenHash = this.hashToken(rawToken);
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
 
-    await this.prisma.passwordResetToken.create({
-      data: {
-        userId: user.id,
-        tokenHash,
-        expiresAt,
-      },
+    await this.supabase.db.from('PasswordResetToken').insert({
+      id: uuidv4(),
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      createdAt: now,
+      updatedAt: now,
     });
 
     const frontendUrl = this.configService.get<string>('frontend.url');
@@ -397,46 +417,55 @@ export class AuthService {
     });
   }
 
-  // ─── Reset Password ───────────────────────────────────────────────────────
+  // ─── Reset Password ────────────────────────────────────────────────────────
 
   async resetPassword(dto: ResetPasswordDto): Promise<void> {
     const tokenHash = this.hashToken(dto.token);
 
-    const resetToken = await this.prisma.passwordResetToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
-    });
+    const { data: tokens } = await this.supabase.db
+      .from('PasswordResetToken')
+      .select('id, userId, usedAt, expiresAt')
+      .eq('tokenHash', tokenHash)
+      .limit(1);
 
-    if (
-      !resetToken ||
-      resetToken.usedAt ||
-      resetToken.expiresAt < new Date() ||
-      !resetToken.user.isActive ||
-      resetToken.user.deletedAt
-    ) {
+    const resetToken = tokens?.[0];
+    if (!resetToken || resetToken.usedAt || new Date(resetToken.expiresAt) < new Date()) {
+      throw new BadRequestException('Password reset token is invalid or has expired');
+    }
+
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, isActive, deletedAt')
+      .eq('id', resetToken.userId)
+      .limit(1);
+
+    const user = users?.[0];
+    if (!user?.isActive || user.deletedAt) {
       throw new BadRequestException('Password reset token is invalid or has expired');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const now = new Date().toISOString();
 
-    await this.prisma.$transaction([
-      this.prisma.passwordResetToken.update({
-        where: { id: resetToken.id },
-        data: { usedAt: new Date() },
-      }),
-      this.prisma.user.update({
-        where: { id: resetToken.userId },
-        data: { passwordHash },
-      }),
-      // Revoke all refresh tokens on password reset
-      this.prisma.refreshToken.updateMany({
-        where: { userId: resetToken.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
-    ]);
+    await this.supabase.db
+      .from('PasswordResetToken')
+      .update({ usedAt: now })
+      .eq('id', resetToken.id);
+
+    await this.supabase.db
+      .from('User')
+      .update({ passwordHash, updatedAt: now })
+      .eq('id', resetToken.userId);
+
+    // Revoke all refresh tokens on password reset
+    await this.supabase.db
+      .from('RefreshToken')
+      .update({ revokedAt: now })
+      .eq('userId', resetToken.userId)
+      .is('revokedAt', null);
   }
 
-  // ─── Refresh ──────────────────────────────────────────────────────────────
+  // ─── Refresh ───────────────────────────────────────────────────────────────
 
   async refresh(
     userId: string,
@@ -447,116 +476,142 @@ export class AuthService {
   ): Promise<{ accessToken: string }> {
     const tokenHash = this.hashToken(rawToken);
 
-    const existingToken = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
-    });
+    const { data: tokens } = await this.supabase.db
+      .from('RefreshToken')
+      .select('id, userId, family, tokenHash, revokedAt, expiresAt')
+      .eq('tokenHash', tokenHash)
+      .limit(1);
+
+    const existingToken = tokens?.[0];
 
     if (!existingToken) {
-      // Token not found — possible theft: revoke entire family
-      await this.prisma.refreshToken.updateMany({
-        where: { family, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      await this.supabase.db
+        .from('RefreshToken')
+        .update({ revokedAt: new Date().toISOString() })
+        .eq('family', family)
+        .is('revokedAt', null);
       this.clearRefreshCookie(res);
       throw new UnauthorizedException('Refresh token reuse detected. Please log in again.');
     }
 
     if (existingToken.revokedAt) {
-      // Reuse of revoked token — revoke entire family (theft detection)
-      await this.prisma.refreshToken.updateMany({
-        where: { family, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      await this.supabase.db
+        .from('RefreshToken')
+        .update({ revokedAt: new Date().toISOString() })
+        .eq('family', family)
+        .is('revokedAt', null);
       this.clearRefreshCookie(res);
       throw new UnauthorizedException('Refresh token reuse detected. Please log in again.');
     }
 
-    if (existingToken.expiresAt < new Date()) {
+    if (new Date(existingToken.expiresAt) < new Date()) {
       this.clearRefreshCookie(res);
       throw new UnauthorizedException('Refresh token has expired');
     }
 
-    if (!existingToken.user.isActive || existingToken.user.deletedAt) {
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, email, isActive, deletedAt')
+      .eq('id', existingToken.userId)
+      .limit(1);
+
+    const user = users?.[0];
+    if (!user?.isActive || user.deletedAt) {
       this.clearRefreshCookie(res);
       throw new UnauthorizedException('User account is inactive');
     }
 
-    // Rotate: revoke old token, issue new one in same family
-    await this.prisma.refreshToken.update({
-      where: { id: existingToken.id },
-      data: { revokedAt: new Date() },
-    });
+    await this.supabase.db
+      .from('RefreshToken')
+      .update({ revokedAt: new Date().toISOString() })
+      .eq('id', existingToken.id);
 
     const newRawToken = await this.issueRefreshToken(existingToken.userId, family, req);
     this.setRefreshCookie(res, newRawToken);
 
-    const accessToken = await this.issueAccessToken(
-      existingToken.userId,
-      existingToken.user.email,
-    );
-
+    const accessToken = await this.issueAccessToken(existingToken.userId, user.email);
     return { accessToken };
   }
 
-  // ─── Logout ───────────────────────────────────────────────────────────────
+  // ─── Logout ────────────────────────────────────────────────────────────────
 
   async logout(rawToken: string | undefined, res: Response): Promise<void> {
     if (rawToken) {
       const tokenHash = this.hashToken(rawToken);
-      await this.prisma.refreshToken
-        .update({
-          where: { tokenHash },
-          data: { revokedAt: new Date() },
-        })
-        .catch(() => {
-          // Token not found — already revoked or expired, that's fine
-        });
+      await this.supabase.db
+        .from('RefreshToken')
+        .update({ revokedAt: new Date().toISOString() })
+        .eq('tokenHash', tokenHash)
+        .is('revokedAt', null);
     }
     this.clearRefreshCookie(res);
   }
 
-  // ─── Magic Link Send ──────────────────────────────────────────────────────
+  // ─── Magic Link Send ───────────────────────────────────────────────────────
 
   async sendMagicLink(email: string): Promise<void> {
-    // Create user if not exists (passwordless signup)
-    let user = await this.prisma.user.findUnique({ where: { email } });
+    const { data: existing } = await this.supabase.db
+      .from('User')
+      .select('id, isActive, deletedAt, firstName')
+      .eq('email', email)
+      .limit(1);
+
+    let user = existing?.[0];
+    const now = new Date().toISOString();
 
     if (!user) {
-      user = await this.prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({ data: { email } });
-        await tx.loyaltyAccount.create({
-          data: {
-            userId: newUser.id,
-            pointsBalance: 0,
-            tier: LoyaltyTier.Member,
-          },
+      const userId = uuidv4();
+      const { data: newUser } = await this.supabase.db
+        .from('User')
+        .insert({
+          id: userId,
+          email,
+          isActive: true,
+          emailVerified: false,
+          preferredLocale: 'en',
+          marketingEmailOptIn: false,
+          marketingSmsOptIn: false,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .select('id, isActive, deletedAt, firstName')
+        .single();
+
+      if (newUser) {
+        await this.supabase.db.from('LoyaltyAccount').insert({
+          id: uuidv4(),
+          userId,
+          pointsBalance: 0,
+          tier: 'Member',
+          totalEarned: 0,
+          totalRedeemed: 0,
+          createdAt: now,
+          updatedAt: now,
         });
-        return newUser;
-      });
+        user = newUser;
+      }
     }
 
-    if (!user.isActive || user.deletedAt) {
-      return; // Silently fail
-    }
+    if (!user || !user.isActive || user.deletedAt) return;
 
-    // Invalidate old magic link tokens for this email
-    const old = await this.prisma.magicLinkToken.findMany({
-      where: { email, usedAt: null, expiresAt: { gt: new Date() } },
-    });
-    if (old.length > 0) {
-      await this.prisma.magicLinkToken.updateMany({
-        where: { email, usedAt: null },
-        data: { usedAt: new Date() },
-      });
-    }
+    // Invalidate old tokens
+    await this.supabase.db
+      .from('MagicLinkToken')
+      .update({ usedAt: now })
+      .eq('email', email)
+      .is('usedAt', null);
 
     const rawToken = uuidv4() + '-' + uuidv4();
     const tokenHash = this.hashToken(rawToken);
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-    await this.prisma.magicLinkToken.create({
-      data: { email, tokenHash, expiresAt },
+    await this.supabase.db.from('MagicLinkToken').insert({
+      id: uuidv4(),
+      email,
+      tokenHash,
+      expiresAt,
+      createdAt: now,
+      updatedAt: now,
     });
 
     const frontendUrl = this.configService.get<string>('frontend.url');

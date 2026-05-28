@@ -1,19 +1,4 @@
-import {
-  Order,
-  OrderItem,
-  OrderEvent,
-  OrderAddress,
-  DeliverySlotBooking,
-} from '@prisma/client';
-
-type RawOrder = Order & {
-  items: OrderItem[];
-  events: OrderEvent[];
-  addresses: OrderAddress[];
-  deliverySlotBooking: DeliverySlotBooking | null;
-};
-
-function serializeAddress(addr: OrderAddress | null) {
+function serializeAddress(addr: any | null) {
   if (!addr) return null;
   return {
     firstName: addr.firstName,
@@ -28,7 +13,7 @@ function serializeAddress(addr: OrderAddress | null) {
   };
 }
 
-function serializeItem(item: OrderItem) {
+function serializeItem(item: any) {
   return {
     id: item.id,
     orderId: item.orderId,
@@ -45,18 +30,19 @@ function serializeItem(item: OrderItem) {
   };
 }
 
-function serializeEvent(event: OrderEvent) {
+function serializeEvent(event: any) {
   return {
     id: event.id,
     orderId: event.orderId,
     eventType: event.eventType,
     payload: event.payload,
     actorId: event.actorId ?? undefined,
-    createdAt: event.createdAt.toISOString(),
+    createdAt: event.createdAt,
   };
 }
 
-export function serializeOrder(order: RawOrder) {
+export function serializeOrder(order: any) {
+  const addresses: any[] = order.addresses ?? [];
   const deliverySlot = order.deliverySlotBooking
     ? {
         date: order.deliverySlotBooking.date,
@@ -79,20 +65,20 @@ export function serializeOrder(order: RawOrder) {
     shippingMinor: order.shippingMinor,
     taxMinor: order.taxMinor,
     totalMinor: order.totalMinor,
-    shippingAddress: serializeAddress(order.addresses?.find(a => a.type === 'shipping') ?? null),
-    billingAddress: serializeAddress(order.addresses?.find(a => a.type === 'billing') ?? null),
+    shippingAddress: serializeAddress(addresses.find((a) => a.type === 'shipping') ?? null),
+    billingAddress: serializeAddress(addresses.find((a) => a.type === 'billing') ?? null),
     deliverySlot,
     deliveryMethod: order.deliveryMethod,
     notesCustomer: order.notesCustomer ?? undefined,
     loyaltyPointsEarned: order.loyaltyPointsEarned,
     loyaltyPointsRedeemed: order.loyaltyPointsRedeemed,
-    placedAt: order.placedAt.toISOString(),
-    paidAt: order.paidAt?.toISOString() ?? undefined,
-    shippedAt: order.shippedAt?.toISOString() ?? undefined,
-    deliveredAt: order.deliveredAt?.toISOString() ?? undefined,
+    placedAt: order.placedAt,
+    paidAt: order.paidAt ?? undefined,
+    shippedAt: order.shippedAt ?? undefined,
+    deliveredAt: order.deliveredAt ?? undefined,
     trackingNumber: order.trackingNumber ?? undefined,
     carrierName: order.carrierName ?? undefined,
-    events: order.events.map(serializeEvent),
-    items: order.items.map(serializeItem),
+    events: (order.events ?? []).map(serializeEvent),
+    items: (order.items ?? []).map(serializeItem),
   };
 }

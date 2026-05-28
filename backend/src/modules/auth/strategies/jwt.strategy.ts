@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { SupabaseService } from '../../../supabase/supabase.service';
 
 export interface JwtPayload {
   sub: string;
@@ -15,7 +15,7 @@ export interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
-    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -25,33 +25,29 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        preferredLocale: true,
-        marketingEmailOptIn: true,
-        marketingSmsOptIn: true,
-        isAdmin: true,
-        isSuperAdmin: true,
-        isActive: true,
-        deletedAt: true,
-        teamMembership: { select: { role: true, status: true } },
-      },
-    });
+    const { data: users } = await this.supabase.db
+      .from('User')
+      .select('id, email, firstName, lastName, phone, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, isAdmin, isSuperAdmin, isActive, deletedAt')
+      .eq('id', payload.sub)
+      .limit(1);
 
+    const user = users?.[0];
     if (!user || !user.isActive || user.deletedAt) {
       throw new UnauthorizedException('User account is inactive or does not exist');
     }
 
+    const { data: teamRows } = await this.supabase.db
+      .from('TeamMember')
+      .select('role, status')
+      .eq('userId', user.id)
+      .limit(1);
+
+    const team = teamRows?.[0];
+
     return {
       ...user,
-      teamRole: user.teamMembership?.role ?? null,
-      teamStatus: user.teamMembership?.status ?? null,
+      teamRole: team?.role ?? null,
+      teamStatus: team?.status ?? null,
     };
   }
 }
