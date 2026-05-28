@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\api\\index.ts": {
-    "mtime": 1779983538.09054,
-    "ast_hash": "3f7ff6282b98588ee4f298063edcf63e",
+    "mtime": 1780010729.5567708,
+    "ast_hash": "9e2419d5165ccea35c30898773b25b74",
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\docker\\postgres\\init.sql": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\main.ts": {
-    "mtime": 1779986866.8140225,
-    "ast_hash": "4e14b4a9f24e0882bbf089b2a496bc2d",
+    "mtime": 1780010558.036169,
+    "ast_hash": "3c6ef1a1d2179d2aea2f5a70c536f03d",
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\common\\decorators\\current-user.decorator.ts": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\auth.service.ts": {
-    "mtime": 1779987422.836735,
-    "ast_hash": "27fdaccfa8780b6276459fdec4e0195d",
+    "mtime": 1780011493.7489092,
+    "ast_hash": "08814c11b20dc39477e7adf9c233c7ba",
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\auth\\strategies\\jwt-refresh.strategy.ts": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.controller.ts": {
-    "mtime": 1779410636.2040596,
-    "ast_hash": "e6b5be651dc9755b8fec4284cfaa2e23",
+    "mtime": 1780010327.2174091,
+    "ast_hash": "0612c308c256ac9f740c7c0ce97a6d7c",
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.dto.ts": {
@@ -470,13 +470,13 @@
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.serializer.ts": {
-    "mtime": 1779410404.9218183,
-    "ast_hash": "63f0655ca1dac8d8efcd43e4175065ef",
+    "mtime": 1780010869.750835,
+    "ast_hash": "963bb61de4faaccb04e68e4ab759fdda",
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\products\\products.service.ts": {
-    "mtime": 1779986876.042194,
-    "ast_hash": "c2fe9f48c1efc2334a31e0c2a2491b5f",
+    "mtime": 1780007726.519755,
+    "ast_hash": "c1e4fcfaf810837596d4eb30d6e61d1d",
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\src\\modules\\recipes\\recipes.controller.ts": {
@@ -615,8 +615,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\next.config.ts": {
-    "mtime": 1779425299.597445,
-    "ast_hash": "c91344d41eb485e0bc6d0cf83ec02842",
+    "mtime": 1780010877.9704483,
+    "ast_hash": "00071c370e6b2ddbaa027380f1c07db3",
     "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\package.json": {
@@ -1417,6 +1417,271 @@
   "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\search_oluolu_pounded_yam.png": {
     "mtime": 1780007308.3473563,
     "ast_hash": "114bccf4d6f9c0436977ef5c6c274780",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\process.py": {
+    "mtime": 1780009623.9993849,
+    "ast_hash": "96ad5cae5ab53992a296d189b5d103fa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\backend\\scripts\\upload-product-images.ts": {
+    "mtime": 1780010094.8951843,
+    "ast_hash": "0fe907d7bdd8df0a22a6b7b780bdf95e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\EREKO_NEW\\public\\manifest.json": {
+    "mtime": 1780007734.874919,
+    "ast_hash": "4c966720698a28e388cb496d5a32c460",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\metadata.json": {
+    "mtime": 1780009798.6072245,
+    "ast_hash": "10f3191739677a05397c1ee390cdb7cd",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\upload-results.json": {
+    "mtime": 1780010033.8801,
+    "ast_hash": "c12e9a294741cbbf540e0119fb32a9fb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\GEMINI_IMAGE_PROMPT.md": {
+    "mtime": 1780007774.9955945,
+    "ast_hash": "098d242a43d207eaaf287f1882643d42",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_fanta_detail.png": {
+    "mtime": 1780011093.6081219,
+    "ast_hash": "db8d460f9a54f014f7c9997de00c976b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_final_shop.png": {
+    "mtime": 1780010820.8292894,
+    "ast_hash": "5aae27190ecae01556c8b2103ecd5a1f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_home_final.png": {
+    "mtime": 1780011053.3283758,
+    "ast_hash": "586cf945fb027754e895e260aa702b9c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_malta_detail.png": {
+    "mtime": 1780011091.5999994,
+    "ast_hash": "a3c90c27d198ab2520ccbfdf475cd5c6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_mobile_shop.png": {
+    "mtime": 1780011113.5589056,
+    "ast_hash": "f4ff81665737a7a5ef8d2de065a9fddb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_product_detail.png": {
+    "mtime": 1780011075.2553325,
+    "ast_hash": "e9d138ec3404a5d9ece10ee42e78ca28",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_shop_final.png": {
+    "mtime": 1780010418.189883,
+    "ast_hash": "4fff925ad4bc1ef5119d485a4af44127",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_shop_loaded.png": {
+    "mtime": 1780011027.6547666,
+    "ast_hash": "f4ff81665737a7a5ef8d2de065a9fddb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_shop_prices_images.png": {
+    "mtime": 1780011006.7548616,
+    "ast_hash": "bb747ba865ad9f79ccb34ab768018a01",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\qa_shop_with_images.png": {
+    "mtime": 1780010171.2197812,
+    "ast_hash": "7f859498e0453737173343bdee88be0f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\amala_yam_flour.jpg": {
+    "mtime": 1780009784.6393795,
+    "ast_hash": "01589974d360ae9a6235d402742679a3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\basmati_rice_5kg.jpg": {
+    "mtime": 1780009760.2209032,
+    "ast_hash": "058b8e125357038a2de5ea0fb0c1b496",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\cameroon_pepper.jpg": {
+    "mtime": 1780009792.9108386,
+    "ast_hash": "ac7ca2a147a8ec534efc4a585a1639b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\dried_stockfish.jpg": {
+    "mtime": 1780009758.196206,
+    "ast_hash": "db83552e00c41f5c581dc09fcefa8893",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\frozen_plantain.jpg": {
+    "mtime": 1780009779.7820754,
+    "ast_hash": "cb54e34f32076672c6dd74109e7c3dc8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\fufu_cassava.jpg": {
+    "mtime": 1780009781.9043882,
+    "ast_hash": "da69784905ce008374239a430c2bce12",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\golden_penny_semovita.jpg": {
+    "mtime": 1780009798.6072245,
+    "ast_hash": "f36e0a0f3575db7a8ae8475e07a0005b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\ground_egusi.jpg": {
+    "mtime": 1780009753.5582504,
+    "ast_hash": "c5dfa100a4125d2fc0f36b7d34c751fe",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\indomie_chicken.jpg": {
+    "mtime": 1780009746.085568,
+    "ast_hash": "61562c19ff8d6046120ac8cc538e9f3c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\maggi_naija.jpg": {
+    "mtime": 1780009790.2811382,
+    "ast_hash": "7b47f644125a6fe7bb5421ca57bc52f4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\malta_guinness.jpg": {
+    "mtime": 1780009748.6121542,
+    "ast_hash": "69ea93d88cc37e02bc539202a526e1cd",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\milo_tin.jpg": {
+    "mtime": 1780009762.6248405,
+    "ast_hash": "677484c2c487d50b4727ce6421bd1071",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\nigerian_fanta.jpg": {
+    "mtime": 1780009795.3480306,
+    "ast_hash": "545b61314d334cf37b9f82d43986a7cf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\oluolu_pounded_yam.jpg": {
+    "mtime": 1780009736.1072335,
+    "ast_hash": "b16013206bd4fb5282fd4cc576ce640d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\oluolu_poundo_4kg.jpg": {
+    "mtime": 1780009741.2152965,
+    "ast_hash": "75632c44b5a86f8b87c2daf0df4ce4b0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\oluolu_poundo_iyan.jpg": {
+    "mtime": 1780009738.537286,
+    "ast_hash": "cfd8ff88bbb5629664d56954c1ad65ce",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\palm_oil_red.jpg": {
+    "mtime": 1780009751.3548253,
+    "ast_hash": "52b330775a896ed2c39935be6507d95d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\edited\\titus_sardines.jpg": {
+    "mtime": 1780009787.4793766,
+    "ast_hash": "5e58b1af1af27848579f5d49b5615460",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\amala_yam_flour.jpg": {
+    "mtime": 1780007589.98245,
+    "ast_hash": "5e495ae4cbe1a76395710ab644332e6d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\basmati_rice_5kg.jpg": {
+    "mtime": 1780007589.970531,
+    "ast_hash": "91fa033b8372a58df8ad318aa0dfb3a2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\cameroon_pepper.jpg": {
+    "mtime": 1780007590.1650245,
+    "ast_hash": "4d41e574665d8ba46b21a44ec7ddcc99",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\dried_stockfish.jpg": {
+    "mtime": 1780007590.0686378,
+    "ast_hash": "958c1975e74ee7fe3fe00eeb6236f83a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\frozen_plantain.jpg": {
+    "mtime": 1780007590.0766182,
+    "ast_hash": "c8739452e3373fa44bd45c60e8af788a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\fufu_cassava.jpg": {
+    "mtime": 1780007590.075608,
+    "ast_hash": "de0619af5baa244a1c6754c70ffa54e6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\golden_penny_semovita.jpg": {
+    "mtime": 1780007492.015855,
+    "ast_hash": "92de86afd040f8e92890864f07f1fe07",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\ground_egusi.jpg": {
+    "mtime": 1780007590.0321102,
+    "ast_hash": "a969f3e40c6040099f5e195f279e6cd4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\indomie_chicken.jpg": {
+    "mtime": 1780007590.1583781,
+    "ast_hash": "23859353e090b43db4445af764a18875",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\maggi_naija.jpg": {
+    "mtime": 1780007589.9904215,
+    "ast_hash": "eb8fc03108120839f57e697b3755f22e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\malta_guinness.jpg": {
+    "mtime": 1780007590.0321102,
+    "ast_hash": "1652b9483065efa5303ce7a6237c9652",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\milo_tin.jpg": {
+    "mtime": 1780007590.030594,
+    "ast_hash": "77852e0c07680805c5d2b98f63f77d46",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\nigerian_fanta.jpg": {
+    "mtime": 1780007589.9651103,
+    "ast_hash": "ca452e1d476fad07eadeae26db8209d3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\oluolu_pounded_yam.jpg": {
+    "mtime": 1780007455.1598024,
+    "ast_hash": "2f01c59c3db26366cbe8785ca8ce167e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\oluolu_pounded_yam_page.png": {
+    "mtime": 1780007430.627478,
+    "ast_hash": "021415bda47d4b05358f121a111ad456",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\oluolu_poundo_4kg.jpg": {
+    "mtime": 1780007455.155695,
+    "ast_hash": "b7c5ce8de9408df8a93ca668c9f774a1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\oluolu_poundo_iyan.jpg": {
+    "mtime": 1780007455.1587956,
+    "ast_hash": "d2c95ad5bbab41f84c50ef50e08b8a14",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\palm_oil_red.jpg": {
+    "mtime": 1780007589.970531,
+    "ast_hash": "968668c1925fbc8f7bf3c1c354598b07",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\User\\Desktop\\Projects\\EREKO_NEW\\product-images\\raw\\titus_sardines.jpg": {
+    "mtime": 1780007590.007042,
+    "ast_hash": "f14692437e56f24d0f151ed9e93726cf",
     "semantic_hash": ""
   }
 }

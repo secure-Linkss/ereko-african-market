@@ -147,6 +147,8 @@ export class AuthService {
       preferredLocale: user.preferredLocale,
       marketingEmailOptIn: user.marketingEmailOptIn,
       marketingSmsOptIn: user.marketingSmsOptIn,
+      isAdmin: user.isAdmin ?? false,
+      isSuperAdmin: user.isSuperAdmin ?? false,
       loyaltyTier: user.loyaltyTier ?? 'Member',
       loyaltyPointsBalance: user.loyaltyPointsBalance ?? 0,
       createdAt: user.createdAt,
@@ -166,7 +168,7 @@ export class AuthService {
 
     const { data: users, error } = await this.supabase.db
       .from('User')
-      .select('id, email, passwordHash, isActive, deletedAt, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
+      .select('id, email, passwordHash, isAdmin, isSuperAdmin, isActive, deletedAt, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
       .eq('email', dto.email)
       .limit(1);
 
@@ -230,7 +232,7 @@ export class AuthService {
 
     const { data: users } = await this.supabase.db
       .from('User')
-      .select('id, email, isActive, deletedAt, emailVerified, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
+      .select('id, email, isAdmin, isSuperAdmin, isActive, deletedAt, emailVerified, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
       .eq('email', magicLink.email)
       .limit(1);
 
@@ -292,7 +294,7 @@ export class AuthService {
         createdAt: now,
         updatedAt: now,
       })
-      .select('id, email, firstName, lastName, phone, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, createdAt, updatedAt')
+      .select('id, email, isAdmin, isSuperAdmin, firstName, lastName, phone, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, createdAt, updatedAt')
       .single();
 
     if (userErr || !newUser) {
@@ -356,7 +358,7 @@ export class AuthService {
 
     const { data: users } = await this.supabase.db
       .from('User')
-      .select('id, email, isActive, deletedAt, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
+      .select('id, email, isAdmin, isSuperAdmin, isActive, deletedAt, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, phone, firstName, lastName, createdAt, updatedAt')
       .eq('id', userId)
       .limit(1);
 

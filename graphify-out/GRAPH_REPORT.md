@@ -1,16 +1,16 @@
-# Graph Report - EREKO_NEW  (2026-05-28)
+# Graph Report - EREKO_NEW  (2026-05-29)
 
 ## Corpus Check
-- 236 files · ~1,596,289 words
+- 242 files · ~1,736,483 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2543 nodes · 3360 edges · 214 communities (197 shown, 17 thin omitted)
+- 2590 nodes · 3407 edges · 218 communities (198 shown, 20 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d48c5c76`
+- Built from commit: `e6932568`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -222,6 +222,10 @@
 - [[_COMMUNITY_Community 205|Community 205]]
 - [[_COMMUNITY_Community 206|Community 206]]
 - [[_COMMUNITY_Community 207|Community 207]]
+- [[_COMMUNITY_Community 214|Community 214]]
+- [[_COMMUNITY_Community 215|Community 215]]
+- [[_COMMUNITY_Community 216|Community 216]]
+- [[_COMMUNITY_Community 217|Community 217]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `SupabaseService` - 44 edges
@@ -238,20 +242,20 @@
 ## Surprising Connections (you probably didn't know these)
 - `CategoryGrid()` --calls--> `cn()`  [EXTRACTED]
   EREKO_NEW/src/components/home/CategoryGrid.tsx → EREKO_NEW/src/lib/utils.ts
-- `AdminOrdersResponse` --references--> `Order`  [EXTRACTED]
-  EREKO_NEW/src/services/admin.ts → EREKO_NEW/src/types/index.ts
 - `serializeVariant()` --calls--> `stripNulls()`  [EXTRACTED]
   backend/src/modules/products/products.serializer.ts → backend/src/common/utils/serializer.util.ts
-- `AccountPage()` --calls--> `useOrders()`  [EXTRACTED]
-  EREKO_NEW/src/app/[locale]/account/page.tsx → EREKO_NEW/src/services/orders.ts
 - `AccountPage()` --calls--> `useCartStore`  [EXTRACTED]
   EREKO_NEW/src/app/[locale]/account/page.tsx → EREKO_NEW/src/store/cart.ts
+- `AdminDashboardPage()` --calls--> `useAdminMetrics()`  [EXTRACTED]
+  EREKO_NEW/src/app/[locale]/admin/page.tsx → EREKO_NEW/src/services/admin.ts
+- `CartPage()` --calls--> `formatGBP()`  [INFERRED]
+  EREKO_NEW/src/app/[locale]/cart/page.tsx → EREKO_NEW/src/app/[locale]/checkout/page.tsx
 
-## Communities (214 total, 17 thin omitted)
+## Communities (218 total, 20 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.09
-Nodes (35): ORDER_STATUS_LABEL, ProfileForm, profileSchema, TIER_NEXT, CartPage(), AddressForm, addressSchema, CheckoutPage() (+27 more)
+Nodes (33): CartPage(), AddressForm, addressSchema, CheckoutPage(), ContactForm, contactSchema, formatGBP(), ContactForm (+25 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.04
@@ -270,12 +274,12 @@ Cohesion: 0.12
 Nodes (9): AuthController, ForgotPasswordDto, LoginDto, MagicLinkRequestDto, MfaVerifyDto, RefreshTokenDto, ResetPasswordDto, SignupDto (+1 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (12): CartController, ApplyCouponDto, CartItemInputDto, RedeemLoyaltyDto, SyncCartDto, CartModule, serializeCart(), serializeCartItem() (+4 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.08
-Nodes (13): CheckoutController, AddressDto, ConfirmOrderDto, DeliveryMethod, DeliverySlotInputDto, PaymentIntentDto, PaymentMethodEnum, StartCheckoutDto (+5 more)
+Cohesion: 0.06
+Nodes (17): CheckoutController, AddressDto, ConfirmOrderDto, DeliveryMethod, DeliverySlotInputDto, PaymentIntentDto, PaymentMethodEnum, StartCheckoutDto (+9 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.05
@@ -298,15 +302,15 @@ Cohesion: 0.06
 Nodes (34): dependencies, axios, clsx, framer-motion, @hookform/resolvers, lucide-react, next, next-intl (+26 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.08
-Nodes (21): Footer(), ClientLayoutWrapper(), geistMono, geistSans, LocaleLayoutProps, metadata, orgJsonLd, siteJsonLd (+13 more)
+Cohesion: 0.07
+Nodes (26): Footer(), ClientLayoutWrapper(), geistMono, geistSans, LocaleLayoutProps, metadata, orgJsonLd, siteJsonLd (+18 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.11
-Nodes (27): AccountPage(), AdminDashboardPage(), Header(), ForgotForm, forgotSchema, LoginForm, LoginPage(), loginSchema (+19 more)
+Cohesion: 0.10
+Nodes (32): AccountPage(), ORDER_STATUS_LABEL, ProfileForm, profileSchema, TIER_NEXT, AdminDashboardPage(), Header(), ForgotForm (+24 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (19): CargoController, CargoEstimateDto, CargoInquireDto, CargoUrgencyDto, CargoModule, serializeCargoInquiry(), serializeUrgency(), calculateQuoteMinor() (+11 more)
 
 ### Community 15 - "Community 15"
@@ -322,8 +326,8 @@ Cohesion: 0.06
 Nodes (32): minLength, type, minLength, type, minLength, type, items, type (+24 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.08
-Nodes (22): activeIdempotencyKeys, API_ENDPOINTS, apiClient, clearIdempotencyKey(), errorData, failedQueue, fallbackProblem, isMutatingAction (+14 more)
+Cohesion: 0.07
+Nodes (25): activeIdempotencyKeys, API_ENDPOINTS, apiClient, errorData, failedQueue, fallbackProblem, isMutatingAction, key (+17 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.06
@@ -334,8 +338,8 @@ Cohesion: 0.07
 Nodes (29): code:block1 (node "$SKILL_DIR/scripts/worktree-harvest.cjs" cleanup-all "), code:block10 (node "$SKILL_DIR/scripts/worktree-harvest.cjs" harvest ".bug), code:block11 (node "$SKILL_DIR/scripts/worktree-harvest.cjs" cleanup ".bug), code:block12 (node "$SKILL_DIR/scripts/fix-lock.cjs" renew ".bug-hunter/fi), code:block13 (node "$SKILL_DIR/scripts/fix-lock.cjs" renew ".bug-hunter/fi), code:block14 (node "$SKILL_DIR/scripts/worktree-harvest.cjs" cleanup-all "), code:block15 (node "$SKILL_DIR/scripts/worktree-harvest.cjs" checkout-fix ), code:block16 (timeout 60 git revert --no-edit <hash>) (+21 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.12
-Nodes (9): TeamController, AcceptInviteDto, InviteTeamMemberDto, SendAdminEmailDto, StaffRole, TeamMemberStatus, UpdateTeamMemberDto, ROLE_PERMISSIONS (+1 more)
+Cohesion: 0.07
+Nodes (23): baseLayout(), escapeHtml(), MagicLinkContext, magicLinkTemplate(), OrderConfirmationContext, orderConfirmationTemplate(), PasswordResetContext, passwordResetTemplate() (+15 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.07
@@ -346,20 +350,20 @@ Cohesion: 0.07
 Nodes (19): CATEGORIES, CategoryCardProps, CategoryGrid(), CategoryGridProps, CategoryItem, EASE_OUT, FadeInProps, FadeInUpProps (+11 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.10
-Nodes (8): OrderPlacedJob, OrdersProcessor, OrderStatus, JwtPayload, JwtStrategy, SupabaseService, WebhookProcessor, WebhooksService
+Cohesion: 0.15
+Nodes (6): JwtPayload, JwtStrategy, SupabaseModule, SupabaseService, WebhookProcessor, WebhooksModule
 
 ### Community 25 - "Community 25"
-Cohesion: 0.11
-Nodes (26): ContactsTab(), DashboardTab(), InventoryTab(), ORDER_STATUS_COLORS, OrdersTab(), ReturnsTab(), Tab, AdminContactMessage (+18 more)
+Cohesion: 0.12
+Nodes (25): ContactsTab(), DashboardTab(), InventoryTab(), ORDER_STATUS_COLORS, OrdersTab(), ReturnsTab(), Tab, AdminContactMessage (+17 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.11
-Nodes (10): AdminController, AdjustInventoryDto, InventoryReasonCode, OrderStatus, ResolveReturnDto, ReturnStatus, UpdateOrderStatusDto, AdminService (+2 more)
+Cohesion: 0.24
+Nodes (6): AdjustInventoryDto, InventoryReasonCode, ResolveReturnDto, ReturnStatus, ALLOWED_TRANSITIONS, POST_SHIP_STATUSES
 
 ### Community 27 - "Community 27"
-Cohesion: 0.14
-Nodes (14): AdminModule, AuthModule, CheckoutModule, ContactModule, NotificationsModule, PaymentsModule, buildBullModule(), buildCacheModule() (+6 more)
+Cohesion: 0.11
+Nodes (15): AdminModule, expressApp, AuthModule, ContactModule, AllExceptionsFilter, LoggingInterceptor, InventoryModule, NotificationsModule (+7 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.12
@@ -374,8 +378,8 @@ Cohesion: 0.07
 Nodes (26): code:bash (fd -e ts -e js -e tsx -e jsx -e py -e go -e rs -e java -e rb), code:bash (find <target> -type f \( -name '*.ts' -o -name '*.js' -o -na), code:block3 (Glob("**/*.{ts,js,py,go,rs,java,rb,php}")), code:bash (ls -R <target> | head -500), code:bash (rg -l "app\.(get|post|put|delete|patch)" <target>), code:bash (grep -rl "app\.\(get\|post\|put\|delete\)" <target>), code:block7 (Grep("app.get|app.post|router.", <target>)), code:bash (fd -e ts -e js . <target> | xargs wc -l | tail -1) (+18 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.09
-Nodes (24): StripePaymentForm(), checkoutService, ConfirmCheckoutRequest, ConfirmCheckoutResponse, PaymentIntentRequest, PaymentIntentResponse, StartCheckoutRequest, StartCheckoutResponse (+16 more)
+Cohesion: 0.08
+Nodes (27): clearIdempotencyKey(), StripePaymentForm(), AdminOrdersResponse, checkoutService, ConfirmCheckoutRequest, ConfirmCheckoutResponse, PaymentIntentRequest, PaymentIntentResponse (+19 more)
 
 ### Community 32 - "Community 32"
 Cohesion: 0.08
@@ -386,8 +390,8 @@ Cohesion: 0.10
 Nodes (25): additionalProperties, artifact, items, type, items, type, items, type (+17 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.12
-Nodes (10): CurrentUser, OrdersController, CreateReturnDto, RefundTypeDto, ReturnItemDto, ReturnReasonCodeDto, OrdersModule, serializeAddress() (+2 more)
+Cohesion: 0.17
+Nodes (7): OrdersController, CreateReturnDto, RefundTypeDto, ReturnItemDto, ReturnReasonCodeDto, OrdersModule, OrdersService
 
 ### Community 35 - "Community 35"
 Cohesion: 0.08
@@ -402,12 +406,12 @@ Cohesion: 0.09
 Nodes (21): compilerOptions, allowSyntheticDefaultImports, baseUrl, declaration, emitDecoratorMetadata, esModuleInterop, experimentalDecorators, forceConsistentCasingInFileNames (+13 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.11
-Nodes (5): AdminGuard, SeoController, UpsertSeoDto, SeoModule, SeoService
+Cohesion: 0.12
+Nodes (3): SeoController, SeoModule, SeoService
 
 ### Community 39 - "Community 39"
-Cohesion: 0.22
-Nodes (12): baseLayout(), escapeHtml(), MagicLinkContext, magicLinkTemplate(), OrderConfirmationContext, orderConfirmationTemplate(), PasswordResetContext, passwordResetTemplate() (+4 more)
+Cohesion: 0.12
+Nodes (15): code:json ({), EREKO BRAND IDENTITY, EREKO Market — Gemini Product Image Editing Prompt, FILES TO PROCESS, IMAGE EDITING TASK, IMPORTANT REMINDERS, OUTPUT: metadata.json, QUALITY CHECKLIST (verify for each image before saving) (+7 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.11
@@ -438,8 +442,8 @@ Cohesion: 0.10
 Nodes (19): code:json ([), code:bash (node "$SKILL_DIR/scripts/doc-lookup.cjs" search "<library>" ), code:bash (node "$SKILL_DIR/scripts/doc-lookup.cjs" get "<library-or-id), code:bash (node "$SKILL_DIR/scripts/context7-api.cjs" search "<library>), Common false positive patterns, Completeness check, Context, Doc Lookup Tool (+11 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.14
-Nodes (8): InventoryModule, InsufficientStockException, InventoryReasonCode, InventoryService, WarehouseStockRow, buildCursorWhere(), decodeCursor(), encodeCursor()
+Cohesion: 0.21
+Nodes (7): OrderStatus, InsufficientStockException, InventoryReasonCode, WarehouseStockRow, buildCursorWhere(), decodeCursor(), encodeCursor()
 
 ### Community 48 - "Community 48"
 Cohesion: 0.11
@@ -454,8 +458,8 @@ Cohesion: 0.11
 Nodes (19): minimum, type, minimum, type, minimum, type, minimum, type (+11 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.17
-Nodes (9): ProductsController, ProductFilterDto, ProductsQueryDto, SORT_OPTIONS, SortBy, ProductsModule, mapRow(), PRODUCT_SELECT (+1 more)
+Cohesion: 0.09
+Nodes (22): ProductsController, ProductFilterDto, ProductsQueryDto, SORT_OPTIONS, SortBy, ProductsModule, PrismaAllergen, PrismaCulturalMeta (+14 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.11
@@ -473,10 +477,6 @@ Nodes (18): type, minLength, type, enum, type, properties, enum, type (+10 more)
 Cohesion: 0.12
 Nodes (16): 1. Check whether to continue, 2. Determine which files remain, 3. Run one pipeline iteration, 4. Log the iteration result, 5. Check coverage, code:bash (node "$SKILL_DIR/scripts/experiment-loop.cjs" init \), code:bash (node "$SKILL_DIR/scripts/experiment-loop.cjs" check-continue), code:bash (node "$SKILL_DIR/scripts/experiment-loop.cjs" log \) (+8 more)
 
-### Community 56 - "Community 56"
-Cohesion: 0.18
-Nodes (13): PrismaAllergen, PrismaCulturalMeta, PrismaImage, PrismaNutritionalInfo, PrismaProduct, PrismaSeo, PrismaVariant, serializeCulturalMeta() (+5 more)
-
 ### Community 57 - "Community 57"
 Cohesion: 0.12
 Nodes (15): code:python (def search_users(request):), code:block2 (**BUG-1** | Severity: Critical | Points: 10), code:javascript (router.get('/api/documents/:id', async (req, res) => {), code:block4 (**BUG-2** | Severity: Critical | Points: 10), code:python (def resize_image(filename, width, height):), code:block6 (**BUG-3** | Severity: Critical | Points: 10), code:python (def get_products(category_id):), code:typescript (router.get('/api/documents/:id',) (+7 more)
@@ -490,11 +490,11 @@ Cohesion: 0.13
 Nodes (14): AddressFormData, addressSchema, CargoInquiryFormData, cargoInquirySchema, CheckoutFormData, checkoutSchema, ContactFormData, contactSchema (+6 more)
 
 ### Community 60 - "Community 60"
-Cohesion: 0.20
-Nodes (6): Public(), SearchQueryDto, SearchController, SearchModule, PRODUCT_SELECT, SearchService
+Cohesion: 0.23
+Nodes (5): SearchQueryDto, SearchController, SearchModule, PRODUCT_SELECT, SearchService
 
 ### Community 61 - "Community 61"
-Cohesion: 0.20
+Cohesion: 0.18
 Nodes (3): ContactController, CreateContactDto, ContactService
 
 ### Community 62 - "Community 62"
@@ -518,7 +518,7 @@ Cohesion: 0.14
 Nodes (13): code:json ({), Fixer — Surgical Code Repair, Handling complex fixes, How to work, Looking up documentation, Output Destination, Output format, Phase 1: Read and understand (before ANY edits) (+5 more)
 
 ### Community 67 - "Community 67"
-Cohesion: 0.20
+Cohesion: 0.21
 Nodes (5): RecipesController, ListRecipesQueryDto, RecipesModule, RecipesService, serializeRecipe()
 
 ### Community 68 - "Community 68"
@@ -538,8 +538,8 @@ Cohesion: 0.15
 Nodes (12): Bug Hunt - Adversarial Bug Finding, code:block1 (Recon (map) --> Hunter (deep scan) --> Skeptic (challenge) -), code:block2 (Baseline --> Git branch --> sequential Fixer (single writer)), code:block3 (/bug-hunter                              # Scan entire proje), code:bash (node "$SKILL_DIR/scripts/pr-scope.cjs" resolve "<selector>" ), code:block5 (avg_tokens_per_file = average_lines_per_file * 4), Context Budget, Error handling (+4 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.24
-Nodes (4): expressApp, AllExceptionsFilter, LoggingInterceptor, AppModule
+Cohesion: 0.27
+Nodes (9): ensureBucket(), IMAGES_DIR, main(), METADATA_PATH, prisma, PRODUCT_SLUG_MAP, supabase, uploadImage() (+1 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.15
@@ -589,9 +589,9 @@ Nodes (9): code:markdown (# Threat Model for [Repository Name]), code:block2, co
 Cohesion: 0.20
 Nodes (9): additionalProperties, allOf, artifact, description, required, $schema, schemaVersion, title (+1 more)
 
-### Community 85 - "Community 85"
-Cohesion: 0.22
-Nodes (8): CargoPortalPage(), CargoEstimateRequest, CargoEstimateResponse, CargoInquiryRequest, cargoService, useCreateCargoInquiry(), useTrackConsignment(), CargoInquiry
+### Community 86 - "Community 86"
+Cohesion: 0.19
+Nodes (6): CurrentUser, Public(), AdminGuard, JwtAuthGuard, IdempotencyInterceptor, UpsertSeoDto
 
 ### Community 87 - "Community 87"
 Cohesion: 0.22
@@ -674,8 +674,8 @@ Cohesion: 0.29
 Nodes (6): Existing implementation hooks, Output rules, Purpose, Required outputs, Threat Model Generation, Workflow
 
 ### Community 108 - "Community 108"
-Cohesion: 0.38
-Nodes (5): NotificationState, SystemNotification, ToastMessage, useNotificationStore, ToastContainer()
+Cohesion: 0.22
+Nodes (8): background_color, description, display, icons, name, short_name, start_url, theme_color
 
 ### Community 109 - "Community 109"
 Cohesion: 0.29
@@ -1009,25 +1009,33 @@ Nodes (3): minimum, type, new_failures
 Cohesion: 0.67
 Nodes (3): minimum, type, confirmed
 
+### Community 215 - "Community 215"
+Cohesion: 0.70
+Nodes (4): create_circular_logo(), create_drop_shadow(), main(), process_image()
+
+### Community 216 - "Community 216"
+Cohesion: 0.50
+Nodes (3): generated, images, watermark_version
+
 ## Knowledge Gaps
-- **1359 isolated node(s):** `name`, `version`, `description`, `license`, `main` (+1354 more)
+- **1389 isolated node(s):** `name`, `version`, `description`, `license`, `main` (+1384 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `SupabaseService` connect `Community 24` to `Community 34`, `Community 67`, `Community 4`, `Community 5`, `Community 6`, `Community 38`, `Community 10`, `Community 14`, `Community 79`, `Community 47`, `Community 51`, `Community 115`, `Community 21`, `Community 26`, `Community 27`, `Community 60`, `Community 61`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `PaymentsService` connect `Community 6` to `Community 24`, `Community 115`, `Community 27`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `NotificationsService` connect `Community 39` to `Community 4`, `Community 21`, `Community 24`, `Community 27`, `Community 61`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+- **Why does `SupabaseService` connect `Community 24` to `Community 34`, `Community 67`, `Community 4`, `Community 5`, `Community 6`, `Community 38`, `Community 10`, `Community 14`, `Community 79`, `Community 47`, `Community 51`, `Community 21`, `Community 56`, `Community 26`, `Community 60`, `Community 61`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+- **Why does `AuthService` connect `Community 4` to `Community 27`, `Community 21`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `description` to the rest of the system?**
-  _1359 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1389 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.09125188536953242 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09224489795918367 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.0425531914893617 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.05087881591119334 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.048625792811839326 - nodes in this community are weakly interconnected._
