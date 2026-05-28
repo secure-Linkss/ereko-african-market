@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Minus, Plus, Trash2, ArrowRight, Bookmark, ShoppingBag, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
+import { apiClient, API_ENDPOINTS } from '@/lib/api/client';
 
 export default function CartPage() {
   const params = useParams();
@@ -45,13 +46,18 @@ export default function CartPage() {
     return `£${(minor / 100).toFixed(2)}`;
   }
 
-  function handlePromo() {
-    // In production this would call the backend coupon endpoint
-    if (promoInput.toUpperCase() === 'EREKO10') {
-      applyPromo(promoInput.toUpperCase(), Math.round(subtotal * 0.1));
-      setPromoError('');
-    } else {
-      setPromoError('Invalid promo code');
+  async function handlePromo() {
+    if (!promoInput.trim()) return;
+    setPromoError('');
+    try {
+      const res = await apiClient.post<{ discountMinor: number; promoCode: string }>(
+        API_ENDPOINTS.CART.COUPON,
+        { code: promoInput.trim() },
+      );
+      applyPromo(res.data.promoCode, res.data.discountMinor);
+      setPromoInput('');
+    } catch (err: any) {
+      setPromoError(err?.response?.data?.detail ?? err?.message ?? 'Invalid promo code');
     }
   }
 

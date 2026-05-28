@@ -55,11 +55,10 @@ export function Footer() {
             <h3 className="font-bold text-lg mb-6 border-b border-background/20 pb-2 inline-block">Company</h3>
             <ul className="space-y-3 text-sm text-muted">
               <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link href="/careers" className="hover:text-primary transition-colors">Careers</Link></li>
-              <li><Link href="/press" className="hover:text-primary transition-colors">Press & Media</Link></li>
-              <li><Link href="/community" className="hover:text-primary transition-colors">Community Initiatives</Link></li>
-              <li><Link href="/sustainability" className="hover:text-primary transition-colors">Sustainability</Link></li>
-              <li><Link href="/blog" className="hover:text-primary transition-colors">The Ereko Blog</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
+              <li><Link href="/cargo" className="hover:text-primary transition-colors">Cargo Service</Link></li>
+              <li><Link href="/recipes" className="hover:text-primary transition-colors">Recipes</Link></li>
+              <li><Link href="/help" className="hover:text-primary transition-colors">Help Centre</Link></li>
             </ul>
           </div>
 
@@ -67,12 +66,12 @@ export function Footer() {
           <div>
             <h3 className="font-bold text-lg mb-6 border-b border-background/20 pb-2 inline-block">Support</h3>
             <ul className="space-y-3 text-sm text-muted">
-              <li><Link href="/help" className="hover:text-primary transition-colors">Help Center & FAQs</Link></li>
-              <li><Link href="/track" className="hover:text-primary transition-colors">Track Order</Link></li>
-              <li><Link href="/returns" className="hover:text-primary transition-colors">Returns & Refunds</Link></li>
-              <li><Link href="/shipping" className="hover:text-primary transition-colors">Shipping Info</Link></li>
-              <li><Link href="/loyalty" className="hover:text-primary transition-colors">Loyalty Program</Link></li>
-              <li><Link href="/vendors" className="hover:text-primary transition-colors">Sell on Ereko</Link></li>
+              <li><Link href="/help" className="hover:text-primary transition-colors">Help Centre & FAQs</Link></li>
+              <li><Link href="/account" className="hover:text-primary transition-colors">Track My Order</Link></li>
+              <li><Link href="/account" className="hover:text-primary transition-colors">Returns & Refunds</Link></li>
+              <li><Link href="/help" className="hover:text-primary transition-colors">Shipping Info</Link></li>
+              <li><Link href="/account" className="hover:text-primary transition-colors">Loyalty Programme</Link></li>
+              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
             </ul>
           </div>
 

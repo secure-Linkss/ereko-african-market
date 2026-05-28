@@ -10,6 +10,7 @@ export interface AdminDashboardMetrics {
   pendingRefundsCount: number;
   activeDisputesCount: number;
   webhookFailuresCount: number;
+  unreadContactsCount: number;
 }
 
 export interface AdminOrdersRequest {
@@ -71,6 +72,17 @@ export interface ApproveRefundRequest {
   customRefundAmountMinor?: number;
 }
 
+export interface AdminContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  phone?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 // --- Service Implementation ---
 export const adminService = {
   getMetrics: async (): Promise<AdminDashboardMetrics> => {
@@ -127,6 +139,15 @@ export const adminService = {
       `${API_ENDPOINTS.ADMIN.RETURNS}/${payload.rmaId}/resolve`,
       payload
     );
+  },
+
+  getContacts: async (limit = 50): Promise<AdminContactMessage[]> => {
+    const response = await apiClient.get<AdminContactMessage[]>('/api/v1/contact/admin', { params: { limit } });
+    return response.data;
+  },
+
+  markContactRead: async (id: string): Promise<void> => {
+    await apiClient.patch(`/api/v1/contact/admin/${id}/read`);
   },
 };
 
@@ -186,6 +207,25 @@ export function useAdminReturns() {
     queryKey: ["admin-returns"],
     queryFn: adminService.getReturns,
     staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useAdminContacts(limit = 50) {
+  return useQuery({
+    queryKey: ['admin-contacts', limit],
+    queryFn: () => adminService.getContacts(limit),
+    staleTime: 1000 * 30,
+  });
+}
+
+export function useMarkContactRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adminService.markContactRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+    },
   });
 }
 

@@ -10,6 +10,7 @@ import Stripe from 'stripe';
 import { SupabaseService } from '../../supabase/supabase.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import { ContactService } from '../contact/contact.service';
 import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto, OrderStatus, ReturnStatus } from './admin.dto';
 import { serializeOrder } from '../orders/orders.serializer';
 import { encodeCursor, decodeCursor } from '../../common/utils/pagination.util';
@@ -44,6 +45,7 @@ export class AdminService {
     private readonly supabase: SupabaseService,
     private readonly inventory: InventoryService,
     private readonly webhooks: WebhooksService,
+    private readonly contact: ContactService,
     private readonly config: ConfigService,
   ) {
     this.stripe = new Stripe(this.config.get<string>('stripe.secretKey') ?? '', {
@@ -91,6 +93,7 @@ export class AdminService {
       { count: pendingRefundsCount },
       { count: activeDisputesCount },
       { count: webhookFailuresCount },
+      unreadContactsCount,
     ] = await Promise.all([
       this.supabase.db
         .from('Order')
@@ -114,6 +117,7 @@ export class AdminService {
         .from('WebhookEvent')
         .select('id', { count: 'exact', head: true })
         .in('status', ['failed', 'retrying']),
+      this.contact.countUnread(),
     ]);
 
     const todayRevenueMinor = (revenueData ?? []).reduce(
@@ -128,6 +132,7 @@ export class AdminService {
       pendingRefundsCount: pendingRefundsCount ?? 0,
       activeDisputesCount: activeDisputesCount ?? 0,
       webhookFailuresCount: webhookFailuresCount ?? 0,
+      unreadContactsCount: unreadContactsCount ?? 0,
     };
   }
 

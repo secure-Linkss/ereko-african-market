@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
-  LayoutDashboard, ShoppingBag, Package, Users, Settings, Bell,
-  Search, ArrowUpRight, ArrowDownRight, PackageCheck, AlertCircle,
-  RefreshCcw, LogOut, TrendingUp, Banknote, RotateCcw,
+  LayoutDashboard, ShoppingBag, Package, Bell,
+  Search, PackageCheck, AlertCircle,
+  RefreshCcw, LogOut, Banknote, RotateCcw, MessageSquare, Mail, CheckCircle2,
 } from 'lucide-react';
-import { useAdminMetrics, useAdminOrders, useAdminInventory, useAdminReturns, useUpdateOrderStatus } from '@/services/admin';
+import { useAdminMetrics, useAdminOrders, useAdminInventory, useAdminReturns, useResolveRma, useAdminContacts, useMarkContactRead, useUpdateOrderStatus } from '@/services/admin';
 import { useAuthStore } from '@/store/auth';
 import { useLogout } from '@/services/auth';
 
@@ -29,7 +29,7 @@ const ORDER_STATUS_COLORS: Record<string, string> = {
   RETURN_REQUESTED: 'bg-orange-100 text-orange-800',
 };
 
-type Tab = 'dashboard' | 'orders' | 'inventory' | 'returns';
+type Tab = 'dashboard' | 'orders' | 'inventory' | 'returns' | 'contacts';
 
 export default function AdminDashboardPage() {
   const params = useParams();
@@ -40,6 +40,7 @@ export default function AdminDashboardPage() {
   const [orderSearch, setOrderSearch] = useState('');
 
   const { user, isAuthenticated } = useAuthStore();
+  const { data: metrics } = useAdminMetrics();
   const logoutMutation = useLogout();
 
   if (!isAuthenticated || !user?.isAdmin) {
@@ -82,6 +83,7 @@ export default function AdminDashboardPage() {
           <NavItem tab="orders" icon={ShoppingBag} label="Orders" />
           <NavItem tab="inventory" icon={Package} label="Inventory" />
           <NavItem tab="returns" icon={RefreshCcw} label="Returns" />
+          <NavItem tab="contacts" icon={MessageSquare} label="Messages" badge={metrics?.unreadContactsCount ? String(metrics.unreadContactsCount) : undefined} />
         </nav>
         <div className="p-4 border-t border-border space-y-1">
           <Link href={`/${locale}`} className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-muted/50 hover:text-foreground rounded-lg transition-colors text-sm">
@@ -99,7 +101,7 @@ export default function AdminDashboardPage() {
         {/* Topbar */}
         <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 flex-shrink-0">
           <div className="flex items-center gap-2 overflow-x-auto">
-            {(['dashboard', 'orders', 'inventory', 'returns'] as Tab[]).map((t) => (
+            {(['dashboard', 'orders', 'inventory', 'returns', 'contacts'] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setActiveTab(t)}
@@ -129,6 +131,7 @@ export default function AdminDashboardPage() {
           {activeTab === 'orders' && <OrdersTab locale={locale} search={orderSearch} />}
           {activeTab === 'inventory' && <InventoryTab />}
           {activeTab === 'returns' && <ReturnsTab />}
+          {activeTab === 'contacts' && <ContactsTab />}
         </div>
       </main>
     </div>
@@ -315,7 +318,7 @@ function OrdersTab({ locale, search }: { locale: string; search: string }) {
                 <tr key={order.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-5 py-4 font-medium">{order.orderNumber}</td>
                   <td className="px-5 py-4 text-muted-foreground">{new Date(order.createdAt).toLocaleDateString('en-GB')}</td>
-                  <td className="px-5 py-4 text-muted-foreground">{order.user?.email ?? '—'}</td>
+                  <td className="px-5 py-4 text-muted-foreground">{order.email ?? '—'}</td>
                   <td className="px-5 py-4 text-muted-foreground">{order.items?.length ?? '—'}</td>
                   <td className="px-5 py-4">
                     <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${ORDER_STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
@@ -386,7 +389,7 @@ function InventoryTab() {
 
 function ReturnsTab() {
   const { data: returns, isLoading } = useAdminReturns();
-  const resolveRma = useUpdateOrderStatus();
+  const resolveRma = useResolveRma();
 
   const items = returns ?? [];
 
@@ -411,10 +414,83 @@ function ReturnsTab() {
               </div>
               {rma.status === 'PENDING_REVIEW' && (
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="text-emerald-600 border-emerald-300 hover:bg-emerald-50">Approve</Button>
-                  <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">Reject</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                    disabled={resolveRma.isPending}
+                    onClick={() => resolveRma.mutate({ rmaId: rma.id, action: 'approve' })}
+                  >Approve</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                    disabled={resolveRma.isPending}
+                    onClick={() => resolveRma.mutate({ rmaId: rma.id, action: 'reject', reason: 'Rejected by admin' })}
+                  >Reject</Button>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ContactsTab() {
+  const { data: contacts, isLoading } = useAdminContacts();
+  const markRead = useMarkContactRead();
+  const items = contacts ?? [];
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Contact Messages</h2>
+        <span className="text-sm text-muted-foreground">{items.filter((c: any) => !c.isRead).length} unread</span>
+      </div>
+      <div className="space-y-4">
+        {isLoading ? (
+          [1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-xl" />)
+        ) : items.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Mail className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
+            <p>No contact messages yet</p>
+          </div>
+        ) : items.map((msg: any) => (
+          <Card key={msg.id} className={!msg.isRead ? 'border-primary/40 bg-primary/5' : ''}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {!msg.isRead && <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />}
+                    <p className="font-bold text-sm">{msg.name}</p>
+                    <a href={`mailto:${msg.email}`} className="text-xs text-primary hover:underline">{msg.email}</a>
+                    {msg.phone && <span className="text-xs text-muted-foreground">{msg.phone}</span>}
+                  </div>
+                  <p className="font-semibold text-sm mb-2">{msg.subject}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{new Date(msg.createdAt).toLocaleString('en-GB')}</p>
+                </div>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {!msg.isRead && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      disabled={markRead.isPending}
+                      onClick={() => markRead.mutate(msg.id)}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" /> Mark read
+                    </Button>
+                  )}
+                  <a href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject)}`}>
+                    <Button variant="outline" size="sm" className="text-xs w-full">
+                      <Mail className="w-3 h-3 mr-1" /> Reply
+                    </Button>
+                  </a>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
