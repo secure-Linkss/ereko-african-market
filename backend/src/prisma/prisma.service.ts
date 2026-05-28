@@ -15,8 +15,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleInit() {
     if (process.env.NODE_ENV !== 'production') {
-      await this.$connect();
-      this.logger.log('Database connected');
+      try {
+        await this.$connect();
+        this.logger.log('Database connected');
+      } catch (err) {
+        this.logger.warn(`DB connect failed (non-fatal in dev): ${err}`);
+      }
     }
   }
 
