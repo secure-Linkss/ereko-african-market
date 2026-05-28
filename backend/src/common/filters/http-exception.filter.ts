@@ -43,7 +43,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled error: ${exception.message}`, exception.stack);
-      detail = process.env.NODE_ENV === 'development' ? exception.message : 'An unexpected error occurred';
+      detail = exception.message || 'An unexpected error occurred';
     }
 
     const problemDetails = {
