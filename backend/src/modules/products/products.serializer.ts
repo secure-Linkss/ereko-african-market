@@ -91,6 +91,7 @@ function serializeVariant(v: PrismaVariant) {
     name: v.name,
     weightGrams: v.weightGrams,
     priceAmountMinor: v.priceAmountMinor,
+    priceMinor: v.priceAmountMinor, // alias kept for frontend compatibility
     currency: v.currency,
     compareAtAmountMinor: v.compareAtAmountMinor,
     taxClassId: v.taxClassId,

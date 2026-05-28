@@ -50,6 +50,12 @@ const nextConfig: NextConfig = {
         hostname: "*.imgix.net",
         pathname: "/**",
       },
+      // Supabase Storage CDN
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
       // AWS S3 / presigned
       {
         protocol: "https",
