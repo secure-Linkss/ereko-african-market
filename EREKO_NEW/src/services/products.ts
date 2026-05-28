@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient, API_ENDPOINTS } from "@/lib/api/client";
-import { Product, Category, SearchFilters } from "@/types";
+import { Product, Category } from "@/types";
+import { SearchFilters } from "@/store/search";
 
 // --- Request/Response Interfaces ---
 export interface ProductListRequest {

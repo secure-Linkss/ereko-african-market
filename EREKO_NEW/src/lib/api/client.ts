@@ -194,13 +194,13 @@ apiClient.interceptors.response.use(
     // Check if error matches standard RFC 7807 format
     if (errorData && typeof errorData === "object" && "type" in errorData && "title" in errorData) {
       const problem: ProblemDetails = {
-        type: errorData.type,
-        title: errorData.title,
-        status: errorData.status || error.response?.status || 500,
-        detail: errorData.detail || error.message || "An unexpected system error occurred",
-        instance: errorData.instance,
-        trace_id: errorData.trace_id,
-        errors: errorData.errors,
+        type: String(errorData.type ?? ''),
+        title: String(errorData.title ?? ''),
+        status: (errorData.status as number) || error.response?.status || 500,
+        detail: String(errorData.detail ?? error.message ?? "An unexpected system error occurred"),
+        instance: errorData.instance as string | undefined,
+        trace_id: errorData.trace_id as string | undefined,
+        errors: errorData.errors as Record<string, string[]> | undefined,
       };
       
       // Attach parsed RFC 7807 problem details to the error object

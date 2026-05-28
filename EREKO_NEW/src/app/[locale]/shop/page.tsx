@@ -32,14 +32,14 @@ export default function ShopPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { data: categoriesData } = useCategories();
-  const { data, isLoading, fetchNextPage, hasNextPage } = useProducts({
+  const { data, isLoading } = useProducts({
     filter: {
       categorySlug: selectedCategory || undefined,
       storageTypes: selectedStorage.length ? selectedStorage : undefined,
       onlyInStock: true,
     },
     sortBy: sortBy as any,
-    limit: 12,
+    limit: 24,
   } as any);
 
   const addItem = useCartStore((s) => s.addItem);
@@ -283,11 +283,11 @@ export default function ShopPage() {
           </div>
         )}
 
-        {hasNextPage && (
+        {(data as any)?.nextCursor && (
           <div className="flex justify-center pt-8">
-            <Button variant="outline" size="lg" onClick={() => fetchNextPage?.()}>
-              Load more products
-            </Button>
+            <Link href={`/${locale}/shop`}>
+              <Button variant="outline" size="lg">Load more products</Button>
+            </Link>
           </div>
         )}
       </section>

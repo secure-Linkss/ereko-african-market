@@ -21,6 +21,8 @@ export interface UserProfile {
   phone?: string;
   firstName?: string;
   lastName?: string;
+  isAdmin?: boolean;
+  isActive?: boolean;
   preferredLocale: string;
   marketingEmailOptIn: boolean;
   marketingSmsOptIn: boolean;

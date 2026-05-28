@@ -1,140 +1,297 @@
-import React from 'react';
-import { getTranslations } from 'next-intl/server';
+'use client';
+
+import React, { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
-import { ArrowLeft, Minus, Plus, Truck, ShieldCheck, Heart } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { ArrowLeft, Minus, Plus, Truck, ShieldCheck, Heart, ShoppingCart, Star } from 'lucide-react';
 import Link from 'next/link';
+import { useProductDetails } from '@/services/products';
+import { useCartStore } from '@/store/cart';
+import { useWishlistStore } from '@/store/wishlist';
 
-export default async function ProductDetailPage({
-  params
-}: {
-  params: Promise<{ slug: string; locale: string }>
-}) {
-  const { slug, locale } = await params;
-  const t = await getTranslations('common');
+const STORAGE_BADGE: Record<string, { label: string; variant: any }> = {
+  ambient: { label: 'Ambient', variant: 'ambient' },
+  chilled: { label: 'Chilled', variant: 'chilled' },
+  frozen: { label: 'Frozen', variant: 'frozen' },
+};
+
+export default function ProductDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const locale = (params?.locale as string) ?? 'en-gb';
+  const slug = params?.slug as string;
+
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const { data: product, isLoading, isError } = useProductDetails(slug);
+  const addItem = useCartStore((s) => s.addItem);
+  const { toggleWishlist, isInWishlist } = useWishlistStore();
+
+  const variant = product?.variants?.[selectedVariantIndex];
+  const available = variant ? variant.stockOnHand - variant.stockReserved > 0 : false;
+  const maxQty = variant ? Math.max(0, variant.stockOnHand - variant.stockReserved) : 0;
+  const isWishlisted = product ? isInWishlist(product.id) : false;
+  const storageBadge = product?.storageType ? STORAGE_BADGE[product.storageType] : null;
+
+  function handleAddToCart() {
+    if (!product || !variant) return;
+    addItem({
+      variantId: variant.id,
+      productId: product.id,
+      title: product.title,
+      variantName: variant.name,
+      slug: product.slug,
+      image: product.images?.[0]?.url ?? product.images?.[0] ?? '',
+      unitPriceMinor: variant.priceAmountMinor,
+      quantity,
+      availableStock: maxQty,
+      storageType: product.storageType,
+    });
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
+  }
+
+  function handleToggleWishlist() {
+    if (!product) return;
+    toggleWishlist(product.id);
+  }
+
+  if (isLoading) {
+    return (
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
+        <Skeleton className="h-4 w-32 mb-6" />
+        <div className="flex flex-col lg:flex-row gap-12">
+          <div className="w-full lg:w-1/2 space-y-4">
+            <Skeleton className="aspect-square rounded-2xl" />
+            <div className="grid grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="aspect-square rounded-lg" />)}
+            </div>
+          </div>
+          <div className="w-full lg:w-1/2 space-y-4">
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-12 w-1/3" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (isError || !product) {
+    return (
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 text-center py-20">
+        <h2 className="text-2xl font-bold mb-4">Product not found</h2>
+        <p className="text-muted-foreground mb-6">This product may be unavailable or the link is incorrect.</p>
+        <Link href={`/${locale}/shop`}><Button>Browse the shop</Button></Link>
+      </main>
+    );
+  }
+
+  const images = product.images?.length ? product.images : [{ url: '', alt: product.title, id: '0', productId: product.id, position: 0 }];
 
   return (
     <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
       <Link href={`/${locale}/shop`} className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6">
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Shop
       </Link>
-      
+
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Image Gallery */}
         <div className="w-full lg:w-1/2 space-y-4">
-            <div className="aspect-square bg-muted rounded-2xl overflow-hidden border border-border">
-                <img src="/images/img03.jpg" alt="Product Image" className="w-full h-full object-cover" />
-            </div>
+          <div className="aspect-square bg-muted rounded-2xl overflow-hidden border border-border">
+            {images[selectedImage]?.url ? (
+              <img
+                src={images[selectedImage].url}
+                alt={images[selectedImage].alt ?? product.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-8xl">🥬</div>
+            )}
+          </div>
+          {images.length > 1 && (
             <div className="grid grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="aspect-square bg-muted rounded-lg overflow-hidden border border-border cursor-pointer hover:ring-2 hover:ring-primary">
-                         <img src={`/images/img0${i}.jpg`} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
-                    </div>
-                ))}
+              {images.map((img, i) => (
+                <button
+                  key={img.id}
+                  onClick={() => setSelectedImage(i)}
+                  className={`aspect-square bg-muted rounded-lg overflow-hidden border-2 transition-colors ${i === selectedImage ? 'border-primary' : 'border-border hover:border-primary/50'}`}
+                >
+                  {img.url ? (
+                    <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl">🥬</div>
+                  )}
+                </button>
+              ))}
             </div>
+          )}
         </div>
 
         {/* Product Info */}
         <div className="w-full lg:w-1/2 flex flex-col">
-            <div className="flex items-start justify-between">
-                <div>
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-2">Premium Egusi Seeds</h1>
-                    <p className="text-lg text-muted-foreground">Olu Olu • 500g</p>
-                </div>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                    <Heart className="w-6 h-6 text-muted-foreground hover:text-destructive transition-colors" />
-                </Button>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-2">{product.title}</h1>
+              {product.brand && <p className="text-lg text-muted-foreground">{product.brand}</p>}
             </div>
-            
-            <div className="flex flex-wrap gap-2 mt-4">
-                <Badge variant="outline">🇳🇬 Origin: Nigeria</Badge>
-                <Badge variant="ambient">Ambient</Badge>
-                <Badge variant="outline">Vegan</Badge>
-                <Badge variant="outline">Gluten-Free</Badge>
-            </div>
+            <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0" onClick={handleToggleWishlist}>
+              <Heart className={`w-6 h-6 transition-colors ${isWishlisted ? 'fill-destructive text-destructive' : 'text-muted-foreground hover:text-destructive'}`} />
+            </Button>
+          </div>
 
-            <div className="mt-8 pb-8 border-b border-border">
-                <div className="flex items-end gap-4 mb-6">
-                    <span className="text-4xl font-bold text-foreground">£8.50</span>
-                    <span className="text-lg text-muted-foreground line-through mb-1">£10.00</span>
-                    <Badge variant="secondary" className="mb-2">Save 15%</Badge>
-                </div>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {product.originCountry && (
+              <Badge variant="outline">Origin: {product.originCountry}</Badge>
+            )}
+            {storageBadge && <Badge variant={storageBadge.variant}>{storageBadge.label}</Badge>}
+            {product.tags?.map((tag) => (
+              <Badge key={tag} variant="outline" className="capitalize">{tag}</Badge>
+            ))}
+          </div>
 
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-sm">Select Size</h4>
-                    <div className="flex gap-3">
-                        <Button variant="outline" className="border-primary ring-1 ring-primary">500g</Button>
-                        <Button variant="outline">1kg (+£7.00)</Button>
-                        <Button variant="outline">5kg (+£35.00)</Button>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4 mt-8">
-                    <div className="flex items-center border border-border rounded-lg h-12">
-                        <button className="px-4 text-muted-foreground hover:text-foreground"><Minus className="w-4 h-4" /></button>
-                        <span className="w-8 text-center font-medium">1</span>
-                        <button className="px-4 text-muted-foreground hover:text-foreground"><Plus className="w-4 h-4" /></button>
-                    </div>
-                    <Button size="lg" className="flex-1 h-12 text-lg">Add to Cart</Button>
-                </div>
+          <div className="mt-8 pb-8 border-b border-border">
+            <div className="flex items-end gap-4 mb-6">
+              <span className="text-4xl font-bold text-foreground">
+                {variant ? `£${(variant.priceAmountMinor / 100).toFixed(2)}` : 'TBC'}
+              </span>
+              {variant?.compareAtAmountMinor && variant.compareAtAmountMinor > variant.priceAmountMinor && (
+                <>
+                  <span className="text-lg text-muted-foreground line-through mb-1">
+                    £{(variant.compareAtAmountMinor / 100).toFixed(2)}
+                  </span>
+                  <Badge variant="secondary" className="mb-2">
+                    Save {Math.round((1 - variant.priceAmountMinor / variant.compareAtAmountMinor) * 100)}%
+                  </Badge>
+                </>
+              )}
             </div>
 
-            <div className="py-6 space-y-4 border-b border-border">
-                <div className="flex items-center gap-3 text-sm">
-                    <Truck className="w-5 h-5 text-primary" />
-                    <div>
-                        <p className="font-semibold">Next Day Delivery Available</p>
-                        <p className="text-muted-foreground">Order before 2PM</p>
-                    </div>
+            {/* Variant selector */}
+            {product.variants.length > 1 && (
+              <div className="space-y-3 mb-6">
+                <h4 className="font-semibold text-sm">Select Size</h4>
+                <div className="flex flex-wrap gap-3">
+                  {product.variants.map((v, i) => {
+                    const variantAvailable = v.stockOnHand - v.stockReserved > 0;
+                    return (
+                      <Button
+                        key={v.id}
+                        variant="outline"
+                        size="sm"
+                        disabled={!variantAvailable}
+                        onClick={() => { setSelectedVariantIndex(i); setQuantity(1); }}
+                        className={`${i === selectedVariantIndex ? 'border-primary ring-1 ring-primary bg-primary/5' : ''} ${!variantAvailable ? 'opacity-40' : ''}`}
+                      >
+                        {v.name}
+                        {!variantAvailable && ' (OOS)'}
+                      </Button>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                    <ShieldCheck className="w-5 h-5 text-primary" />
-                    <div>
-                        <p className="font-semibold">Secure Cold Chain</p>
-                        <p className="text-muted-foreground">Guaranteed freshness upon arrival</p>
-                    </div>
-                </div>
-            </div>
+              </div>
+            )}
 
-            <div className="mt-8 space-y-6">
-                <div>
-                    <h3 className="text-lg font-bold mb-2">Description</h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                        Hand-selected premium melon seeds, peeled and ready to blend. Essential for authentic Nigerian Egusi soup. Sourced directly from local farmers in Enugu State to guarantee the highest quality and rich flavor.
-                    </p>
-                </div>
-                
-                <div>
-                     <h3 className="text-lg font-bold mb-2">Allergens</h3>
-                     <p className="text-muted-foreground text-sm bg-muted/50 p-3 rounded-lg border border-border/50">
-                         Prepared in a facility that also processes peanuts, tree nuts, and soy.
-                     </p>
-                </div>
+            {/* Stock warning */}
+            {available && maxQty <= 5 && (
+              <p className="text-sm text-amber-600 font-medium mb-4">Only {maxQty} left in stock!</p>
+            )}
+            {!available && (
+              <p className="text-sm text-destructive font-medium mb-4">Currently out of stock</p>
+            )}
+
+            <div className="flex items-center gap-4 mt-6">
+              <div className="flex items-center border border-border rounded-lg h-12">
+                <button
+                  className="px-4 text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-10 text-center font-medium">{quantity}</span>
+                <button
+                  className="px-4 text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                  disabled={quantity >= maxQty || !available}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <Button
+                size="lg"
+                className="flex-1 h-12 text-base"
+                onClick={handleAddToCart}
+                disabled={!available || !variant}
+              >
+                {addedToCart ? (
+                  <><span className="text-emerald-300">✓</span> Added to cart!</>
+                ) : (
+                  <><ShoppingCart className="w-5 h-5 mr-2" /> Add to Cart</>
+                )}
+              </Button>
             </div>
+          </div>
+
+          {/* Delivery info */}
+          <div className="py-6 space-y-4 border-b border-border">
+            <div className="flex items-center gap-3 text-sm">
+              <Truck className="w-5 h-5 text-primary flex-shrink-0" />
+              <div>
+                <p className="font-semibold">Next Day Delivery Available</p>
+                <p className="text-muted-foreground">Order before 2PM for next-day delivery</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <ShieldCheck className="w-5 h-5 text-primary flex-shrink-0" />
+              <div>
+                <p className="font-semibold">Secure Cold Chain</p>
+                <p className="text-muted-foreground">Guaranteed freshness upon arrival</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Description & Nutritional */}
+          <div className="mt-8 space-y-6">
+            {product.descriptionShort && (
+              <div>
+                <h3 className="text-lg font-bold mb-2">Description</h3>
+                <p className="text-muted-foreground leading-relaxed">{product.descriptionShort}</p>
+              </div>
+            )}
+            {product.descriptionLong && product.descriptionLong !== product.descriptionShort && (
+              <p className="text-muted-foreground leading-relaxed text-sm">{product.descriptionLong}</p>
+            )}
+            {product.ingredients && (
+              <div>
+                <h3 className="text-lg font-bold mb-2">Ingredients</h3>
+                <p className="text-muted-foreground text-sm bg-muted/50 p-3 rounded-lg border border-border/50">{product.ingredients}</p>
+              </div>
+            )}
+            {product.allergens && product.allergens.length > 0 && (
+              <div>
+                <h3 className="text-lg font-bold mb-2">Allergens</h3>
+                <p className="text-muted-foreground text-sm bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800/30">
+                  Contains: {product.allergens.map((a) => a.allergen).join(', ')}
+                </p>
+              </div>
+            )}
+            {product.culturalMeta?.traditionalUses && (
+              <div>
+                <h3 className="text-lg font-bold mb-2">Traditional Uses</h3>
+                <p className="text-muted-foreground leading-relaxed text-sm">{product.culturalMeta.traditionalUses}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      
-      {/* Recipe Pairings */}
-      <section className="mt-24">
-        <h2 className="text-2xl font-bold mb-6">Perfect Recipe Pairings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             {[1, 2, 3].map((i) => (
-                <Card key={i} hoverable className="overflow-hidden">
-                    <div className="h-48 bg-muted">
-                        <img src={`/images/img0${i + 3}.jpg`} alt="Recipe" className="w-full h-full object-cover" />
-                    </div>
-                    <CardContent className="p-4">
-                        <h3 className="font-bold text-lg mb-1">Classic Egusi Soup</h3>
-                        <p className="text-sm text-muted-foreground mb-4">45 mins • Serves 6</p>
-                        <Link href={`/${locale}/recipes/classic-egusi`} className="text-primary font-medium text-sm hover:underline">
-                            View Recipe →
-                        </Link>
-                    </CardContent>
-                </Card>
-             ))}
-        </div>
-      </section>
     </main>
   );
 }
