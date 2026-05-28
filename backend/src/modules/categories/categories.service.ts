@@ -1,9 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
-import { PrismaService } from '../../prisma/prisma.service';
+import { SupabaseService } from '../../supabase/supabase.service';
 
-const TTL_CATEGORIES = 30 * 60 * 1000; // 30 min
+const TTL_CATEGORIES = 30 * 60 * 1000;
 
 export interface CategoryResponse {
   id: string;
@@ -17,35 +17,31 @@ export interface CategoryResponse {
 
 @Injectable()
 export class CategoriesService {
+  private readonly logger = new Logger(CategoriesService.name);
+
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  /**
-   * Returns the flat list of all active categories (with parentId for hierarchy).
-   * The frontend builds the tree from the flat list.
-   */
   async getCategoriesTree(): Promise<CategoryResponse[]> {
     const cacheKey = 'categories:flat';
     const cached = await this.cache.get<CategoryResponse[]>(cacheKey);
     if (cached) return cached;
 
-    const rows = await this.prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: [{ position: 'asc' }, { name: 'asc' }],
-      select: {
-        id: true,
-        parentId: true,
-        slug: true,
-        name: true,
-        position: true,
-        description: true,
-        image: true,
-      },
-    });
+    const { data, error } = await this.supabase.db
+      .from('Category')
+      .select('id, parentId, slug, name, position, description, image')
+      .eq('isActive', true)
+      .order('position', { ascending: true })
+      .order('name', { ascending: true });
 
-    const result: CategoryResponse[] = rows.map((r) => {
+    if (error) {
+      this.logger.error(`Failed to fetch categories: ${error.message}`);
+      return [];
+    }
+
+    const result: CategoryResponse[] = (data ?? []).map((r: any) => {
       const cat: CategoryResponse = {
         id: r.id,
         parentId: r.parentId,

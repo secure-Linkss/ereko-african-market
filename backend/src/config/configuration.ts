@@ -66,4 +66,9 @@ export default () => ({
   },
 
   freeShippingThresholdMinor: parseInt(process.env.FREE_SHIPPING_THRESHOLD_MINOR ?? '5500', 10) || 5500,
+
+  supabase: {
+    url: process.env.SUPABASE_URL ?? '',
+    serviceKey: process.env.SUPABASE_SERVICE_KEY ?? '',
+  },
 });

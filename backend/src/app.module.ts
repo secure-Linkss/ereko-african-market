@@ -10,6 +10,7 @@ import * as redisStore from 'cache-manager-redis-store';
 
 import configuration from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
+import { SupabaseModule } from './supabase/supabase.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -103,6 +104,7 @@ function buildBullModule(): DynamicModule[] {
     ScheduleModule.forRoot(),
 
     PrismaModule,
+    SupabaseModule,
     AuthModule,
     UsersModule,
     ProductsModule,
