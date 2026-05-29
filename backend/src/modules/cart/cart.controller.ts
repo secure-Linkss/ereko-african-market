@@ -20,6 +20,7 @@ import {
 import { CartService } from './cart.service';
 import { SyncCartDto, ApplyCouponDto, RedeemLoyaltyDto } from './cart.dto';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Cart')
@@ -29,6 +30,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
   description: 'Anonymous cart token (used when not authenticated)',
   required: false,
 })
+@Public()
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('cart')
 export class CartController {

@@ -52,15 +52,16 @@ export default function CargoPortalPage() {
     <main className="flex-1 w-full bg-muted/20 overflow-hidden">
         
         {/* Hero */}
-        <section className="relative bg-primary text-primary-foreground py-20 px-4 md:px-8 overflow-hidden">
-            {/* Background Pattern/Image Simulation */}
+        <section className="relative bg-black text-white py-24 px-4 md:px-8 overflow-hidden">
+            {/* Background Image Animation */}
             <motion.div 
-               className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none"
-               initial={{ scale: 1.1 }}
-               animate={{ scale: 1 }}
-               transition={{ duration: 1.5, ease: "easeOut" }}
-               style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8), transparent 70%)' }}
+               className="absolute inset-0 opacity-70 pointer-events-none bg-contain bg-no-repeat bg-center md:bg-right"
+               initial={{ opacity: 0.5 }}
+               animate={{ opacity: 0.8 }}
+               transition={{ duration: 4, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
+               style={{ backgroundImage: 'url(/generated_images/cargo_services_final.png)' }}
             />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-transparent pointer-events-none" />
             <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center relative z-10">
                 <motion.div 
                    className="space-y-6"

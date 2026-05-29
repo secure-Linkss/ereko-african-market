@@ -1,14 +1,14 @@
 'use client';
 // v4 - reviews section added
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
-import { ShoppingCart, Truck, ShieldCheck, Star, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Truck, ShieldCheck, Star, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useProducts } from '@/services/products';
 import { useCartStore } from '@/store/cart';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReviewsSection from '@/components/ReviewsSection';
 
 export default function HomePage() {
@@ -17,6 +17,24 @@ export default function HomePage() {
 
   const { data: productsData, isLoading } = useProducts({ limit: 8, sortBy: 'relevance', filter: { onlyInStock: true } });
   const addItem = useCartStore((s) => s.addItem);
+
+  const heroImages = [
+    '/generated_images/hero_image_1.png',
+    '/generated_images/hero_image_2.png',
+    '/generated_images/store_front_edited.png',
+    '/generated_images/home_delivery.png'
+  ];
+  const [currentHeroImage, setCurrentHeroImage] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentHeroImage((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [heroImages.length]);
+
+  const handleNextHero = () => setCurrentHeroImage((prev) => (prev + 1) % heroImages.length);
+  const handlePrevHero = () => setCurrentHeroImage((prev) => (prev - 1 + heroImages.length) % heroImages.length);
 
   const products = (productsData as any)?.products ?? [];
 
@@ -92,8 +110,40 @@ export default function HomePage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
         >
-          <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-amber-50 to-orange-50">
-            <img src="/hero-african-market.svg" alt="African lady selling fresh food at Ereko Market" className="w-full h-full object-cover" />
+          <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-amber-50 to-orange-50 relative group">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={currentHeroImage}
+                src={heroImages[currentHeroImage]}
+                alt="Ereko African Market premium offerings"
+                className="w-full h-full object-cover absolute inset-0"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              />
+            </AnimatePresence>
+            
+            {/* Controls */}
+            <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Button variant="outline" size="icon" className="w-10 h-10 rounded-full bg-background/50 backdrop-blur border-0 hover:bg-background/80" onClick={handlePrevHero}>
+                <ChevronLeft className="w-6 h-6" />
+              </Button>
+              <Button variant="outline" size="icon" className="w-10 h-10 rounded-full bg-background/50 backdrop-blur border-0 hover:bg-background/80" onClick={handleNextHero}>
+                <ChevronRight className="w-6 h-6" />
+              </Button>
+            </div>
+            
+            {/* Dots */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+              {heroImages.map((_, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setCurrentHeroImage(i)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === currentHeroImage ? 'bg-primary scale-125' : 'bg-primary/30 hover:bg-primary/50'}`}
+                />
+              ))}
+            </div>
           </div>
         </motion.div>
       </section>

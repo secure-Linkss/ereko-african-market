@@ -24,6 +24,7 @@ import {
 } from './checkout.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Checkout')
@@ -33,6 +34,7 @@ export class CheckoutController {
   constructor(private readonly checkoutService: CheckoutService) {}
 
   @Get('delivery-slots')
+  @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get available delivery slots for a postcode' })
   @ApiQuery({ name: 'postcode', required: true, example: 'SW1A 1AA' })
@@ -41,9 +43,10 @@ export class CheckoutController {
   }
 
   @Post('start')
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Start checkout — reserve stock and create pending order' })
   @ApiOkResponse({
     description: 'Returns orderId, orderNumber, cart snapshot, stockReservedUntil, and delivery slots',
@@ -56,9 +59,10 @@ export class CheckoutController {
   }
 
   @Post('payment-intent')
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Create Stripe PaymentIntent for an order' })
   @ApiOkResponse({ description: 'Returns clientSecret, publishableKey, amountMinor' })
   async createPaymentIntent(
@@ -69,9 +73,10 @@ export class CheckoutController {
   }
 
   @Post('confirm')
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Confirm order with addresses, delivery slot, and payment intent' })
   @ApiOkResponse({ description: 'Returns { order, success }' })
   async confirmOrder(
