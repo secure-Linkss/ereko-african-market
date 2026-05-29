@@ -317,18 +317,25 @@ export class AdminService {
     return { seeded, skipped, errors };
   }
 
-  async runOrderStatusMigration(): Promise<{ ok: boolean; message: string }> {
-    const sqls = [
-      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'READY_FOR_PICKUP' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'OrderStatus')) THEN ALTER TYPE "OrderStatus" ADD VALUE 'READY_FOR_PICKUP'; END IF; END $$;`,
-      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'PICKED_UP' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'OrderStatus')) THEN ALTER TYPE "OrderStatus" ADD VALUE 'PICKED_UP'; END IF; END $$;`,
-    ];
-    for (const sql of sqls) {
-      const { error } = await this.supabase.db.rpc('exec_sql', { sql });
-      if (error && !error.message.includes('already exists')) {
-        this.logger.warn(`Migration SQL warning: ${error.message}`);
-      }
+  async runOrderStatusMigration(): Promise<{ ok: boolean; message: string; details: string[] }> {
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    const details: string[] = [];
+    try {
+      // ALTER TYPE ADD VALUE must run outside a transaction; Prisma $executeRaw handles this
+      await prisma.$executeRaw`ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'READY_FOR_PICKUP'`;
+      details.push('READY_FOR_PICKUP: added or already exists');
+    } catch (e: any) {
+      details.push(`READY_FOR_PICKUP: ${e.message}`);
     }
-    return { ok: true, message: 'READY_FOR_PICKUP and PICKED_UP added (or already existed)' };
+    try {
+      await prisma.$executeRaw`ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'PICKED_UP'`;
+      details.push('PICKED_UP: added or already exists');
+    } catch (e: any) {
+      details.push(`PICKED_UP: ${e.message}`);
+    }
+    await prisma.$disconnect();
+    return { ok: true, message: 'Migration complete', details };
   }
 
   // ─── RETURNS ───────────────────────────────────────────────────────────────
