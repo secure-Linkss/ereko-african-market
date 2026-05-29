@@ -226,10 +226,10 @@ export default function ShopPage() {
                 <Card key={product.id} hoverable className="flex flex-col">
                   <Link href={`/${locale}/product/${product.slug}`} className="block">
                     <div className="aspect-square bg-muted rounded-t-xl overflow-hidden">
-                      {product.images?.[0] ? (
+                      {product.images?.[0]?.url ? (
                         <img
-                          src={product.images[0]}
-                          alt={product.title}
+                          src={product.images[0].url}
+                          alt={product.images[0].alt || product.title}
                           className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
