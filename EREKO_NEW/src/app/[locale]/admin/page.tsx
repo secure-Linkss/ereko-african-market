@@ -62,9 +62,20 @@ export default function AdminDashboardPage() {
   const locale = (params?.locale as string) ?? 'en-gb';
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [orderSearch, setOrderSearch] = useState('');
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, isLoading } = useAuthStore();
   const { data: metrics } = useAdminMetrics();
   const logoutMutation = useLogout();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-muted/20">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user?.isAdmin) {
     router.push(`/${locale}/login`);
