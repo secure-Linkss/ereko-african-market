@@ -84,7 +84,6 @@ export function Footer() {
               <li><Link href="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
               <li><Link href="/food-safety" className="hover:text-primary transition-colors">Food Safety</Link></li>
               <li><Link href="/accessibility" className="hover:text-primary transition-colors">Accessibility</Link></li>
-              <li><Link href="/modern-slavery" className="hover:text-primary transition-colors">Modern Slavery Statement</Link></li>
             </ul>
           </div>
         </div>
