@@ -38,17 +38,25 @@ const STATUS_COLORS: Record<string, string> = {
   REFUNDED: 'bg-gray-100 text-gray-700',
   RETURN_REQUESTED: 'bg-orange-100 text-orange-800',
   ON_HOLD: 'bg-yellow-100 text-yellow-800',
+  READY_FOR_PICKUP: 'bg-teal-100 text-teal-800',
+  PICKED_UP: 'bg-emerald-100 text-emerald-800',
+  DISPUTED: 'bg-red-100 text-red-800',
+  RETURNED: 'bg-gray-100 text-gray-700',
 };
 
 const NEXT_STATUSES: Record<string, string[]> = {
-  PENDING_PAYMENT: ['CANCELLED'],
+  PENDING_PAYMENT: ['PAID', 'ON_HOLD', 'CANCELLED'],
   PAID: ['ALLOCATED', 'ON_HOLD', 'CANCELLED'],
-  ALLOCATED: ['PICKING', 'ON_HOLD', 'CANCELLED'],
-  PICKING: ['PACKED', 'ON_HOLD', 'CANCELLED'],
-  PACKED: ['SHIPPED', 'ON_HOLD', 'CANCELLED'],
-  SHIPPED: ['OUT_FOR_DELIVERY', 'ON_HOLD'],
-  OUT_FOR_DELIVERY: ['DELIVERED', 'ON_HOLD'],
-  DELIVERED: ['RETURN_REQUESTED'],
+  ALLOCATED: ['PICKING', 'READY_FOR_PICKUP', 'ON_HOLD', 'CANCELLED'],
+  PICKING: ['PACKED', 'READY_FOR_PICKUP', 'ON_HOLD', 'CANCELLED'],
+  PACKED: ['SHIPPED', 'OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'ON_HOLD', 'CANCELLED'],
+  READY_FOR_PICKUP: ['PICKED_UP', 'ON_HOLD', 'CANCELLED'],
+  PICKED_UP: ['DELIVERED'],
+  SHIPPED: ['OUT_FOR_DELIVERY', 'ON_HOLD', 'CANCELLED'],
+  OUT_FOR_DELIVERY: ['DELIVERED', 'ON_HOLD', 'CANCELLED'],
+  DELIVERED: ['RETURN_REQUESTED', 'REFUNDED'],
+  RETURN_REQUESTED: ['RETURNED'],
+  RETURNED: ['REFUNDED'],
   ON_HOLD: ['PAID', 'ALLOCATED', 'PICKING', 'PACKED', 'CANCELLED'],
 };
 
@@ -286,7 +294,7 @@ function OrdersTab({ search }: { search: string }) {
   const { data, isLoading } = useAdminOrders({ limit: 30, status: statusFilter || undefined, searchQuery: search || undefined });
   const orders = data?.orders ?? [];
 
-  const statuses = ['', 'PENDING_PAYMENT', 'PAID', 'ALLOCATED', 'PICKING', 'PACKED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+  const statuses = ['', 'PENDING_PAYMENT', 'PAID', 'ALLOCATED', 'PICKING', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'PICKED_UP', 'DELIVERED', 'ON_HOLD', 'CANCELLED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED', 'DISPUTED'];
 
   async function handleUpdateStatus(orderId: string) {
     if (!updating) return;
@@ -371,7 +379,7 @@ function OrdersTab({ search }: { search: string }) {
                                 {nextStatuses.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
                               </select>
                             </div>
-                            {updating.status === 'SHIPPED' && (
+                            {(updating.status === 'SHIPPED' || updating.status === 'OUT_FOR_DELIVERY') && (
                               <>
                                 <div className="space-y-1">
                                   <label className="text-xs font-semibold">Carrier</label>

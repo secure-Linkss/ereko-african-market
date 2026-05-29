@@ -61,6 +61,8 @@ enum OrderStatus {
   PARTIALLY_SHIPPED
   PARTIALLY_REFUNDED
   DISPUTED
+  READY_FOR_PICKUP
+  PICKED_UP
 }
 
 enum PaymentMethod {

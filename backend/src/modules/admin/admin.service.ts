@@ -23,17 +23,19 @@ const POST_SHIP_STATUSES: OrderStatus[] = [
 ];
 
 const ALLOWED_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  [OrderStatus.PENDING_PAYMENT]: [OrderStatus.PAID, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.PAID]: [OrderStatus.ALLOCATED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
-  [OrderStatus.ALLOCATED]: [OrderStatus.PICKING, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
-  [OrderStatus.PICKING]: [OrderStatus.PACKED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
-  [OrderStatus.PACKED]: [OrderStatus.SHIPPED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
-  [OrderStatus.SHIPPED]: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.CANCELLED, OrderStatus.ON_HOLD],
+  [OrderStatus.ALLOCATED]: [OrderStatus.PICKING, OrderStatus.READY_FOR_PICKUP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.PICKING]: [OrderStatus.PACKED, OrderStatus.READY_FOR_PICKUP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.PACKED]: [OrderStatus.SHIPPED, OrderStatus.READY_FOR_PICKUP, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.READY_FOR_PICKUP]: [OrderStatus.PICKED_UP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.PICKED_UP]: [OrderStatus.DELIVERED],
+  [OrderStatus.SHIPPED]: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
-  [OrderStatus.DELIVERED]: [OrderStatus.RETURN_REQUESTED, OrderStatus.DISPUTED, OrderStatus.CANCELLED],
+  [OrderStatus.DELIVERED]: [OrderStatus.RETURN_REQUESTED, OrderStatus.DISPUTED, OrderStatus.REFUNDED],
   [OrderStatus.RETURN_REQUESTED]: [OrderStatus.RETURNED],
   [OrderStatus.RETURNED]: [OrderStatus.REFUNDED],
   [OrderStatus.ON_HOLD]: [OrderStatus.PAID, OrderStatus.ALLOCATED, OrderStatus.PICKING, OrderStatus.PACKED, OrderStatus.CANCELLED],
-  [OrderStatus.PENDING_PAYMENT]: [OrderStatus.CANCELLED, OrderStatus.ON_HOLD],
 };
 
 @Injectable()
@@ -267,6 +269,66 @@ export class AdminService {
       undefined,
       dto.notes,
     );
+  }
+
+  async seedAllInventory(actorId: string): Promise<{ seeded: number; skipped: number; errors: string[] }> {
+    const { data: warehouses } = await this.supabase.db.from('Warehouse').select('id, code').eq('isActive', true);
+    if (!warehouses?.length) throw new BadRequestException('No active warehouses found');
+
+    const { data: variants } = await this.supabase.db
+      .from('ProductVariant')
+      .select('id, sku, stockOnHand, safetyStockThreshold, isActive')
+      .eq('isActive', true);
+    if (!variants?.length) return { seeded: 0, skipped: 0, errors: ['No active variants found'] };
+
+    let seeded = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (const warehouse of warehouses) {
+      for (const variant of variants) {
+        const { data: existing } = await this.supabase.db
+          .from('WarehouseStock')
+          .select('id')
+          .eq('warehouseId', warehouse.id)
+          .eq('variantId', variant.id)
+          .single();
+
+        if (existing) { skipped++; continue; }
+
+        const qty = variant.stockOnHand > 0 ? variant.stockOnHand : 0;
+        try {
+          await this.inventory.adjustStock(
+            warehouse.id,
+            variant.id,
+            qty > 0 ? qty : 1,
+            'receipt' as any,
+            actorId,
+            undefined,
+            `Seeded from product variant stockOnHand (${warehouse.code})`,
+          );
+          seeded++;
+        } catch (e: any) {
+          errors.push(`${variant.sku}@${warehouse.code}: ${e.message}`);
+        }
+      }
+    }
+
+    return { seeded, skipped, errors };
+  }
+
+  async runOrderStatusMigration(): Promise<{ ok: boolean; message: string }> {
+    const sqls = [
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'READY_FOR_PICKUP' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'OrderStatus')) THEN ALTER TYPE "OrderStatus" ADD VALUE 'READY_FOR_PICKUP'; END IF; END $$;`,
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'PICKED_UP' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'OrderStatus')) THEN ALTER TYPE "OrderStatus" ADD VALUE 'PICKED_UP'; END IF; END $$;`,
+    ];
+    for (const sql of sqls) {
+      const { error } = await this.supabase.db.rpc('exec_sql', { sql });
+      if (error && !error.message.includes('already exists')) {
+        this.logger.warn(`Migration SQL warning: ${error.message}`);
+      }
+    }
+    return { ok: true, message: 'READY_FOR_PICKUP and PICKED_UP added (or already existed)' };
   }
 
   // ─── RETURNS ───────────────────────────────────────────────────────────────

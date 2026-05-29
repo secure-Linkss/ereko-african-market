@@ -37,13 +37,9 @@ export const metadata: Metadata = {
     template: "%s | EREKO Market",
   },
   icons: {
-    icon: [
-      { url: "/logo.jpeg", type: "image/jpeg", sizes: "any" },
-    ],
-    apple: [
-      { url: "/logo.jpeg", type: "image/jpeg" },
-    ],
-    shortcut: "/logo.jpeg",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.jpg",
   },
 };
 

@@ -142,6 +142,20 @@ export class AdminController {
     return { ok: true };
   }
 
+  @Post('inventory/seed-all')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Seed WarehouseStock for all active variants in all active warehouses' })
+  async seedAllInventory(@CurrentUser('id') actorId: string) {
+    return this.adminService.seedAllInventory(actorId);
+  }
+
+  @Post('maintenance/run-migrations')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Run one-time schema migrations (idempotent — safe to call repeatedly)' })
+  async runMigrations() {
+    return this.adminService.runOrderStatusMigration();
+  }
+
   // ─── RETURNS ───────────────────────────────────────────────────────────────
 
   @Get('returns')
