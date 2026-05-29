@@ -24,20 +24,26 @@ export const metadata: Metadata = {
   ...buildMetadata({
     canonicalUrl: "https://ereko.market/en-gb",
   }),
-  // Google Search Console verification (replace with real token when available)
   verification: {
     google: "REPLACE_WITH_GSC_VERIFICATION_TOKEN",
   },
-  // Manifest & theme colour for PWA-readiness
   manifest: "/manifest.json",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#E85D04" },
     { media: "(prefers-color-scheme: dark)", color: "#1A0A00" },
   ],
-  // Override title with template so child pages get " | EREKO Market" suffix
   title: {
     default: "EREKO Market | Authentic African Food Store UK",
     template: "%s | EREKO Market",
+  },
+  icons: {
+    icon: [
+      { url: "/logo.jpeg", type: "image/jpeg", sizes: "any" },
+    ],
+    apple: [
+      { url: "/logo.jpeg", type: "image/jpeg" },
+    ],
+    shortcut: "/logo.jpeg",
   },
 };
 
@@ -80,9 +86,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
-        {/* Favicon — EREKO African Markets logo */}
-        <link rel="icon" href="/logo.jpeg" type="image/jpeg" sizes="any" />
-        <link rel="apple-touch-icon" href="/logo.jpeg" />
         {/* Preconnect to key third-party origins */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

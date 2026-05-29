@@ -3,174 +3,380 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Clock, Users, ChefHat, ShoppingCart, CheckCircle2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { Clock, Users, ChefHat, ShoppingCart, CheckCircle2, ArrowLeft, Flame, ShoppingBag, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient, API_ENDPOINTS } from '@/lib/api/client';
+import { useCartStore } from '@/store/cart';
+import { motion } from 'framer-motion';
+
+interface RecipeIngredient {
+  variantId?: string;
+  sku?: string;
+  name: string;
+  quantityText: string;
+}
+
+interface RecipeDetail {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  heroImage: string;
+  cookTimeMin: number;
+  servings: number;
+  ingredients: RecipeIngredient[];
+  steps: string[];
+  videoUrl?: string;
+  createdAt: string;
+}
+
+function useRecipeDetail(slug: string) {
+  return useQuery<RecipeDetail>({
+    queryKey: ['recipe', slug],
+    queryFn: async () => {
+      const res = await apiClient.get<RecipeDetail>(API_ENDPOINTS.RECIPES.DETAILS(slug));
+      return res.data;
+    },
+    enabled: !!slug,
+    staleTime: 1000 * 60 * 10,
+  });
+}
+
+function useProductsBySkus(skus: string[]) {
+  return useQuery({
+    queryKey: ['products-by-skus', skus],
+    queryFn: async () => {
+      if (!skus.length) return {};
+      const results: Record<string, any> = {};
+      for (const sku of skus) {
+        try {
+          const res = await apiClient.get('/api/v1/products', { params: { limit: 5, q: sku } });
+          const products = (res.data as any)?.products ?? [];
+          if (products.length > 0) results[sku] = products[0];
+        } catch { /* skip */ }
+      }
+      return results;
+    },
+    enabled: skus.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+const DIFFICULTY_MAP: Record<string, { label: string; color: string }> = {
+  Easy: { label: 'Easy', color: 'text-emerald-600 bg-emerald-50' },
+  Medium: { label: 'Medium', color: 'text-amber-600 bg-amber-50' },
+  Advanced: { label: 'Advanced', color: 'text-red-600 bg-red-50' },
+};
 
 export default function RecipeDetailPage() {
   const params = useParams();
   const locale = params.locale as string;
-  const [added, setAdded] = useState(false);
+  const slug = params.slug as string;
 
-  const handleAddAllToCart = () => {
-    // In a real app, this would dispatch to Zustand/API
-    setAdded(true);
-    setTimeout(() => setAdded(false), 3000);
+  const { data: recipe, isLoading, error } = useRecipeDetail(slug);
+  const skus = (recipe?.ingredients ?? []).filter((i) => i.sku).map((i) => i.sku!);
+  const { data: productsBySku = {} } = useProductsBySkus(skus);
+
+  const addItem = useCartStore((s) => s.addItem);
+
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const toggleCheck = (idx: number) => {
+    setChecked((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
 
+  const checkedCount = Object.values(checked).filter(Boolean).length;
+  const allChecked = recipe ? checkedCount === recipe.ingredients.length : false;
+
+  function toggleAll() {
+    if (!recipe) return;
+    if (allChecked) {
+      setChecked({});
+    } else {
+      const all: Record<number, boolean> = {};
+      recipe.ingredients.forEach((_, i) => { all[i] = true; });
+      setChecked(all);
+    }
+  }
+
+  function handleAddToBasket() {
+    if (!recipe) return;
+    let added = 0;
+    recipe.ingredients.forEach((ing, idx) => {
+      if (!checked[idx]) return;
+      const product = ing.sku ? productsBySku[ing.sku] : null;
+      if (!product) return;
+      const variant = product.variants?.[0];
+      if (!variant) return;
+      addItem({
+        variantId: variant.id,
+        productId: product.id,
+        title: product.title,
+        variantName: variant.name,
+        slug: product.slug,
+        image: product.images?.[0]?.url ?? '',
+        unitPriceMinor: variant.priceAmountMinor,
+        quantity: 1,
+        availableStock: variant.stockOnHand - (variant.stockReserved ?? 0),
+        storageType: product.storageType ?? 'ambient',
+      });
+      added++;
+    });
+
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 3000);
+  }
+
+  const shoppableCount = recipe?.ingredients.filter((ing, idx) =>
+    checked[idx] && ing.sku && productsBySku[ing.sku]
+  ).length ?? 0;
+
+  if (isLoading) return <RecipeSkeleton locale={locale} />;
+
+  if (error || !recipe) {
+    return (
+      <main className="flex-1 max-w-5xl mx-auto w-full p-4 md:p-8">
+        <Link href={`/${locale}/recipes`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-8">
+          <ArrowLeft className="w-4 h-4" /> Back to Recipes
+        </Link>
+        <div className="text-center py-24 space-y-4">
+          <ChefHat className="w-16 h-16 mx-auto text-muted-foreground/30" />
+          <h2 className="text-2xl font-bold">Recipe not found</h2>
+          <p className="text-muted-foreground">This recipe may have been removed or the link is incorrect.</p>
+          <Link href={`/${locale}/recipes`}><Button>Browse all recipes</Button></Link>
+        </div>
+      </main>
+    );
+  }
+
+  const difficultyData = DIFFICULTY_MAP.Medium;
+
   return (
-    <main className="flex-1 max-w-5xl mx-auto w-full p-4 md:p-8 space-y-12">
-      <Link href={`/${locale}/recipes`} className="text-sm text-muted-foreground hover:text-primary mb-4 inline-block">
-          ← Back to Recipes
-      </Link>
-
-      {/* Hero Section */}
-      <div className="space-y-6 text-center max-w-3xl mx-auto">
-          <div className="text-primary font-bold uppercase tracking-widest text-sm">Main Course • Nigerian</div>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">Classic Party Jollof Rice</h1>
-          <p className="text-xl text-muted-foreground leading-relaxed">
-              The ultimate West African party dish. Smoky, spicy, and deeply flavorful rice cooked in a rich tomato and pepper stew.
-          </p>
-          
-          <div className="flex flex-wrap justify-center gap-8 pt-4 pb-8 border-b border-border">
-              <div className="flex flex-col items-center gap-1">
-                  <Clock className="w-6 h-6 text-muted-foreground" />
-                  <span className="font-semibold">Prep: 20 mins</span>
-                  <span className="text-sm text-muted-foreground">Cook: 45 mins</span>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                  <Users className="w-6 h-6 text-muted-foreground" />
-                  <span className="font-semibold">Serves 6-8</span>
-                  <span className="text-sm text-muted-foreground">Main Portion</span>
-              </div>
-               <div className="flex flex-col items-center gap-1">
-                  <ChefHat className="w-6 h-6 text-muted-foreground" />
-                  <span className="font-semibold">Medium</span>
-                  <span className="text-sm text-muted-foreground">Difficulty</span>
-              </div>
+    <main className="flex-1 bg-background">
+      {/* Hero image */}
+      <div className="w-full h-[45vh] md:h-[55vh] relative overflow-hidden bg-muted">
+        <img
+          src={recipe.heroImage}
+          alt={recipe.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute bottom-0 left-0 right-0 p-6 md:p-12 max-w-5xl mx-auto"
+        >
+          <Link href={`/${locale}/recipes`} className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm mb-4 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> All Recipes
+          </Link>
+          <div className="text-primary font-bold uppercase tracking-widest text-xs mb-3">
+            {recipe.cookTimeMin <= 20 ? 'Quick & Easy' : recipe.cookTimeMin <= 45 ? 'Main Course' : 'Centrepiece'} · West African
           </div>
+          <h1 className="text-3xl md:text-5xl font-black text-white leading-tight max-w-3xl">
+            {recipe.title}
+          </h1>
+        </motion.div>
       </div>
 
-      <div className="aspect-[21/9] rounded-2xl overflow-hidden bg-muted shadow-lg">
-          <img src="/images/img01.jpg" alt="Jollof Rice" className="w-full h-full object-cover" />
-      </div>
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 space-y-12">
+        {/* Meta bar */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="flex flex-wrap items-center gap-6 py-6 border-b border-border"
+        >
+          <div className="flex flex-col items-center gap-1 text-center">
+            <Clock className="w-6 h-6 text-primary" />
+            <span className="font-bold text-sm">{recipe.cookTimeMin} min</span>
+            <span className="text-xs text-muted-foreground">Total time</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 text-center">
+            <Users className="w-6 h-6 text-primary" />
+            <span className="font-bold text-sm">Serves {recipe.servings}</span>
+            <span className="text-xs text-muted-foreground">Portions</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 text-center">
+            <Flame className="w-6 h-6 text-primary" />
+            <span className={`font-bold text-sm px-2 py-0.5 rounded-full text-xs ${difficultyData.color}`}>{difficultyData.label}</span>
+            <span className="text-xs text-muted-foreground">Difficulty</span>
+          </div>
+          <div className="ml-auto">
+            <p className="text-sm text-muted-foreground italic max-w-md leading-relaxed">{recipe.body}</p>
+          </div>
+        </motion.div>
 
-      <div className="flex flex-col md:flex-row gap-12 pt-8">
-          {/* Ingredients */}
-          <div className="w-full md:w-1/3 space-y-6">
+        <div className="flex flex-col lg:flex-row gap-12">
+          {/* Ingredients sidebar — sticky */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="lg:sticky lg:top-8 space-y-4">
               <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Ingredients</h2>
+                <h2 className="text-2xl font-bold">Ingredients</h2>
+                <span className="text-sm text-muted-foreground">{recipe.ingredients.length} items</span>
               </div>
-              
-              <Card className="bg-primary/5 border-primary/20 sticky top-8">
-                  <CardContent className="p-6 space-y-6">
-                      <ul className="space-y-3">
-                          <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">3 cups Long Grain Parboiled Rice</span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">1 can (400g) Plum Tomatoes</span>
-                          </li>
-                           <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">3 Red Bell Peppers (Tatashe)</span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">2 Scotch Bonnet Peppers (Ata Rodo)</span>
-                          </li>
-                           <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">1 Large Red Onion</span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">1/2 cup Vegetable Oil</span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">100g Tomato Paste</span>
-                          </li>
-                          <li className="flex items-start gap-3">
-                              <input type="checkbox" className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" defaultChecked />
-                              <span className="leading-tight">2 tbsp Curry Powder & Dried Thyme</span>
-                          </li>
-                      </ul>
 
-                      <div className="pt-4 border-t border-primary/20">
-                          <Button size="lg" className="w-full shadow-lg" onClick={handleAddAllToCart} disabled={added}>
-                              {added ? (
-                                  <><CheckCircle2 className="w-5 h-5 mr-2" /> Added to Cart</>
-                              ) : (
-                                  <><ShoppingCart className="w-5 h-5 mr-2" /> Add 8 Items to Cart</>
-                              )}
-                          </Button>
-                          <p className="text-xs text-center text-muted-foreground mt-3">
-                              Instantly adds all checked ingredients to your Ereko cart.
+              <Card className="border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
+                <CardContent className="p-5 space-y-5">
+                  {/* Select all */}
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={allChecked}
+                      onChange={toggleAll}
+                      className="w-4 h-4 rounded accent-primary cursor-pointer"
+                    />
+                    <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                      {allChecked ? 'Deselect all' : 'Select all'}
+                    </span>
+                  </label>
+
+                  <div className="h-px bg-border" />
+
+                  {/* Ingredient list */}
+                  <ul className="space-y-3">
+                    {recipe.ingredients.map((ing, idx) => {
+                      const inStock = ing.sku && productsBySku[ing.sku];
+                      return (
+                        <motion.li
+                          key={idx}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.03 }}
+                          className="flex items-start gap-3"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!checked[idx]}
+                            onChange={() => toggleCheck(idx)}
+                            className="mt-0.5 w-4 h-4 rounded accent-primary cursor-pointer flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className={`text-sm leading-snug ${checked[idx] ? 'line-through text-muted-foreground' : ''}`}>
+                              <span className="font-medium">{ing.quantityText}</span> {ing.name}
+                            </span>
+                            {inStock && (
+                              <span className="ml-1.5 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+                                In stock
+                              </span>
+                            )}
+                          </div>
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+
+                  <div className="pt-3 border-t border-primary/20 space-y-3">
+                    {checkedCount > 0 && (
+                      <p className="text-xs text-center text-muted-foreground">
+                        {checkedCount} of {recipe.ingredients.length} ingredients selected
+                        {shoppableCount > 0 && ` · ${shoppableCount} available on EREKO`}
+                      </p>
+                    )}
+
+                    {recipe.ingredients.length > 0 && shoppableCount < recipe.ingredients.length && (
+                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 rounded-xl p-4 flex gap-3 text-amber-800 dark:text-amber-400/90 shadow-sm">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-bold mb-1">Availability Notice</p>
+                          <p className="text-xs leading-relaxed opacity-90">
+                            Some ingredients are currently out of stock or unavailable at EREKO. You may need to source items without the <span className="font-bold text-primary bg-primary/10 px-1 rounded-sm uppercase tracking-wider text-[9px]">In stock</span> badge locally.
                           </p>
+                        </div>
                       </div>
-                  </CardContent>
+                    )}
+
+                    <Button
+                      size="lg"
+                      className="w-full shadow-lg gap-2"
+                      onClick={handleAddToBasket}
+                      disabled={addedToCart || checkedCount === 0}
+                    >
+                      {addedToCart ? (
+                        <><CheckCircle2 className="w-5 h-5" /> Added to Basket!</>
+                      ) : (
+                        <><ShoppingCart className="w-5 h-5" /> Add {checkedCount > 0 ? `${checkedCount} ` : ''}to Basket</>
+                      )}
+                    </Button>
+
+                    <Link href={`/${locale}/shop`} className="block">
+                      <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
+                        <ShoppingBag className="w-3.5 h-3.5" /> Shop All Ingredients
+                      </Button>
+                    </Link>
+
+                    <p className="text-[11px] text-center text-muted-foreground">
+                      Tick ingredients you need, then add them to your EREKO basket in one click.
+                    </p>
+                  </div>
+                </CardContent>
               </Card>
+            </div>
           </div>
 
-          {/* Instructions */}
-          <div className="w-full md:w-2/3 space-y-8">
-               <h2 className="text-2xl font-bold">Instructions</h2>
-               
-               <div className="space-y-8">
-                   <div className="flex gap-6">
-                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-lg">1</div>
-                       <div className="space-y-2">
-                           <h3 className="text-lg font-bold">Blend the base</h3>
-                           <p className="text-muted-foreground leading-relaxed">
-                               Blend the plum tomatoes, red bell peppers, scotch bonnet peppers, and half of the onion until smooth. Boil the mixture in a pot until it reduces to a thick paste and the water dries up (about 15-20 mins).
-                           </p>
-                       </div>
-                   </div>
+          {/* Method */}
+          <div className="flex-1 space-y-10 min-w-0">
+            <h2 className="text-2xl font-bold">Method</h2>
+            <ol className="space-y-8">
+              {recipe.steps.map((step, idx) => (
+                <motion.li
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{ duration: 0.4, delay: idx * 0.05 }}
+                  className="flex gap-5"
+                >
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black text-base shadow-sm">
+                    {idx + 1}
+                  </div>
+                  <div className="flex-1 pt-1.5">
+                    <p className="text-base text-foreground leading-relaxed">{step}</p>
+                  </div>
+                </motion.li>
+              ))}
+            </ol>
 
-                   <div className="flex gap-6">
-                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-lg">2</div>
-                       <div className="space-y-2">
-                           <h3 className="text-lg font-bold">Fry the stew</h3>
-                           <p className="text-muted-foreground leading-relaxed">
-                               In a large sturdy pot, heat the vegetable oil. Slice the remaining half onion and fry until translucent. Stir in the tomato paste and fry for 3-5 minutes on medium heat to remove the tanginess. Add the boiled pepper mix, curry powder, thyme, and stock cubes. Cover and fry for 10-15 minutes until the oil floats to the top.
-                           </p>
-                       </div>
-                   </div>
-
-                    <div className="flex gap-6">
-                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-lg">3</div>
-                       <div className="space-y-2">
-                           <h3 className="text-lg font-bold">Wash the rice</h3>
-                           <p className="text-muted-foreground leading-relaxed">
-                               While the stew is frying, thoroughly wash the parboiled rice in warm water multiple times until the water runs completely clear to remove excess starch. Drain well.
-                           </p>
-                       </div>
-                   </div>
-
-                   <div className="flex gap-6">
-                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-lg">4</div>
-                       <div className="space-y-2">
-                           <h3 className="text-lg font-bold">Combine and cook</h3>
-                           <p className="text-muted-foreground leading-relaxed">
-                               Pour the washed rice into the fried stew. Stir thoroughly to ensure every grain is coated. Add meat stock or water—just enough to be at the exact same level as the rice (do not drown it). Add salt to taste. Bring to a boil, then immediately reduce the heat to the absolute minimum.
-                           </p>
-                       </div>
-                   </div>
-
-                   <div className="flex gap-6">
-                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-lg">5</div>
-                       <div className="space-y-2">
-                           <h3 className="text-lg font-bold">Steam it</h3>
-                           <p className="text-muted-foreground leading-relaxed">
-                               Cover the pot tightly with foil paper before placing the lid on to trap the steam. Let it cook for 30-40 minutes without opening. Jollof cooks with steam, not water. Let the bottom burn slightly for that authentic party smokiness.
-                           </p>
-                       </div>
-                   </div>
-               </div>
+            {/* Related recipes CTA */}
+            <div className="mt-12 pt-8 border-t border-border">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold">Continue cooking</h3>
+              </div>
+              <Link href={`/${locale}/recipes`}>
+                <Button variant="outline" className="gap-2">
+                  <ChefHat className="w-4 h-4" /> Browse all 20 recipes
+                </Button>
+              </Link>
+            </div>
           </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function RecipeSkeleton({ locale }: { locale: string }) {
+  return (
+    <main className="flex-1 bg-background">
+      <Skeleton className="w-full h-[45vh] md:h-[55vh]" />
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 space-y-8">
+        <div className="flex gap-8 py-6 border-b border-border">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-20" />)}
+        </div>
+        <div className="flex gap-12">
+          <div className="w-80 space-y-3">
+            <Skeleton className="h-8 w-32" />
+            {[1,2,3,4,5,6,7,8].map((i) => <Skeleton key={i} className="h-6 w-full" />)}
+          </div>
+          <div className="flex-1 space-y-6">
+            <Skeleton className="h-8 w-24" />
+            {[1,2,3,4,5].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
+          </div>
+        </div>
       </div>
     </main>
   );

@@ -163,4 +163,99 @@ export class OrdersService {
 
     return { rmaNumber, status: 'PENDING_REVIEW', refundAmountMinor };
   }
+
+  async getPublicTracking(orderNumber: string, email: string) {
+    const { data: orderRows } = await this.supabase.db
+      .from('Order')
+      .select('id, orderNumber, status, deliveryMethod, trackingNumber, carrierName, placedAt, shippedAt, deliveredAt, email, totalMinor')
+      .eq('orderNumber', orderNumber)
+      .eq('email', email.toLowerCase().trim())
+      .limit(1);
+
+    const order = orderRows?.[0];
+    if (!order) throw new NotFoundException('Order not found — check your order number and email address.');
+
+    const { data: events } = await this.supabase.db
+      .from('OrderEvent')
+      .select('eventType, payload, createdAt')
+      .eq('orderId', order.id)
+      .order('createdAt', { ascending: true });
+
+    const { data: items } = await this.supabase.db
+      .from('OrderItem')
+      .select('title, quantity, variantName')
+      .eq('orderId', order.id);
+
+    return buildTrackingResponse(order, events ?? [], items ?? []);
+  }
+
+  async getOrderTracking(userId: string, orderId: string) {
+    const order = await this.fetchOrderWithRelations(orderId);
+    if (!order) throw new NotFoundException(`Order ${orderId} not found`);
+    if (order.userId !== userId) throw new ForbiddenException('Access denied to this order');
+    return buildTrackingResponse(order, order.events ?? [], order.items ?? []);
+  }
+}
+
+const DELIVERY_STEPS = [
+  { key: 'PENDING_PAYMENT', label: 'Order Placed', icon: 'receipt', desc: 'We have received your order.' },
+  { key: 'PAID', label: 'Payment Confirmed', icon: 'credit-card', desc: 'Payment has been confirmed.' },
+  { key: 'ALLOCATED', label: 'Processing', icon: 'box', desc: 'Your order is being processed.' },
+  { key: 'PICKING', label: 'Picking Items', icon: 'package', desc: 'Our team is picking your items.' },
+  { key: 'PACKED', label: 'Packed & Ready', icon: 'package-check', desc: 'Your order is packed and ready.' },
+  { key: 'SHIPPED', label: 'Shipped', icon: 'truck', desc: 'Your order is on its way.' },
+  { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: 'map-pin', desc: 'Your order is out for delivery today.' },
+  { key: 'DELIVERED', label: 'Delivered', icon: 'check-circle', desc: 'Your order has been delivered.' },
+];
+
+const COLLECTION_STEPS = [
+  { key: 'PENDING_PAYMENT', label: 'Order Placed', icon: 'receipt', desc: 'We have received your order.' },
+  { key: 'PAID', label: 'Payment Confirmed', icon: 'credit-card', desc: 'Payment has been confirmed.' },
+  { key: 'ALLOCATED', label: 'Preparing Your Order', icon: 'box', desc: 'We are preparing your order in-store.' },
+  { key: 'PICKING', label: 'Picking Items', icon: 'package', desc: 'Staff are picking and packing your items.' },
+  { key: 'PACKED', label: 'Ready for Collection', icon: 'store', desc: 'Your order is ready. Come pick it up at 5 Broadway, Barking, IG11 7LS.' },
+  { key: 'DELIVERED', label: 'Collected', icon: 'check-circle', desc: 'Order collected. Enjoy your EREKO products!' },
+];
+
+const STATUS_ORDER = ['PENDING_PAYMENT','PAID','ALLOCATED','PICKING','PACKED','SHIPPED','OUT_FOR_DELIVERY','DELIVERED','CANCELLED','ON_HOLD','RETURN_REQUESTED'];
+
+function buildTrackingResponse(order: any, events: any[], items: any[]) {
+  const isCollection = order.deliveryMethod === 'click_and_collect';
+  const steps = isCollection ? COLLECTION_STEPS : DELIVERY_STEPS;
+
+  const statusIdx = STATUS_ORDER.indexOf(order.status);
+  const stepsWithStatus = steps.map((step) => {
+    const stepIdx = STATUS_ORDER.indexOf(step.key);
+    let state: 'completed' | 'active' | 'pending' = 'pending';
+    if (stepIdx < statusIdx) state = 'completed';
+    else if (stepIdx === statusIdx) state = 'active';
+    // For collection flow: PAID/SHIPPED/OUT_FOR_DELIVERY map to 'completed' once PACKED
+    if (isCollection && order.status === 'PACKED' && ['PAID','ALLOCATED','PICKING'].includes(step.key)) state = 'completed';
+    if (isCollection && order.status === 'DELIVERED' && step.key !== 'DELIVERED') state = 'completed';
+    return { ...step, state };
+  });
+
+  const timeline = events.map((e: any) => ({
+    eventType: e.eventType,
+    timestamp: e.createdAt,
+    note: (e.payload as any)?.notes ?? null,
+  }));
+
+  return {
+    orderNumber: order.orderNumber,
+    status: order.status,
+    deliveryMethod: order.deliveryMethod,
+    isClickAndCollect: isCollection,
+    trackingNumber: order.trackingNumber ?? null,
+    carrierName: order.carrierName ?? null,
+    placedAt: order.placedAt,
+    shippedAt: order.shippedAt ?? null,
+    deliveredAt: order.deliveredAt ?? null,
+    totalMinor: order.totalMinor,
+    items: items.map((i: any) => ({ title: i.title, variantName: i.variantName, quantity: i.quantity })),
+    steps: stepsWithStatus,
+    timeline,
+    collectionAddress: isCollection ? '5 Broadway, Barking, IG11 7LS' : null,
+    collectionHours: isCollection ? 'Mon–Sat 9am–7pm, Sun 10am–5pm' : null,
+  };
 }

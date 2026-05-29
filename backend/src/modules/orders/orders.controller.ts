@@ -19,6 +19,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { OrdersService } from './orders.service';
 import { CreateReturnDto } from './orders.dto';
@@ -54,6 +55,31 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.ordersService.getOrder(userId, id);
+  }
+
+  @Get('track')
+  @Public()
+  @ApiOperation({ summary: 'Public order tracking — lookup by order number + email' })
+  @ApiQuery({ name: 'orderNumber', required: true, type: String })
+  @ApiQuery({ name: 'email', required: true, type: String })
+  @ApiResponse({ status: 200, description: 'Order tracking details with step timeline' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  async trackPublic(
+    @Query('orderNumber') orderNumber: string,
+    @Query('email') email: string,
+  ) {
+    return this.ordersService.getPublicTracking(orderNumber, email);
+  }
+
+  @Get(':id/tracking')
+  @ApiOperation({ summary: 'Get full tracking for an authenticated user\'s order' })
+  @ApiParam({ name: 'id', description: 'Order UUID' })
+  @ApiResponse({ status: 200, description: 'Order tracking details with step timeline' })
+  async getTracking(
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ordersService.getOrderTracking(userId, id);
   }
 
   @Post(':orderId/returns')
