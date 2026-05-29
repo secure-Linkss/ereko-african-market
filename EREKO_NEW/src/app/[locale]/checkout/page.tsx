@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Check, CreditCard, MapPin, Truck, ChevronRight, Loader2, Lock, ShoppingBag } from 'lucide-react';
+import { Check, CreditCard, MapPin, Truck, ChevronRight, Loader2, Lock, ShoppingBag, Store, Package } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
 import { useStartCheckout, useCreatePaymentIntent, useConfirmCheckout } from '@/services/checkout';
@@ -16,23 +16,47 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+const STORE_ADDRESS = {
+  line1: '5 Broadway',
+  city: 'Barking',
+  postcode: 'IG11 7LS',
+  countryCode: 'GB',
+  phone: '02036337503',
+};
+
 const contactSchema = z.object({
   email: z.string().email('Please enter a valid email'),
   newsletter: z.boolean().optional(),
 });
-const addressSchema = z.object({
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
-  postcode: z.string().min(3, 'Required'),
-  line1: z.string().min(1, 'Required'),
-  line2: z.string().optional(),
-  city: z.string().min(1, 'Required'),
-  phone: z.string().min(7, 'Required'),
-  deliveryMethod: z.enum(['standard', 'nextday']),
-});
+const addressSchema = z.discriminatedUnion('fulfillment', [
+  z.object({
+    fulfillment: z.literal('delivery'),
+    firstName: z.string().min(1, 'Required'),
+    lastName: z.string().min(1, 'Required'),
+    postcode: z.string().min(3, 'Required'),
+    line1: z.string().min(1, 'Required'),
+    line2: z.string().optional(),
+    city: z.string().min(1, 'Required'),
+    phone: z.string().min(7, 'Required'),
+    deliveryMethod: z.enum(['standard', 'nextday']),
+  }),
+  z.object({
+    fulfillment: z.literal('collect'),
+    firstName: z.string().min(1, 'Required'),
+    lastName: z.string().min(1, 'Required'),
+    phone: z.string().min(7, 'Required'),
+    postcode: z.string().optional(),
+    line1: z.string().optional(),
+    line2: z.string().optional(),
+    city: z.string().optional(),
+    deliveryMethod: z.literal('collect').optional(),
+  }),
+]);
 
 type ContactForm = z.infer<typeof contactSchema>;
 type AddressForm = z.infer<typeof addressSchema>;
+type DeliveryAddressForm = Extract<AddressForm, { fulfillment: 'delivery' }>;
+type CollectForm = Extract<AddressForm, { fulfillment: 'collect' }>;
 
 function formatGBP(minor: number) {
   return `£${(minor / 100).toFixed(2)}`;
@@ -75,12 +99,13 @@ function StripePaymentForm({ clientSecret, orderId, shippingAddress, onSuccess, 
         return;
       }
       if (paymentIntent?.status === 'succeeded') {
+        const dm = (shippingAddress as any)?._deliveryMethod ?? 'standard';
         await confirmMutation.mutateAsync({
           orderId,
           paymentIntentId: paymentIntent.id,
           billingAddressSameAsShipping: true,
           shippingAddress,
-          deliveryMethod: 'standard',
+          deliveryMethod: dm,
         });
         onSuccess();
       }
@@ -108,18 +133,20 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [contactData, setContactData] = useState<ContactForm | null>(null);
   const [addressData, setAddressData] = useState<AddressForm | null>(null);
+  const [fulfillment, setFulfillment] = useState<'delivery' | 'collect'>('delivery');
   const [checkoutData, setCheckoutData] = useState<{ orderId: string; clientSecret: string; publishableKey: string } | null>(null);
   const [stepError, setStepError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const { items, getSubtotalMinor, getTotalMinor, shippingMinor, discountMinor, promoCode, clearCart } = useCartStore();
-  const { user, isAuthenticated } = useAuthStore();
+  const { items, getSubtotalMinor, shippingMinor, discountMinor, promoCode, clearCart } = useCartStore();
+  const { user } = useAuthStore();
   const startCheckout = useStartCheckout();
   const createPaymentIntent = useCreatePaymentIntent();
 
   const subtotal = getSubtotalMinor();
+  const isCollect = fulfillment === 'collect';
   const activeShipping = subtotal >= 5500 ? 0 : shippingMinor;
-  const deliveryFee = addressData?.deliveryMethod === 'nextday' ? 599 : (activeShipping || 399);
+  const deliveryFee = isCollect ? 0 : ((addressData as DeliveryAddressForm)?.deliveryMethod === 'nextday' ? 599 : (activeShipping || 399));
   const total = Math.max(0, subtotal - discountMinor) + deliveryFee;
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
 
@@ -127,9 +154,13 @@ export default function CheckoutPage() {
     resolver: zodResolver(contactSchema),
     defaultValues: { email: user?.email ?? '', newsletter: false },
   });
-  const addressForm = useForm<AddressForm>({
-    resolver: zodResolver(addressSchema),
-    defaultValues: { deliveryMethod: 'standard', firstName: user?.firstName ?? '', lastName: user?.lastName ?? '' },
+  const addressForm = useForm<any>({
+    defaultValues: {
+      fulfillment: 'delivery',
+      deliveryMethod: 'standard',
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+    },
   });
 
   if (items.length === 0 && !success) {
@@ -167,13 +198,15 @@ export default function CheckoutPage() {
     setStep(2);
   }
 
-  async function onAddressSubmit(data: AddressForm) {
+  async function onAddressSubmit(data: any) {
     setStepError('');
-    setAddressData(data);
+    const formData = { ...data, fulfillment };
+    setAddressData(formData);
     try {
       const cartId = `local-${Date.now()}`;
+      const postcode = isCollect ? STORE_ADDRESS.postcode : (data.postcode ?? '');
       const startRes = await startCheckout.mutateAsync({
-        postcode: data.postcode,
+        postcode,
         cartId,
         email: contactData!.email,
         firstName: data.firstName,
@@ -249,92 +282,157 @@ export default function CheckoutPage() {
             )}
           </Card>
 
-          {/* Step 2: Delivery */}
+          {/* Step 2: Fulfilment */}
           <Card className={step < 2 ? 'opacity-50 pointer-events-none' : ''}>
             <CardHeader className="flex flex-row items-center gap-4 bg-muted/30 rounded-t-xl">
               <StepBadge n={2} complete={step > 2} active={step === 2} />
-              <CardTitle className="text-lg flex items-center gap-2"><MapPin className="w-5 h-5 text-muted-foreground" /> Delivery Details</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                {isCollect ? <Store className="w-5 h-5 text-muted-foreground" /> : <MapPin className="w-5 h-5 text-muted-foreground" />}
+                {isCollect ? 'Click & Collect' : 'Delivery Details'}
+              </CardTitle>
               {step > 2 && addressData && (
                 <button onClick={() => { setStep(2); setCheckoutData(null); }} className="ml-auto text-xs text-primary hover:underline">Edit</button>
               )}
             </CardHeader>
             {step > 2 && addressData ? (
               <CardContent className="p-4 text-sm text-muted-foreground">
-                {addressData.firstName} {addressData.lastName} · {addressData.line1}, {addressData.city}, {addressData.postcode}
+                {isCollect
+                  ? <span className="flex items-center gap-2"><Store className="w-4 h-4 text-primary" /> Collect from: 5 Broadway, Barking, IG11 7LS</span>
+                  : <span>{(addressData as any).firstName} {(addressData as any).lastName} · {(addressData as any).line1}, {(addressData as any).city}, {(addressData as any).postcode}</span>
+                }
               </CardContent>
             ) : step === 2 && (
-              <CardContent className="p-6">
+              <CardContent className="p-6 space-y-6">
+                {/* Fulfilment selector */}
+                <div>
+                  <h3 className="font-semibold mb-3">How would you like to receive your order?</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFulfillment('delivery')}
+                      className={`p-4 border-2 rounded-xl text-left transition-all ${fulfillment === 'delivery' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'}`}
+                    >
+                      <Truck className={`w-6 h-6 mb-2 ${fulfillment === 'delivery' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <p className="font-semibold text-sm">Home Delivery</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Delivered to your door</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFulfillment('collect')}
+                      className={`p-4 border-2 rounded-xl text-left transition-all ${fulfillment === 'collect' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'}`}
+                    >
+                      <Store className={`w-6 h-6 mb-2 ${fulfillment === 'collect' ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <p className="font-semibold text-sm">Click & Collect</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Collect from our store — FREE</p>
+                    </button>
+                  </div>
+                </div>
+
                 <form onSubmit={addressForm.handleSubmit(onAddressSubmit)} className="space-y-4">
                   {stepError && (
                     <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">{stepError}</div>
                   )}
+
+                  {/* Name + Phone — always needed */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-semibold block mb-1">First Name</label>
-                      <Input {...addressForm.register('firstName')} />
-                      {addressForm.formState.errors.firstName && <p className="text-xs text-destructive mt-1">{addressForm.formState.errors.firstName.message}</p>}
+                      <Input {...addressForm.register('firstName', { required: 'Required' })} />
+                      {addressForm.formState.errors.firstName && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.firstName.message)}</p>}
                     </div>
                     <div>
                       <label className="text-sm font-semibold block mb-1">Last Name</label>
-                      <Input {...addressForm.register('lastName')} />
-                      {addressForm.formState.errors.lastName && <p className="text-xs text-destructive mt-1">{addressForm.formState.errors.lastName.message}</p>}
+                      <Input {...addressForm.register('lastName', { required: 'Required' })} />
+                      {addressForm.formState.errors.lastName && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.lastName.message)}</p>}
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-semibold block mb-1">Postcode</label>
-                    <Input placeholder="e.g. SW1A 1AA" {...addressForm.register('postcode')} />
-                    {addressForm.formState.errors.postcode && <p className="text-xs text-destructive mt-1">{addressForm.formState.errors.postcode.message}</p>}
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">Address Line 1</label>
-                    <Input placeholder="House number and street name" {...addressForm.register('line1')} />
-                    {addressForm.formState.errors.line1 && <p className="text-xs text-destructive mt-1">{addressForm.formState.errors.line1.message}</p>}
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">Address Line 2 (optional)</label>
-                    <Input placeholder="Apartment, flat, unit, etc." {...addressForm.register('line2')} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-semibold block mb-1">City</label>
-                      <Input {...addressForm.register('city')} />
-                      {addressForm.formState.errors.city && <p className="text-xs text-destructive mt-1">{addressForm.formState.errors.city.message}</p>}
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold block mb-1">Phone</label>
-                      <Input type="tel" placeholder="+44 7700 000000" {...addressForm.register('phone')} />
-                      {addressForm.formState.errors.phone && <p className="text-xs text-destructive mt-1">{addressForm.formState.errors.phone.message}</p>}
-                    </div>
+                    <label className="text-sm font-semibold block mb-1">Phone Number</label>
+                    <Input type="tel" placeholder="+44 7700 000000" {...addressForm.register('phone', { required: 'Required', minLength: { value: 7, message: 'Enter a valid phone number' } })} />
+                    {addressForm.formState.errors.phone && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.phone.message)}</p>}
                   </div>
 
-                  {/* Delivery Method */}
-                  <div className="pt-4 border-t border-border">
-                    <h3 className="font-semibold mb-3 flex items-center gap-2"><Truck className="w-4 h-4" /> Delivery Method</h3>
-                    <div className="space-y-3">
-                      <label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors hover:bg-muted/30 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                        <div className="flex items-center gap-3">
-                          <input type="radio" value="standard" className="text-primary w-4 h-4" {...addressForm.register('deliveryMethod')} />
-                          <div>
-                            <p className="font-medium">Standard Delivery</p>
-                            <p className="text-sm text-muted-foreground">2-3 Business Days</p>
-                          </div>
+                  {/* Click & Collect info */}
+                  {isCollect && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <Store className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-sm">EREKO African Market</p>
+                          <p className="text-sm text-muted-foreground">5 Broadway, Barking, IG11 7LS</p>
                         </div>
-                        <span className="font-bold">{subtotal >= 5500 ? 'FREE' : '£3.99'}</span>
-                      </label>
-                      <label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors hover:bg-muted/30 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                        <div className="flex items-center gap-3">
-                          <input type="radio" value="nextday" className="text-primary w-4 h-4" {...addressForm.register('deliveryMethod')} />
-                          <div>
-                            <p className="font-medium">Next Day Delivery</p>
-                            <p className="text-sm text-muted-foreground">Order before 2PM</p>
-                          </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Package className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-sm">How it works</p>
+                          <ol className="text-sm text-muted-foreground space-y-1 mt-1 list-decimal list-inside">
+                            <li>Place your order and pay online</li>
+                            <li>We'll pack your items ready for collection</li>
+                            <li>You'll receive a "Ready to Collect" notification</li>
+                            <li>Collect from our store during opening hours</li>
+                          </ol>
                         </div>
-                        <span className="font-bold">£5.99</span>
-                      </label>
+                      </div>
+                      <div className="pt-2 border-t border-primary/10 text-xs text-muted-foreground">
+                        <strong>Store hours:</strong> Mon–Sat 9am–8pm · Sun 10am–6pm
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="pt-4 flex justify-between">
+                  {/* Delivery address fields — only for home delivery */}
+                  {!isCollect && (
+                    <>
+                      <div>
+                        <label className="text-sm font-semibold block mb-1">Postcode</label>
+                        <Input placeholder="e.g. SW1A 1AA" {...addressForm.register('postcode', { required: 'Required', minLength: { value: 3, message: 'Required' } })} />
+                        {addressForm.formState.errors.postcode && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.postcode.message)}</p>}
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold block mb-1">Address Line 1</label>
+                        <Input placeholder="House number and street name" {...addressForm.register('line1', { required: 'Required' })} />
+                        {addressForm.formState.errors.line1 && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.line1.message)}</p>}
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold block mb-1">Address Line 2 (optional)</label>
+                        <Input placeholder="Apartment, flat, unit, etc." {...addressForm.register('line2')} />
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold block mb-1">City</label>
+                        <Input {...addressForm.register('city', { required: 'Required' })} />
+                        {addressForm.formState.errors.city && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.city.message)}</p>}
+                      </div>
+
+                      {/* Delivery Method */}
+                      <div className="pt-2 border-t border-border">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2"><Truck className="w-4 h-4" /> Delivery Speed</h3>
+                        <div className="space-y-3">
+                          <label className="flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors hover:bg-muted/30 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                            <div className="flex items-center gap-3">
+                              <input type="radio" value="standard" className="text-primary w-4 h-4" {...addressForm.register('deliveryMethod')} />
+                              <div>
+                                <p className="font-medium">Standard Delivery</p>
+                                <p className="text-sm text-muted-foreground">2–3 business days</p>
+                              </div>
+                            </div>
+                            <span className="font-bold text-sm">{subtotal >= 5500 ? <span className="text-emerald-600">FREE</span> : '£3.99'}</span>
+                          </label>
+                          <label className="flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors hover:bg-muted/30 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                            <div className="flex items-center gap-3">
+                              <input type="radio" value="nextday" className="text-primary w-4 h-4" {...addressForm.register('deliveryMethod')} />
+                              <div>
+                                <p className="font-medium">Next Day Delivery</p>
+                                <p className="text-sm text-muted-foreground">Order before 2PM</p>
+                              </div>
+                            </div>
+                            <span className="font-bold text-sm">£5.99</span>
+                          </label>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="pt-2 flex justify-between">
                     <Button type="button" variant="ghost" onClick={() => setStep(1)}>Back</Button>
                     <Button type="submit" size="lg" disabled={startCheckout.isPending || createPaymentIntent.isPending}>
                       {(startCheckout.isPending || createPaymentIntent.isPending)
@@ -364,15 +462,16 @@ export default function CheckoutPage() {
                       clientSecret={checkoutData.clientSecret}
                       orderId={checkoutData.orderId}
                       shippingAddress={{
-                        firstName: addressData?.firstName ?? '',
-                        lastName: addressData?.lastName ?? '',
-                        line1: addressData?.line1 ?? '',
-                        line2: addressData?.line2,
-                        city: addressData?.city ?? '',
-                        postcode: addressData?.postcode ?? '',
+                        firstName: (addressData as any)?.firstName ?? '',
+                        lastName: (addressData as any)?.lastName ?? '',
+                        line1: isCollect ? STORE_ADDRESS.line1 : ((addressData as any)?.line1 ?? ''),
+                        line2: isCollect ? undefined : (addressData as any)?.line2,
+                        city: isCollect ? STORE_ADDRESS.city : ((addressData as any)?.city ?? ''),
+                        postcode: isCollect ? STORE_ADDRESS.postcode : ((addressData as any)?.postcode ?? ''),
                         countryCode: 'GB',
-                        phone: addressData?.phone ?? '',
-                      }}
+                        phone: (addressData as any)?.phone ?? '',
+                        _deliveryMethod: isCollect ? 'click_and_collect' : ((addressData as any)?.deliveryMethod ?? 'standard'),
+                      } as any}
                       onSuccess={handlePaymentSuccess}
                       onError={(msg) => setStepError(msg)}
                     />
@@ -432,7 +531,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Delivery</span>
+                  <span className="text-muted-foreground">{isCollect ? 'Collection' : 'Delivery'}</span>
                   <span className={deliveryFee === 0 ? 'text-emerald-600 font-medium' : ''}>{deliveryFee === 0 ? 'FREE' : formatGBP(deliveryFee)}</span>
                 </div>
               </div>

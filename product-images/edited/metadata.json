@@ -1,6 +1,6 @@
 {
-  "generated": "2026-05-28T23:08:45.795660+00:00",
-  "watermark_version": "ereko-logo-v1",
+  "generated": "2026-05-29T12:00:00.000Z",
+  "watermark_version": "ereko-logo-v2",
   "images": [
     {
       "filename": "oluolu_pounded_yam.jpg",
@@ -181,6 +181,132 @@
       "watermark_position": "bottom-right",
       "dimensions": "800x800",
       "file_size_kb": 74
+    },
+    {
+      "filename": "nigerian_coca_cola.jpg",
+      "product_name": "Nigerian Coca-Cola 35cl Glass Bottle",
+      "brand": "Coca-Cola",
+      "alt_text": "Nigerian Coca-Cola 35cl glass bottle \u2014 classic Coke in the iconic Nigerian glass bottle",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "golden_penny_semolina.jpg",
+      "product_name": "Golden Penny Semolina Fine 1kg",
+      "brand": "Golden Penny",
+      "alt_text": "Golden Penny Semolina Fine 1kg \u2014 premium quality semolina for smooth swallow",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "fresh_plantain.jpg",
+      "product_name": "Fresh Unripe Plantain (Each)",
+      "brand": null,
+      "alt_text": "Fresh unripe green plantain \u2014 staple West African cooking ingredient, perfect for boiling or frying",
+      "category": "Fresh Produce",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "indomie_onion_chicken.jpg",
+      "product_name": "Indomie Onion Chicken Noodles 5-Pack",
+      "brand": "Indomie",
+      "alt_text": "Indomie Onion Chicken instant noodles 5-pack \u2014 popular Nigerian quick meal with onion chicken flavour",
+      "category": "Cupboard Staples",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "caprice_rice_10kg.jpg",
+      "product_name": "Caprice Long Grain Parboiled Rice 10kg",
+      "brand": "Caprice",
+      "alt_text": "Caprice Long Grain Parboiled Rice 10kg \u2014 premium West African parboiled rice for large family meals",
+      "category": "Grains & Rice",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "honeywell_pounded_yam.jpg",
+      "product_name": "Honeywell Pounded Yam Flour 1.5kg",
+      "brand": "Honeywell",
+      "alt_text": "Honeywell Pounded Yam Flour 1.5kg \u2014 smooth authentic Nigerian yam flour from the Honeywell brand",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "poundo_yam_generic.jpg",
+      "product_name": "Poundo Yam Flour 1kg",
+      "brand": "Generic",
+      "alt_text": "Poundo Yam Flour 1kg \u2014 instant pounded yam flour for traditional Nigerian swallow",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "guinness_nigerian_33cl.jpg",
+      "product_name": "Guinness Nigeria Stout 33cl",
+      "brand": "Guinness Nigeria",
+      "alt_text": "Guinness Nigeria Stout 33cl glass bottle \u2014 the iconic rich dark Nigerian stout",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "guinness_nigerian_60cl.jpg",
+      "product_name": "Guinness Nigeria Stout 60cl",
+      "brand": "Guinness Nigeria",
+      "alt_text": "Guinness Nigeria Stout 60cl large glass bottle \u2014 full-size Nigerian Guinness for celebrations",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "nkulenu_palm_wine.jpg",
+      "product_name": "Nkulenu's Palm Wine 75cl",
+      "brand": "Nkulenu's",
+      "alt_text": "Nkulenu's Palm Wine 75cl bottle \u2014 authentic Ghanaian palm wine, naturally sweet and traditional",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "dried_ponmo.jpg",
+      "product_name": "Dried Ponmo (Cow Skin) 200g",
+      "brand": null,
+      "alt_text": "Dried Nigerian ponmo cow skin 200g \u2014 hard dried kanda for soups and stews",
+      "category": "Dried Fish & Seafood",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "canned_snail.jpg",
+      "product_name": "Giant African Land Snail (Canned) 400g",
+      "brand": null,
+      "alt_text": "Giant African land snail canned 400g \u2014 pre-cooked igbin ready for Nigerian soups and pepper soup",
+      "category": "Dried Fish & Seafood",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "bitter_cola.jpg",
+      "product_name": "Bitter Cola (Garcinia Kola) 100g",
+      "brand": null,
+      "alt_text": "Bitter Cola Garcinia kola 100g \u2014 traditional West African obi bitter kola for cultural and health use",
+      "category": "Snacks & Biscuits",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
+    },
+    {
+      "filename": "mortar_pestle.jpg",
+      "product_name": "Wooden Mortar & Pestle Set",
+      "brand": null,
+      "alt_text": "Traditional African wooden mortar and pestle set \u2014 hand-carved for pounding yam and grinding spices",
+      "category": "Kitchen Essentials",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
     }
   ]
 }

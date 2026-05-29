@@ -13,26 +13,59 @@ const METADATA_PATH = path.join(IMAGES_DIR, 'metadata.json');
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const prisma = new PrismaClient();
 
-// Fuzzy product matching: maps metadata product_name/brand to DB slugs
+// Maps image filename → product slug in DB.
+// IMPORTANT: each slug must match exactly what's in the products table.
 const PRODUCT_SLUG_MAP: Record<string, string> = {
-  'oluolu_pounded_yam.jpg':    'pounded-yam-flour-poundo-1kg',      // existing - also map to olu olu
-  'oluolu_poundo_iyan.jpg':    'oluolu-pounded-yam-flour-2kg',
-  'oluolu_poundo_4kg.jpg':     'oluolu-pounded-yam-flour-2kg',      // same product, different pack — use same slug, skip if dup
-  'indomie_chicken.jpg':       'indomie-noodles-chicken-5pack',
-  'malta_guinness.jpg':        'malta-guinness-non-alcoholic-33cl',
-  'palm_oil_red.jpg':          'orishirishi-red-palm-oil-1l',
-  'ground_egusi.jpg':          'egusi-melon-seeds-ground-500g',
-  'dried_stockfish.jpg':       'stockfish-fillet-dried-500g',
-  'basmati_rice_5kg.jpg':      'royal-umbrella-basmati-rice-5kg',
-  'milo_tin.jpg':              'milo-chocolate-malt-drink-400g',
-  'frozen_plantain.jpg':       'frozen-plantain-slices-500g',
-  'fufu_cassava.jpg':          'olu-olu-fufu-flour-1kg',
-  'amala_yam_flour.jpg':       'trocadero-amala-flour-1kg',
-  'titus_sardines.jpg':        'titus-sardines-in-oil-125g',
-  'maggi_naija.jpg':           'maggi-naija-pot-seasoning-100g',
-  'cameroon_pepper.jpg':       'cameroon-pepper-ground-100g',
-  'nigerian_fanta.jpg':        'nigerian-fanta-orange-bottle-35cl',
-  'golden_penny_semovita.jpg': 'golden-penny-semovita-1kg',
+  // ── Flour & Swallows ────────────────────────────────────────────────────────
+  'oluolu_pounded_yam.jpg':      'olu-olu-pounded-yam-flour-2kg',   // Olu Olu 2kg ← primary Olu Olu pounded yam image
+  'oluolu_poundo_iyan.jpg':      'olu-olu-pounded-yam-flour-2kg',   // same product — skip if already has image
+  'honeywell_pounded_yam.jpg':   'honeywell-pounded-yam-flour-1-5kg', // ← MUST be Honeywell brand image, NOT Olu Olu
+  'poundo_yam_generic.jpg':      'pounded-yam-flour-poundo-1kg',    // generic 1kg
+  'fufu_cassava.jpg':            'olu-olu-fufu-flour-1kg',
+  'amala_yam_flour.jpg':         'trocadero-amala-flour-1kg',
+  'golden_penny_semovita.jpg':   'golden-penny-semovita-1kg',
+  'golden_penny_semolina.jpg':   'semolina-fine-1kg',
+
+  // ── Grains & Rice ───────────────────────────────────────────────────────────
+  'basmati_rice_5kg.jpg':        'royal-umbrella-basmati-rice-5kg',
+  'caprice_rice_10kg.jpg':       'caprice-parboiled-rice-10kg',
+
+  // ── Noodles ─────────────────────────────────────────────────────────────────
+  'indomie_chicken.jpg':         'indomie-noodles-chicken-5pack',
+  'indomie_onion_chicken.jpg':   'indomie-onion-chicken-5pack',
+
+  // ── Drinks & Beverages ──────────────────────────────────────────────────────
+  'malta_guinness.jpg':          'malta-guinness-33cl',
+  'nigerian_fanta.jpg':          'nigerian-fanta-orange-bottle-35cl',
+  'nigerian_coca_cola.jpg':      'nigerian-coca-cola-bottle-35cl',
+  'guinness_nigerian_33cl.jpg':  'guinness-nigerian-stout-33cl',
+  'guinness_nigerian_60cl.jpg':  'guinness-nigerian-stout-60cl',
+  'nkulenu_palm_wine.jpg':       'nkulenu-palm-wine',
+  'milo_tin.jpg':                'milo-chocolate-malt-drink-400g',
+
+  // ── Cooking Oils ────────────────────────────────────────────────────────────
+  'palm_oil_red.jpg':            'orishirishi-red-palm-oil-1l',
+
+  // ── Spices, Seasonings, Soups ───────────────────────────────────────────────
+  'ground_egusi.jpg':            'egusi-melon-seeds-ground-500g',
+  'cameroon_pepper.jpg':         'cameroon-pepper-ground-100g',
+  'maggi_naija.jpg':             'maggi-naija-pot-seasoning-100g',
+
+  // ── Fish & Seafood ──────────────────────────────────────────────────────────
+  'dried_stockfish.jpg':         'stockfish-fillet-dried-500g',
+  'titus_sardines.jpg':          'titus-sardines-in-oil-125g',
+  'canned_snail.jpg':            'giant-african-land-snail-canned',
+
+  // ── Frozen & Fresh Produce ──────────────────────────────────────────────────
+  'frozen_plantain.jpg':         'frozen-plantain-slices-500g',
+  'fresh_plantain.jpg':          'unripe-plantain-fresh-each',
+
+  // ── Dried & Preserved Meats ─────────────────────────────────────────────────
+  'dried_ponmo.jpg':             'dried-ponmo-cow-skin',
+
+  // ── Specialties ─────────────────────────────────────────────────────────────
+  'bitter_cola.jpg':             'bitter-cola-garcinia-kola',
+  'mortar_pestle.jpg':           'wooden-mortar-pestle',
 };
 
 async function ensureBucket(): Promise<void> {

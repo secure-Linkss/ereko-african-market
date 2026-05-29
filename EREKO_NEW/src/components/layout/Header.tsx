@@ -34,9 +34,12 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link href={`/${locale}`} className="flex items-center gap-2 flex-shrink-0">
-          <img src="/logo.jpeg" alt="Ereko Logo" className="h-10 w-10 rounded-full border-2 border-primary object-cover" />
-          <span className="hidden sm:inline-block font-black text-xl tracking-tighter text-primary">EREKO</span>
+        <Link href={`/${locale}`} className="flex items-center gap-2.5 flex-shrink-0">
+          <img src="/logo.jpeg" alt="Ereko African Market Logo" className="h-10 w-10 rounded-full border-2 border-primary object-cover shadow-sm" />
+          <div className="flex flex-col leading-none">
+            <span className="font-black text-base sm:text-lg tracking-tight text-primary">EREKO</span>
+            <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">African Market</span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}

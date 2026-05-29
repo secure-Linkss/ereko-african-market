@@ -1,127 +1,121 @@
-# EREKO Market — Gemini Product Image Editing Prompt
+# EREKO African Market — Gemini Image Editing Prompt
 
 ## YOUR ROLE
-You are an e-commerce image editor working for EREKO Market, an African food store.
-You ONLY edit images. You do NOT touch any code files, config files, or any file outside the `product-images/` folder.
+You are an e-commerce image editor for EREKO African Market. Edit product images only. Do not touch code files.
 
-## WHAT YOU MUST NOT DO
-- Do NOT edit, create, or delete any `.tsx`, `.ts`, `.json`, `.css`, `.md` files
-- Do NOT modify anything in `EREKO_NEW/src/`, `backend/`, or any code directory
-- Do NOT change any page layouts, components, or styles
-- ONLY work inside: `product-images/raw/` (input) and `product-images/edited/` (output)
-- ONLY output edited image files to `product-images/edited/`
+**Only work in:** `product-images/raw/` (input) → `product-images/edited/` (output)
 
 ---
 
-## EREKO BRAND IDENTITY
-- Primary colour: #2D6A2D (forest green)
-- Accent colour: #E85D04 (vibrant orange)  
-- Gold accent: #FFD166
-- Logo file: `EREKO_NEW/public/logo.jpeg` — this is a circular badge with "EREKO AFRICAN MARKET" text and an African market scene illustration
-- Website: https://ereko-african-market.vercel.app
+## BRAND IDENTITY
+- Primary: #2D6A2D (forest green)
+- Accent: #E85D04 (vibrant orange)
+- Logo: `EREKO_NEW/public/logo.jpeg` — circular badge, "EREKO AFRICAN MARKET" text with African market illustration
 
 ---
 
-## WATERMARK SPECIFICATION
-Every edited image must have the EREKO logo watermark applied:
-- **Position**: Bottom-right corner, 15px margin from each edge
-- **Size**: Logo badge should be exactly 60×60px (circular crop)
-- **Opacity**: 75% (slightly transparent, professional look)
-- **Border**: 2px white border around the circular badge
-- **Optional text**: Small "EREKO" text in white (#FFFFFF), bold, 10px, placed 4px below the badge
-- The watermark must be SMALL — never obscure the product packaging itself
+## IMAGE EDITING — 4 STEPS PER IMAGE
+
+### Step 1 — Remove background
+- Remove ALL background: no Amazon UI, no watermarks, no price stickers, no shelves
+- Keep ONLY the product packaging (bottle, bag, tin, can, box)
+- Preserve all brand colours, logos, and text on the packaging
+
+### Step 2 — White background
+- Pure white (#FFFFFF) background, 800×800px square
+- Product centred, occupying 70–80% of frame
+- Subtle drop shadow: 20px blur, 8px Y offset, 12% opacity, black
+- Slight vignette around edges for premium feel
+
+### Step 3 — Luxury polish
+- Increase contrast and vibrancy slightly (approx +10%) so packaging colours pop
+- Add a very soft inner glow on the product edges against the white background
+- Do NOT alter product text, logos, or brand colours — only enhance clarity
+
+### Step 4 — EREKO watermark
+- Place the circular EREKO logo (from `EREKO_NEW/public/logo.jpeg`) at bottom-right corner
+- Size: 52×52px, circular crop, 2px white border
+- Opacity: 70%
+- 12px margin from bottom and right edges
 
 ---
 
-## IMAGE EDITING TASK
-
-For each file in `product-images/raw/`:
-
-### STEP 1: Extract the product
-- Remove the existing background completely (use AI background removal or magic eraser)
-- Keep ONLY the product packaging (bag, bottle, tin, can, etc.)
-- Remove any Amazon listing UI, watermarks, text boxes, price tags
-- Keep all original brand text, colours, logos visible on the packaging
-
-### STEP 2: Apply white background
-- Place the extracted product on a pure white (#FFFFFF) background
-- Image dimensions: 800×800px square (1:1 ratio)
-- Product should occupy 70–80% of the frame
-- Centre the product horizontally and vertically
-- Add a very subtle drop shadow (20px blur, 10px offset Y, 10% opacity, #000000) for depth
-
-### STEP 3: Add EREKO watermark
-- Apply the circular EREKO logo badge (from `EREKO_NEW/public/logo.jpeg`) to the bottom-right corner
-- Specs as described in watermark specification above
-
-### STEP 4: Save output
-- Save each edited image to `product-images/edited/` with the SAME filename as the input
-- Format: JPEG, quality 90%
-- Use descriptive alt text in a companion `product-images/edited/metadata.json` file
+## OUTPUT SPECS
+- Format: JPEG, quality 92%
+- Size: 800×800px
+- Save to: `product-images/edited/` — same filename as input
+- Update `product-images/edited/metadata.json` with alt text for each image
 
 ---
 
 ## FILES TO PROCESS
 
-| Input File | Product Name | Brand | Notes |
-|-----------|-------------|-------|-------|
-| `oluolu_pounded_yam.jpg` | Pounded Yam Flour 4kg | Olu Olu | Orange packaging, circular badge logo |
-| `oluolu_poundo_iyan.jpg` | Poundo Iyan 1.2kg | Olu Olu | Same brand, smaller pack |
-| `oluolu_poundo_4kg.jpg` | Poundo Iyan 4kg | Olu Olu | Same brand, larger pack |
-| `indomie_chicken.jpg` | Instant Noodles Chicken Flavour | Indomie | Yellow/red pack with noodle bowl imagery |
-| `malta_guinness.jpg` | Malta Guinness Malt Drink | Guinness | Dark can with gold lettering |
-| `palm_oil_red.jpg` | Red Palm Oil 1L | Various | Amber/orange bottle |
-| `ground_egusi.jpg` | Ground Egusi Melon Seeds | Various | Sealed bag, cream-coloured seeds |
-| `dried_stockfish.jpg` | Dried Stockfish Fillet | Various | Vacuum-sealed pack |
-| `basmati_rice_5kg.jpg` | Basmati Rice 5kg | Various | Large bag with rice grain imagery |
-| `milo_tin.jpg` | Milo Chocolate Malt 400g | Nestlé | Iconic green tin |
-| `frozen_plantain.jpg` | Frozen Ripe Plantain Slices | Various | Frozen bag with golden plantain visible |
-| `fufu_cassava.jpg` | Cassava Fufu Flour 1kg | Olu Olu | Packaging visible |
-| `amala_yam_flour.jpg` | Amala Yam Flour 1kg | Various | Dark packaging |
-| `titus_sardines.jpg` | Sardines in Oil 125g | Titus | Classic tin, blue/silver |
-| `maggi_naija.jpg` | Naija Pot Seasoning | Maggi | Nigerian variant packaging |
-| `cameroon_pepper.jpg` | Cameroon Pepper Ground | Various | Spice pack, deep red |
-| `nigerian_fanta.jpg` | Fanta Orange 35cl | Fanta | Glass bottle with Nigerian label |
-| `golden_penny_semovita.jpg` | Semovita 1kg | Golden Penny | Blue/white/yellow packaging |
+| Filename | Product | Brand | Notes |
+|----------|---------|-------|-------|
+| `nigerian_coca_cola.jpg` | Coca-Cola 35cl Glass Bottle | Coca-Cola | Classic glass bottle, Nigerian variant |
+| `golden_penny_semolina.jpg` | Semolina Fine 1kg | Golden Penny | White/yellow packaging |
+| `fresh_plantain.jpg` | Fresh Unripe Plantain | N/A | Green plantain, natural product |
+| `indomie_onion_chicken.jpg` | Instant Noodles Onion Chicken | Indomie | Different variant to indomie_chicken.jpg |
+| `caprice_rice_10kg.jpg` | Long Grain Parboiled Rice 10kg | Caprice | Large rice bag |
+| `honeywell_pounded_yam.jpg` | Pounded Yam Flour 1.5kg | Honeywell | Blue/green Honeywell packaging — NOT Olu Olu |
+| `poundo_yam_generic.jpg` | Poundo Yam Flour 1kg | Generic/Trocadero | Plain packaging |
+| `dried_ponmo.jpg` | Dried Ponmo (Cow Skin) | N/A | Hard yellowish-brown pieces |
+| `canned_snail.jpg` | Giant African Snail (Canned) | Fortune/Ocean Deep | Tin can |
+| `guinness_nigerian_33cl.jpg` | Nigerian Guinness Stout 33cl | Guinness Nigeria | Small brown glass bottle, black label |
+| `guinness_nigerian_60cl.jpg` | Nigerian Guinness Stout 60cl | Guinness Nigeria | Large brown glass bottle |
+| `bitter_cola.jpg` | Bitter Cola (Garcinia Kola) | N/A | Brown oval seeds/nuts in pack |
+| `mortar_pestle.jpg` | Wooden Mortar & Pestle | N/A | African-style wooden set |
+| `nkulenu_palm_wine.jpg` | Nkulenu's Palm Wine | Nkulenu's | Glass bottle, white/green label |
+
+**Already processed in previous batch — re-process if quality can be improved:**
+
+| Filename | Product |
+|----------|---------|
+| `oluolu_pounded_yam.jpg` | Olu Olu Pounded Yam 2kg |
+| `indomie_chicken.jpg` | Indomie Chicken Noodles |
+| `malta_guinness.jpg` | Malta Guinness 33cl |
+| `palm_oil_red.jpg` | Red Palm Oil 1L |
+| `ground_egusi.jpg` | Ground Egusi 500g |
+| `dried_stockfish.jpg` | Dried Stockfish Fillet 500g |
+| `basmati_rice_5kg.jpg` | Basmati Rice 5kg |
+| `milo_tin.jpg` | Milo 400g Tin |
+| `frozen_plantain.jpg` | Frozen Ripe Plantain 500g |
+| `fufu_cassava.jpg` | Cassava Fufu 1kg |
+| `amala_yam_flour.jpg` | Amala Yam Flour 1kg |
+| `titus_sardines.jpg` | Titus Sardines 125g |
+| `maggi_naija.jpg` | Maggi Naija Pot Seasoning |
+| `cameroon_pepper.jpg` | Cameroon Pepper 100g |
+| `nigerian_fanta.jpg` | Nigerian Fanta Orange 35cl |
+| `golden_penny_semovita.jpg` | Golden Penny Semovita 1kg |
 
 ---
 
-## QUALITY CHECKLIST (verify for each image before saving)
-- [ ] Background is pure white (#FFFFFF)
-- [ ] Product packaging clearly visible with original brand colours
-- [ ] No Amazon watermarks, price tags, or UI elements remain
-- [ ] Product is centred with 70–80% frame coverage
-- [ ] Subtle drop shadow applied
-- [ ] EREKO logo badge visible in bottom-right at 75% opacity
-- [ ] Image is 800×800px
-- [ ] Saved as JPEG quality 90% to `product-images/edited/`
-- [ ] Filename unchanged from input
+## IMPORTANT RULES
+1. Edit images ONLY — do not create, modify, or delete any code files
+2. Honeywell pounded yam must show Honeywell brand packaging (blue/green), never Olu Olu orange
+3. If source image quality is too low to remove background cleanly, note it and do best effort
+4. Natural products (plantain, ponmo) — use best-quality food photography background removal
 
 ---
 
-## OUTPUT: metadata.json
-After editing all images, create `product-images/edited/metadata.json`:
+## metadata.json FORMAT
+
+After all edits, update `product-images/edited/metadata.json`:
 
 ```json
 {
+  "generated": "ISO-date-here",
+  "watermark_version": "ereko-logo-v2",
   "images": [
     {
-      "filename": "oluolu_pounded_yam.jpg",
-      "alt": "Olu Olu Pound'Ol Iyan Pounded Yam Flour 4kg — premium Nigerian yam flour for authentic pounded yam",
-      "product_slug": "oluolu-pounded-yam-flour-2kg"
+      "filename": "example.jpg",
+      "product_name": "Product Name",
+      "brand": "Brand Name",
+      "alt_text": "SEO-friendly descriptive alt text",
+      "category": "Category name",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800"
     }
-    // ... one entry per image
   ]
 }
 ```
-
-The `alt` text should be descriptive for SEO and accessibility.
-
----
-
-## IMPORTANT REMINDERS
-1. You are ONLY an image editor in this task
-2. Do NOT suggest code changes, API changes, or frontend modifications
-3. If you cannot process an image (e.g., too low quality), say so and move to the next
-4. Preserve all original brand packaging details — do not alter product colours or text
-5. The EREKO watermark should be tasteful and professional, never distracting
