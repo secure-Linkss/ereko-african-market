@@ -31,8 +31,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.interceptor';
 import { AdminService } from './admin.service';
 import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto, OrderStatus } from './admin.dto';
+import { CargoService } from '../cargo/cargo.service';
 import { Request } from 'express';
-import { Req } from '@nestjs/common';
+import { Req, Delete, UploadedFile, UseInterceptors as UseFileInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 /** Cache TTLs in seconds */
 const DASHBOARD_TTL = 60;
@@ -49,6 +51,7 @@ const RETURNS_CACHE_KEY = 'admin:returns:v1';
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly cargoService: CargoService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -171,5 +174,83 @@ export class AdminController {
     await this.cache.del(RETURNS_CACHE_KEY);
 
     return { ok: true, rmaId, action: dto.action };
+  }
+
+  // ── Cargo Rates ──────────────────────────────────────────────────────────
+
+  @Get('cargo-rates')
+  @ApiOperation({ summary: 'Get all cargo rates (admin)' })
+  async getCargoRates() {
+    return this.cargoService.getCargoRates();
+  }
+
+  @Patch('cargo-rates/:mode')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update cargo rate for a specific mode (sea | air)' })
+  @ApiParam({ name: 'mode', enum: ['sea', 'air'] })
+  async updateCargoRate(
+    @Param('mode') mode: string,
+    @Body() body: { pricePerKgMinor?: number; minWeightKg?: number; transitDaysMin?: number; transitDaysMax?: number; notes?: string },
+    @CurrentUser('email') adminEmail: string,
+  ) {
+    return this.cargoService.updateCargoRate(mode, {
+      ...(body.pricePerKgMinor !== undefined && { price_per_kg_minor: Math.round(body.pricePerKgMinor) }),
+      ...(body.minWeightKg !== undefined && { min_weight_kg: body.minWeightKg }),
+      ...(body.transitDaysMin !== undefined && { transit_days_min: body.transitDaysMin }),
+      ...(body.transitDaysMax !== undefined && { transit_days_max: body.transitDaysMax }),
+      ...(body.notes !== undefined && { notes: body.notes }),
+    }, adminEmail);
+  }
+
+  // ── Product Management ───────────────────────────────────────────────────
+
+  @Get('products')
+  @ApiOperation({ summary: 'List all products (admin)' })
+  async listProducts(
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.adminService.listProducts(limit, cursor);
+  }
+
+  @Post('products')
+  @ApiOperation({ summary: 'Create a new product (admin)' })
+  async createProduct(
+    @Body() body: any,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.adminService.createProduct(body, adminId);
+  }
+
+  @Patch('products/:productId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update a product (admin)' })
+  async updateProduct(
+    @Param('productId') productId: string,
+    @Body() body: any,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.adminService.updateProduct(productId, body, adminId);
+  }
+
+  @Delete('products/:productId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Soft-delete a product (admin)' })
+  async deleteProduct(
+    @Param('productId') productId: string,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.adminService.deleteProduct(productId, adminId);
+  }
+
+  @Post('products/:productId/images')
+  @ApiOperation({ summary: 'Upload product image to Supabase CDN (admin)' })
+  @UseFileInterceptors(FileInterceptor('file'))
+  async uploadProductImage(
+    @Param('productId') productId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.adminService.uploadProductImage(productId, file, adminId);
   }
 }

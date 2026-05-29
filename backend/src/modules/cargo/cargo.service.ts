@@ -4,6 +4,18 @@ import { CargoInquireDto, CargoEstimateDto, CargoUrgencyDto } from './cargo.dto'
 import { serializeCargoInquiry } from './cargo.serializer';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface CargoRate {
+  id: number;
+  mode: 'sea' | 'air';
+  price_per_kg_minor: number;
+  min_weight_kg: number;
+  transit_days_min: number;
+  transit_days_max: number;
+  notes: string | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
 export enum CargoStatus {
   INQUIRY = 'INQUIRY',
   QUOTED = 'QUOTED',
@@ -179,6 +191,52 @@ export class CargoService {
         max: rates.deliveryDaysMax,
         label: `${rates.deliveryDaysMin}-${rates.deliveryDaysMax} business days`,
       },
+    };
+  }
+
+  async getCargoRates(): Promise<CargoRate[]> {
+    const { data, error } = await this.supabase.db
+      .from('cargo_rates')
+      .select('*')
+      .order('id', { ascending: true });
+    if (error) throw new Error(`Failed to fetch cargo rates: ${error.message}`);
+    return (data ?? []) as CargoRate[];
+  }
+
+  async updateCargoRate(mode: string, update: Partial<Pick<CargoRate, 'price_per_kg_minor' | 'min_weight_kg' | 'transit_days_min' | 'transit_days_max' | 'notes'>>, updatedBy?: string): Promise<CargoRate> {
+    const { data, error } = await this.supabase.db
+      .from('cargo_rates')
+      .update({ ...update, updated_at: new Date().toISOString(), updated_by: updatedBy ?? null })
+      .eq('mode', mode)
+      .select()
+      .single();
+    if (error || !data) throw new NotFoundException(`Cargo rate '${mode}' not found`);
+    return data as CargoRate;
+  }
+
+  async estimateByMode(weightKg: number, mode: 'sea' | 'air'): Promise<{
+    mode: string;
+    weightKg: number;
+    estimatedMinor: number;
+    transitDaysMin: number;
+    transitDaysMax: number;
+    pricePerKgMinor: number;
+    isEstimate: boolean;
+    estimateNote: string;
+  }> {
+    const rates = await this.getCargoRates();
+    const rate = rates.find(r => r.mode === mode);
+    if (!rate) throw new NotFoundException(`Rate for mode '${mode}' not found`);
+    const estimatedMinor = Math.ceil(weightKg * rate.price_per_kg_minor);
+    return {
+      mode,
+      weightKg,
+      estimatedMinor,
+      transitDaysMin: rate.transit_days_min,
+      transitDaysMax: rate.transit_days_max,
+      pricePerKgMinor: rate.price_per_kg_minor,
+      isEstimate: true,
+      estimateNote: 'This is a starting estimate only. Final price confirmed after inquiry — additional surcharges may apply for oversized or special items.',
     };
   }
 

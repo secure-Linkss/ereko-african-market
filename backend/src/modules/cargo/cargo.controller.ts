@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -60,5 +60,21 @@ export class CargoController {
   @ApiResponse({ status: 404, description: 'Tracking number not found' })
   async track(@Param('trackingNumber') trackingNumber: string) {
     return this.cargoService.track(trackingNumber);
+  }
+
+  @Get('rates')
+  @Public()
+  @ApiOperation({ summary: 'Get current cargo rates for sea and air freight (public)' })
+  @ApiResponse({ status: 200, description: 'Current cargo rates' })
+  async getRates() {
+    return this.cargoService.getCargoRates();
+  }
+
+  @Post('estimate-by-mode')
+  @Public()
+  @ApiOperation({ summary: 'Get weight-based cargo estimate for a specific mode (public)' })
+  @ApiResponse({ status: 201, description: 'Weight-based cargo estimate' })
+  async estimateByMode(@Body() body: { weightKg: number; mode: 'sea' | 'air' }) {
+    return this.cargoService.estimateByMode(body.weightKg, body.mode);
   }
 }

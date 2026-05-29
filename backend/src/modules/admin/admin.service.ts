@@ -411,4 +411,145 @@ export class AdminService {
 
     this.logger.log(`Return ${rmaId} ${action}d by admin ${actorId}`);
   }
+
+  // ── Product Management ───────────────────────────────────────────────────
+
+  async listProducts(limit: number, cursor?: string) {
+    let query = this.supabase.db
+      .from('Product')
+      .select('id, slug, title, brand, storageType, isPublished, originCountry, descriptionShort, createdAt, variants:ProductVariant(id,sku,name,priceAmountMinor,stockOnHand,stockReserved,isActive), images:ProductImage(id,url,alt,position), categories:ProductCategory(category:Category(id,slug,name))')
+      .order('createdAt', { ascending: false })
+      .limit(limit);
+    if (cursor) query = query.lt('createdAt', cursor);
+    const { data, error } = await query;
+    if (error) throw new Error(`Failed to list products: ${error.message}`);
+    return { products: data ?? [] };
+  }
+
+  async createProduct(body: any, adminId: string) {
+    const now = new Date().toISOString();
+    const slug = body.slug ?? body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    const { data: product, error: productError } = await this.supabase.db
+      .from('Product')
+      .insert({
+        id: uuidv4(),
+        slug,
+        title: body.title,
+        brand: body.brand ?? null,
+        originCountry: body.originCountry ?? 'Nigeria',
+        descriptionShort: body.descriptionShort ?? '',
+        descriptionLong: body.descriptionLong ?? '',
+        storageType: body.storageType ?? 'ambient',
+        isPublished: body.isPublished ?? true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .select()
+      .single();
+
+    if (productError || !product) throw new Error(`Failed to create product: ${productError?.message}`);
+
+    if (body.priceAmountMinor !== undefined) {
+      await this.supabase.db.from('ProductVariant').insert({
+        id: uuidv4(),
+        productId: product.id,
+        sku: body.sku ?? `${slug.toUpperCase()}-DEFAULT`,
+        name: body.title,
+        priceAmountMinor: Math.round(body.priceAmountMinor),
+        compareAtAmountMinor: body.compareAtAmountMinor ?? null,
+        currency: 'GBP',
+        stockOnHand: body.stockOnHand ?? 0,
+        stockReserved: 0,
+        safetyStockThreshold: 5,
+        isActive: true,
+        weightGrams: body.weightGrams ?? 500,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    if (body.categoryId) {
+      await this.supabase.db.from('ProductCategory').insert({ productId: product.id, categoryId: body.categoryId });
+    }
+
+    this.logger.log(`Product created: ${product.title} by admin ${adminId}`);
+    return product;
+  }
+
+  async updateProduct(productId: string, body: any, adminId: string) {
+    const now = new Date().toISOString();
+    const updates: Record<string, any> = { updatedAt: now };
+    if (body.title !== undefined) updates.title = body.title;
+    if (body.brand !== undefined) updates.brand = body.brand;
+    if (body.descriptionShort !== undefined) updates.descriptionShort = body.descriptionShort;
+    if (body.descriptionLong !== undefined) updates.descriptionLong = body.descriptionLong;
+    if (body.storageType !== undefined) updates.storageType = body.storageType;
+    if (body.isPublished !== undefined) updates.isPublished = body.isPublished;
+    if (body.originCountry !== undefined) updates.originCountry = body.originCountry;
+
+    const { data: product, error } = await this.supabase.db
+      .from('Product')
+      .update(updates)
+      .eq('id', productId)
+      .select()
+      .single();
+
+    if (error || !product) throw new Error(`Failed to update product: ${error?.message}`);
+
+    if (body.priceAmountMinor !== undefined || body.stockOnHand !== undefined) {
+      const variantUpdates: Record<string, any> = { updatedAt: now };
+      if (body.priceAmountMinor !== undefined) variantUpdates.priceAmountMinor = Math.round(body.priceAmountMinor);
+      if (body.stockOnHand !== undefined) variantUpdates.stockOnHand = body.stockOnHand;
+      await this.supabase.db.from('ProductVariant').update(variantUpdates).eq('productId', productId).eq('isActive', true);
+    }
+
+    this.logger.log(`Product updated: ${productId} by admin ${adminId}`);
+    return product;
+  }
+
+  async deleteProduct(productId: string, adminId: string) {
+    const now = new Date().toISOString();
+    await this.supabase.db.from('Product').update({ isPublished: false, updatedAt: now }).eq('id', productId);
+    this.logger.log(`Product unpublished: ${productId} by admin ${adminId}`);
+    return { ok: true, productId };
+  }
+
+  async uploadProductImage(productId: string, file: Express.Multer.File, adminId: string): Promise<{ url: string; imageId: string }> {
+    const ext = (file.originalname.split('.').pop() ?? 'jpg').toLowerCase();
+    const filename = `products/${productId}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await this.supabase.db.storage
+      .from('product-images')
+      .upload(filename, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+        cacheControl: '31536000',
+      });
+
+    if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
+
+    const { data: urlData } = this.supabase.db.storage.from('product-images').getPublicUrl(filename);
+    const url = urlData.publicUrl;
+
+    const existing = await this.supabase.db
+      .from('ProductImage')
+      .select('id')
+      .eq('productId', productId)
+      .eq('position', 0)
+      .maybeSingle();
+
+    let imageId: string;
+    if (existing.data) {
+      await this.supabase.db.from('ProductImage').update({ url, updatedAt: new Date().toISOString() }).eq('id', existing.data.id);
+      imageId = existing.data.id;
+    } else {
+      const id = uuidv4();
+      await this.supabase.db.from('ProductImage').insert({ id, productId, url, alt: '', position: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      imageId = id;
+    }
+
+    this.logger.log(`Image uploaded for product ${productId} by admin ${adminId}`);
+    return { url, imageId };
+  }
 }
