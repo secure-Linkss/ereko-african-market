@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useProductDetails } from '@/services/products';
 import { useCartStore } from '@/store/cart';
 import { useWishlistStore } from '@/store/wishlist';
+import { motion } from 'framer-motion';
 
 const STORAGE_BADGE: Record<string, { label: string; variant: any }> = {
   ambient: { label: 'Ambient', variant: 'ambient' },
@@ -96,21 +97,40 @@ export default function ProductDetailPage() {
 
   const images = product.images?.length ? product.images : [{ url: '', alt: product.title, id: '0', productId: product.id, position: 0 }];
 
+  const fadeUp: any = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
   return (
-    <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
+    <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 overflow-hidden">
       <Link href={`/${locale}/shop`} className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6">
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Shop
       </Link>
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Image Gallery */}
-        <div className="w-full lg:w-1/2 space-y-4">
-          <div className="aspect-square bg-muted rounded-2xl overflow-hidden border border-border">
+        <motion.div 
+           className="w-full lg:w-1/2 space-y-4"
+           initial={{ opacity: 0, x: -30 }}
+           animate={{ opacity: 1, x: 0 }}
+           transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <div className="aspect-square bg-white rounded-2xl overflow-hidden border border-border shadow-sm p-8 flex items-center justify-center">
             {images[selectedImage]?.url ? (
-              <img
+              <motion.img
+                key={images[selectedImage].url}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
                 src={images[selectedImage].url}
                 alt={images[selectedImage].alt ?? product.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain mix-blend-multiply drop-shadow-md"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground text-8xl">🥬</div>
@@ -122,10 +142,10 @@ export default function ProductDetailPage() {
                 <button
                   key={img.id}
                   onClick={() => setSelectedImage(i)}
-                  className={`aspect-square bg-muted rounded-lg overflow-hidden border-2 transition-colors ${i === selectedImage ? 'border-primary' : 'border-border hover:border-primary/50'}`}
+                  className={`aspect-square bg-white p-2 rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${i === selectedImage ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
                 >
                   {img.url ? (
-                    <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                    <img src={img.url} alt={img.alt} className="w-full h-full object-contain mix-blend-multiply" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl">🥬</div>
                   )}
@@ -133,19 +153,24 @@ export default function ProductDetailPage() {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Product Info */}
-        <div className="w-full lg:w-1/2 flex flex-col">
-          <div className="flex items-start justify-between">
+        <motion.div 
+           className="w-full lg:w-1/2 flex flex-col"
+           initial="hidden"
+           animate="visible"
+           variants={staggerContainer}
+        >
+          <motion.div variants={fadeUp} className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-2">{product.title}</h1>
-              {product.brand && <p className="text-lg text-muted-foreground">{product.brand}</p>}
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground mb-2 leading-tight">{product.title}</h1>
+              {product.brand && <p className="text-lg text-primary font-medium tracking-wide uppercase">{product.brand}</p>}
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0" onClick={handleToggleWishlist}>
+            <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0 bg-muted/50 hover:bg-muted" onClick={handleToggleWishlist}>
               <Heart className={`w-6 h-6 transition-colors ${isWishlisted ? 'fill-destructive text-destructive' : 'text-muted-foreground hover:text-destructive'}`} />
             </Button>
-          </div>
+          </motion.div>
 
           <div className="flex flex-wrap gap-2 mt-4">
             {product.originCountry && (
@@ -290,7 +315,7 @@ export default function ProductDetailPage() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
     </main>
   );

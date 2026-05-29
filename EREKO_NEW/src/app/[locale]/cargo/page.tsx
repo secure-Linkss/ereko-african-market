@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { cargoInquirySchema, type CargoInquiryFormData } from '@/lib/validation/schemas';
 import { useParams } from 'next/navigation';
 import { useCreateCargoInquiry, useTrackConsignment } from '@/services/cargo';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 export default function CargoPortalPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -42,29 +43,57 @@ export default function CargoPortalPage() {
     }
   }
 
+  const fadeUp: any = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
   return (
-    <main className="flex-1 w-full bg-muted/20">
+    <main className="flex-1 w-full bg-muted/20 overflow-hidden">
         
         {/* Hero */}
-        <section className="bg-primary text-primary-foreground py-16 px-4 md:px-8">
-            <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-6">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Ereko Cargo Express</h1>
-                    <p className="text-lg opacity-90 leading-relaxed">
+        <section className="relative bg-primary text-primary-foreground py-20 px-4 md:px-8 overflow-hidden">
+            {/* Background Pattern/Image Simulation */}
+            <motion.div 
+               className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none"
+               initial={{ scale: 1.1 }}
+               animate={{ scale: 1 }}
+               transition={{ duration: 1.5, ease: "easeOut" }}
+               style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8), transparent 70%)' }}
+            />
+            <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center relative z-10">
+                <motion.div 
+                   className="space-y-6"
+                   initial="hidden"
+                   animate="visible"
+                   variants={{
+                     hidden: { opacity: 0 },
+                     visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
+                   }}
+                >
+                    <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+                        Ereko Cargo <span className="text-accent">Express</span>
+                    </motion.h1>
+                    <motion.p variants={fadeUp} className="text-lg md:text-xl opacity-90 leading-relaxed font-medium">
                         Reliable, fast, and secure freight forwarding between the UK and West Africa. We handle personal effects, commercial goods, and excess baggage.
-                    </p>
-                    <div className="flex gap-4 pt-2">
-                        <div className="flex items-center gap-2 bg-primary-foreground/10 px-4 py-2 rounded-lg">
-                            <Ship className="w-5 h-5" /> <span className="font-medium">Sea Freight</span>
+                    </motion.p>
+                    <motion.div variants={fadeUp} className="flex gap-4 pt-4">
+                        <div className="flex items-center gap-2 bg-primary-foreground/10 px-5 py-3 rounded-xl backdrop-blur-sm shadow-sm border border-primary-foreground/10">
+                            <Ship className="w-6 h-6 text-accent" /> <span className="font-semibold text-sm tracking-wide uppercase">Sea Freight</span>
                         </div>
-                         <div className="flex items-center gap-2 bg-primary-foreground/10 px-4 py-2 rounded-lg">
-                            <Plane className="w-5 h-5" /> <span className="font-medium">Air Freight</span>
+                         <div className="flex items-center gap-2 bg-primary-foreground/10 px-5 py-3 rounded-xl backdrop-blur-sm shadow-sm border border-primary-foreground/10">
+                            <Plane className="w-6 h-6 text-accent" /> <span className="font-semibold text-sm tracking-wide uppercase">Air Freight</span>
                         </div>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
 
                 {/* Tracker Widget */}
-                <Card className="bg-background text-foreground shadow-2xl border-0">
+                <motion.div
+                   initial={{ opacity: 0, x: 30 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
+                >
+                <Card className="bg-background text-foreground shadow-2xl border-0 overflow-hidden ring-1 ring-border/50">
                     <CardContent className="p-6 md:p-8 space-y-4">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Package className="w-5 h-5 text-primary" /> Track Your Consignment</h2>
                         <div className="flex gap-2">
@@ -114,17 +143,24 @@ export default function CargoPortalPage() {
                         )}
                     </CardContent>
                 </Card>
+                </motion.div>
             </div>
         </section>
 
         {/* Inquiry Form */}
-        <section className="max-w-4xl mx-auto py-16 px-4 md:px-8">
+        <motion.section 
+           className="max-w-4xl mx-auto py-16 px-4 md:px-8"
+           initial="hidden"
+           whileInView="visible"
+           viewport={{ once: true, margin: "-100px" }}
+           variants={fadeUp}
+        >
             <div className="text-center mb-10 space-y-4">
                 <h2 className="text-3xl font-bold">Request a Quote</h2>
-                <p className="text-muted-foreground">Fill out the form below and our cargo experts will provide a customized shipping quote.</p>
+                <p className="text-muted-foreground text-lg">Fill out the form below and our cargo experts will provide a customized shipping quote.</p>
             </div>
 
-            <Card className="shadow-lg border-0">
+            <Card className="shadow-2xl border-0 ring-1 ring-border/50 bg-background/50 backdrop-blur-md">
                 <CardContent className="p-6 md:p-10">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                         
@@ -219,7 +255,7 @@ export default function CargoPortalPage() {
                     </form>
                 </CardContent>
             </Card>
-        </section>
+        </motion.section>
 
     </main>
   );

@@ -10,6 +10,7 @@ import { ShoppingCart, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useProducts, useCategories } from '@/services/products';
 import { useCartStore } from '@/store/cart';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const STORAGE_TYPES = ['ambient', 'chilled', 'frozen'];
 const SORT_OPTIONS = [
@@ -217,20 +218,38 @@ export default function ShopPage() {
             <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div 
+            layout 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+            }}
+          >
+            <AnimatePresence>
             {products.map((product: any) => {
               const variant = product.variants?.[0];
               const available = variant ? (variant.stockOnHand - variant.stockReserved) > 0 : false;
 
               return (
-                <Card key={product.id} hoverable className="flex flex-col">
+                <motion.div 
+                  key={product.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
+                <Card hoverable className="flex flex-col h-full border-border/50 shadow-sm hover:shadow-md transition-all">
                   <Link href={`/${locale}/product/${product.slug}`} className="block">
-                    <div className="aspect-square bg-muted rounded-t-xl overflow-hidden">
+                    <div className="aspect-square bg-white rounded-t-xl overflow-hidden relative group">
                       {product.images?.[0]?.url ? (
                         <img
                           src={product.images[0].url}
                           alt={product.images[0].alt || product.title}
-                          className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
+                          className="object-cover w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-500 ease-out p-4"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl">
@@ -278,9 +297,11 @@ export default function ShopPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </motion.div>
               );
             })}
-          </div>
+            </AnimatePresence>
+          </motion.div>
         )}
 
         {(data as any)?.nextCursor && (

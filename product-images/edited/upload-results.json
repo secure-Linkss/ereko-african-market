@@ -1,44 +1,9 @@
 {
-  "timestamp": "2026-05-29T14:59:23.951Z",
+  "timestamp": "2026-05-29T15:34:52.110Z",
   "results": [
     {
-      "filename": "oluolu_pounded_yam.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/oluolu_pounded_yam.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "oluolu_poundo_iyan.jpg",
-      "url": "",
-      "status": "NO_MAPPING"
-    },
-    {
-      "filename": "oluolu_poundo_4kg.jpg",
-      "url": "",
-      "status": "NO_MAPPING"
-    },
-    {
-      "filename": "indomie_chicken.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/indomie_chicken.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "malta_guinness.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/malta_guinness.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "palm_oil_red.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/palm_oil_red.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "ground_egusi.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/ground_egusi.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "dried_stockfish.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/dried_stockfish.jpg",
+      "filename": "amala_yam_flour.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/amala_yam_flour.jpg",
       "status": "OK"
     },
     {
@@ -47,8 +12,38 @@
       "status": "OK"
     },
     {
-      "filename": "milo_tin.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/milo_tin.jpg",
+      "filename": "bitter_cola.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/bitter_cola.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "cameroon_pepper.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/cameroon_pepper.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "canned_snail.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/canned_snail.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "caprice_rice_10kg.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/caprice_rice_10kg.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "dried_ponmo.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/dried_ponmo.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "dried_stockfish.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/dried_stockfish.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "fresh_plantain.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/fresh_plantain.jpg",
       "status": "OK"
     },
     {
@@ -62,28 +57,8 @@
       "status": "OK"
     },
     {
-      "filename": "amala_yam_flour.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/amala_yam_flour.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "titus_sardines.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/titus_sardines.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "maggi_naija.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/maggi_naija.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "cameroon_pepper.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/cameroon_pepper.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "nigerian_fanta.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/nigerian_fanta.jpg",
+      "filename": "golden_penny_semolina.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/golden_penny_semolina.jpg",
       "status": "OK"
     },
     {
@@ -92,38 +67,8 @@
       "status": "OK"
     },
     {
-      "filename": "nigerian_coca_cola.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/nigerian_coca_cola.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "golden_penny_semolina.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/golden_penny_semolina.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "fresh_plantain.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/fresh_plantain.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "indomie_onion_chicken.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/indomie_onion_chicken.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "caprice_rice_10kg.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/caprice_rice_10kg.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "honeywell_pounded_yam.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/honeywell_pounded_yam.jpg",
-      "status": "OK"
-    },
-    {
-      "filename": "poundo_yam_generic.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/poundo_yam_generic.jpg",
+      "filename": "ground_egusi.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/ground_egusi.jpg",
       "status": "OK"
     },
     {
@@ -137,23 +82,78 @@
       "status": "OK"
     },
     {
+      "filename": "honeywell_pounded_yam.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/honeywell_pounded_yam.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "indomie_chicken.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/indomie_chicken.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "indomie_onion_chicken.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/indomie_onion_chicken.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "maggi_naija.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/maggi_naija.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "malta_guinness.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/malta_guinness.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "milo_tin.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/milo_tin.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "mortar_pestle.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/mortar_pestle.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "nigerian_coca_cola.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/nigerian_coca_cola.jpg",
+      "status": "OK"
+    },
+    {
+      "filename": "nigerian_fanta.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/nigerian_fanta.jpg",
+      "status": "OK"
+    },
+    {
       "filename": "nkulenu_palm_wine.jpg",
       "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/nkulenu_palm_wine.jpg",
       "status": "OK"
     },
     {
-      "filename": "dried_ponmo.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/dried_ponmo.jpg",
+      "filename": "oluolu_pounded_yam.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/oluolu_pounded_yam.jpg",
       "status": "OK"
     },
     {
-      "filename": "canned_snail.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/canned_snail.jpg",
+      "filename": "oluolu_poundo_4kg.jpg",
+      "url": "",
+      "status": "NO_MAPPING"
+    },
+    {
+      "filename": "oluolu_poundo_iyan.jpg",
+      "url": "",
+      "status": "NO_MAPPING"
+    },
+    {
+      "filename": "palm_oil_red.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/palm_oil_red.jpg",
       "status": "OK"
     },
     {
-      "filename": "bitter_cola.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/bitter_cola.jpg",
+      "filename": "poundo_yam_generic.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/poundo_yam_generic.jpg",
       "status": "OK"
     },
     {
@@ -162,8 +162,8 @@
       "status": "OK"
     },
     {
-      "filename": "mortar_pestle.jpg",
-      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/mortar_pestle.jpg",
+      "filename": "titus_sardines.jpg",
+      "url": "https://wulkzddeuhkawrstbcge.supabase.co/storage/v1/object/public/product-images/products/titus_sardines.jpg",
       "status": "OK"
     }
   ]

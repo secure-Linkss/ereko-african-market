@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { ShoppingCart, Truck, ShieldCheck, Star, ArrowRight } from 'lucide-react';
 import { useProducts } from '@/services/products';
 import { useCartStore } from '@/store/cart';
+import { motion } from 'framer-motion';
 
 export default function HomePage() {
   const params = useParams();
@@ -35,54 +36,81 @@ export default function HomePage() {
     });
   }
 
+  const fadeUp: any = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
   return (
     <main className="flex-1 flex flex-col bg-background">
 
       {/* Hero */}
       <section className="w-full max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-20 flex flex-col md:flex-row items-center gap-10">
-        <div className="flex-1 space-y-6">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold">
+        <motion.div 
+          className="flex-1 space-y-6"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
+          <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold">
             <Star className="w-4 h-4 fill-current" /> Africa's finest foods, delivered
-          </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground leading-tight">
+          </motion.div>
+          <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-black tracking-tight text-foreground leading-tight">
             Authentic African<br />
             <span className="text-primary">Groceries Online</span>
-          </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
+          </motion.h1>
+          <motion.p variants={fadeUp} className="text-lg text-muted-foreground leading-relaxed max-w-lg">
             Shop the largest UK selection of African foods — from fresh plantain and suya spice to frozen egusi and crayfish. Next-day delivery available.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 pt-2">
+          </motion.p>
+          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 pt-2">
             <Link href={`/${locale}/shop`}>
               <Button size="lg" className="w-full sm:w-auto gap-2">
                 Shop All Products <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
             <Link href={`/${locale}/cargo`}>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto hover:bg-primary/5">
                 Cargo Services
               </Button>
             </Link>
-          </div>
-          <div className="flex items-center gap-6 pt-2 text-sm text-muted-foreground">
+          </motion.div>
+          <motion.div variants={fadeUp} className="flex items-center gap-6 pt-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2"><Truck className="w-4 h-4 text-primary" /> Free delivery over £55</div>
             <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /> Cold chain secured</div>
-          </div>
-        </div>
-        <div className="flex-1 w-full max-w-lg">
+          </motion.div>
+        </motion.div>
+        
+        <motion.div 
+          className="flex-1 w-full max-w-lg"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+        >
           <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-amber-50 to-orange-50">
             <img src="/hero-african-market.svg" alt="African lady selling fresh food at Ereko Market" className="w-full h-full object-cover" />
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Featured Products */}
       <section className="w-full max-w-7xl mx-auto px-4 md:px-8 py-12 space-y-8">
-        <div className="flex items-center justify-between">
+        <motion.div 
+          className="flex items-center justify-between"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeUp}
+        >
           <h2 className="text-3xl font-bold">Popular Right Now</h2>
           <Link href={`/${locale}/shop`}>
-            <Button variant="ghost" className="gap-1">View All <ArrowRight className="w-4 h-4" /></Button>
+            <Button variant="ghost" className="gap-1 hover:text-primary transition-colors">View All <ArrowRight className="w-4 h-4" /></Button>
           </Link>
-        </div>
+        </motion.div>
 
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
