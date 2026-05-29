@@ -329,7 +329,6 @@ If you are not satisfied with our response, you can contact the Equality and Hum
 };
 
 // Modern Slavery → 404 (page removed)
-const VALID_SLUGS = Object.keys(PAGES);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -396,6 +395,3 @@ export default async function LegalPage({
   );
 }
 
-export async function generateStaticParams() {
-  return VALID_SLUGS.map((slug) => ({ slug }));
-}
