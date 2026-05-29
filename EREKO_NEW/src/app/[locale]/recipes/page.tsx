@@ -34,7 +34,14 @@ export default function RecipesIndexPage() {
 
   const filtered = (recipes ?? []).filter((r: any) => {
     const matchesSearch = !search || r.title?.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === 'All Recipes' || r.category === selectedCategory;
+    const cat = r.category ?? '';
+    let matchesCategory = selectedCategory === 'All Recipes';
+    if (!matchesCategory) {
+      matchesCategory = cat === selectedCategory ||
+        (selectedCategory === 'Quick & Easy' && (r.cookTimeMin <= 25 || cat === 'Quick & Easy')) ||
+        (selectedCategory === 'Soups & Stews' && (cat === 'Soups & Stews' || r.title?.toLowerCase().includes('soup') || r.title?.toLowerCase().includes('stew')));
+      if (!matchesCategory) matchesCategory = cat === selectedCategory;
+    }
     return matchesSearch && matchesCategory;
   });
 

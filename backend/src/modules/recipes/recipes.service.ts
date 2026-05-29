@@ -5,6 +5,25 @@ import { SupabaseService } from '../../supabase/supabase.service';
 
 const RECIPE_CACHE_TTL = 30 * 60 * 1000;
 
+const GHANAIAN_SLUGS = new Set(['kelewele-ghanaian-spiced-plantain','waakye-rice-and-beans','banku-and-tilapia','banku-grilled-tilapia']);
+const SNACK_SLUGS = new Set(['puff-puff','akara-bean-fritters','kelewele-ghanaian-spiced-plantain','fried-plantain-dodo']);
+const SOUP_SLUGS = new Set(['egusi-soup','ogbono-soup','banga-soup-palm-fruit','efo-riro-nigerian-spinach-stew','ofe-onugbu-bitter-leaf-soup','okra-soup','pepper-soup','groundnut-peanut-soup','ila-alasepo']);
+const QUICK_SLUGS = new Set(['fried-plantain-dodo','akara-bean-fritters','puff-puff','okra-soup']);
+
+function deriveCategory(slug: string): string {
+  if (GHANAIAN_SLUGS.has(slug)) return 'Ghanaian';
+  if (SNACK_SLUGS.has(slug)) return 'Snacks';
+  if (SOUP_SLUGS.has(slug)) return 'Soups & Stews';
+  if (QUICK_SLUGS.has(slug)) return 'Quick & Easy';
+  return 'Nigerian';
+}
+
+function deriveDifficulty(cookTimeMin: number, ingredientCount: number): string {
+  if (ingredientCount <= 7 && cookTimeMin <= 25) return 'Easy';
+  if (ingredientCount >= 12 || cookTimeMin >= 75) return 'Advanced';
+  return 'Medium';
+}
+
 function serializeRecipe(recipe: any, ingredients: any[], steps: any[], relatedSlugs: string[]) {
   return {
     id: recipe.id,
@@ -14,6 +33,8 @@ function serializeRecipe(recipe: any, ingredients: any[], steps: any[], relatedS
     heroImage: recipe.heroImage,
     cookTimeMin: recipe.cookTimeMin,
     servings: recipe.servings,
+    category: deriveCategory(recipe.slug),
+    difficulty: deriveDifficulty(recipe.cookTimeMin, ingredients.length),
     ingredients: ingredients.map((ing: any) => ({
       variantId: ing.variantId ?? undefined,
       sku: ing.sku ?? undefined,
