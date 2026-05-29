@@ -27,6 +27,8 @@ export class InsufficientStockException extends BadRequestException {
 
 export interface WarehouseStockRow {
   id: string;
+  warehouseId: string;
+  variantId: string;
   sku: string;
   title: string;
   variantName: string;
@@ -247,6 +249,8 @@ export class InventoryService {
       const p = productMap.get((v as any).productId) ?? { title: '' };
       return {
         id: r.id,
+        warehouseId: r.warehouseId,
+        variantId: r.variantId,
         sku: (v as any).sku,
         title: (p as any).title,
         variantName: (v as any).name,

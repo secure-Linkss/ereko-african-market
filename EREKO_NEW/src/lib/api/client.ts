@@ -56,6 +56,9 @@ export const API_ENDPOINTS = {
     ORDERS: "/api/v1/admin/orders",
     INVENTORY: "/api/v1/admin/inventory",
     RETURNS: "/api/v1/admin/returns",
+    PRODUCTS: "/api/v1/admin/products",
+    CARGO_RATES: "/api/v1/admin/cargo-rates",
+    REVIEWS: "/api/v1/admin/reviews",
   },
 };
 
