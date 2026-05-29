@@ -336,7 +336,7 @@ function OrdersTab({ search }: { search: string }) {
                   <React.Fragment key={order.id}>
                     <tr className={`hover:bg-muted/20 transition-colors ${isExpanded ? 'bg-muted/10' : ''}`}>
                       <td className="px-4 py-3 font-medium font-mono text-xs">{order.orderNumber}</td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(order.createdAt).toLocaleDateString('en-GB')}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{order.placedAt ? new Date(order.placedAt).toLocaleDateString('en-GB') : '—'}</td>
                       <td className="px-4 py-3 text-xs">{order.email ?? '—'}</td>
                       <td className="px-4 py-3 text-center text-xs">{order.items?.length ?? '—'}</td>
                       <td className="px-4 py-3">
