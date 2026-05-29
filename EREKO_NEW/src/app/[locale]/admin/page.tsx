@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
-  LayoutDashboard, ShoppingBag, Package, Bell,
+  LayoutDashboard, ShoppingBag, Package,
   Search, PackageCheck, AlertCircle,
   RefreshCcw, LogOut, Banknote, RotateCcw, MessageSquare, Mail, CheckCircle2,
+  Star, Trash2, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
 import { useAdminMetrics, useAdminOrders, useAdminInventory, useAdminReturns, useResolveRma, useAdminContacts, useMarkContactRead, useUpdateOrderStatus } from '@/services/admin';
+import { useAdminReviews, useModerateReview, useDeleteReview } from '@/services/reviews';
 import { useAuthStore } from '@/store/auth';
 import { useLogout } from '@/services/auth';
 
@@ -29,7 +31,7 @@ const ORDER_STATUS_COLORS: Record<string, string> = {
   RETURN_REQUESTED: 'bg-orange-100 text-orange-800',
 };
 
-type Tab = 'dashboard' | 'orders' | 'inventory' | 'returns' | 'contacts';
+type Tab = 'dashboard' | 'orders' | 'inventory' | 'returns' | 'contacts' | 'reviews';
 
 export default function AdminDashboardPage() {
   const params = useParams();
@@ -84,6 +86,7 @@ export default function AdminDashboardPage() {
           <NavItem tab="inventory" icon={Package} label="Inventory" />
           <NavItem tab="returns" icon={RefreshCcw} label="Returns" />
           <NavItem tab="contacts" icon={MessageSquare} label="Messages" badge={metrics?.unreadContactsCount ? String(metrics.unreadContactsCount) : undefined} />
+          <NavItem tab="reviews" icon={Star} label="Reviews" />
         </nav>
         <div className="p-4 border-t border-border space-y-1">
           <Link href={`/${locale}`} className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-muted/50 hover:text-foreground rounded-lg transition-colors text-sm">
@@ -101,7 +104,7 @@ export default function AdminDashboardPage() {
         {/* Topbar */}
         <header className="h-16 bg-background border-b border-border flex items-center justify-between px-6 flex-shrink-0">
           <div className="flex items-center gap-2 overflow-x-auto">
-            {(['dashboard', 'orders', 'inventory', 'returns', 'contacts'] as Tab[]).map((t) => (
+            {(['dashboard', 'orders', 'inventory', 'returns', 'contacts', 'reviews'] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setActiveTab(t)}
@@ -132,6 +135,7 @@ export default function AdminDashboardPage() {
           {activeTab === 'inventory' && <InventoryTab />}
           {activeTab === 'returns' && <ReturnsTab />}
           {activeTab === 'contacts' && <ContactsTab />}
+          {activeTab === 'reviews' && <ReviewsTab />}
         </div>
       </main>
     </div>
@@ -430,6 +434,135 @@ function ReturnsTab() {
                   >Reject</Button>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ReviewsTab() {
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const { data: reviews, isLoading } = useAdminReviews(statusFilter || undefined, 100);
+  const moderate = useModerateReview();
+  const deleteReview = useDeleteReview();
+  const items = reviews ?? [];
+
+  const STATUS_COLORS: Record<string, string> = {
+    pending: 'bg-amber-100 text-amber-800',
+    approved: 'bg-emerald-100 text-emerald-800',
+    rejected: 'bg-red-100 text-red-800',
+  };
+
+  function StarRow({ rating }: { rating: number }) {
+    return (
+      <div className="flex gap-0.5">
+        {[1,2,3,4,5].map((s) => (
+          <Star key={s} className={`w-3.5 h-3.5 ${s <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/20'}`} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold">Reviews</h2>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">All Reviews</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Pending', key: 'pending', color: 'text-amber-600 bg-amber-50', count: items.filter((r: any) => r.status === 'pending').length },
+          { label: 'Approved', key: 'approved', color: 'text-emerald-600 bg-emerald-50', count: items.filter((r: any) => r.status === 'approved').length },
+          { label: 'Rejected', key: 'rejected', color: 'text-red-600 bg-red-50', count: items.filter((r: any) => r.status === 'rejected').length },
+        ].map((stat) => (
+          <Card key={stat.key}>
+            <CardContent className="p-4 text-center">
+              <p className={`text-2xl font-bold ${stat.color.split(' ')[0]}`}>{stat.count}</p>
+              <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        {isLoading ? (
+          [1,2,3].map((i) => <Skeleton key={i} className="h-28 rounded-xl" />)
+        ) : items.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Star className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
+            <p>No reviews found</p>
+          </div>
+        ) : items.map((review: any) => (
+          <Card key={review.id} className={review.status === 'pending' ? 'border-amber-300/50 bg-amber-50/30' : ''}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase ${STATUS_COLORS[review.status]}`}>
+                      {review.status}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${review.source === 'google' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {review.source}
+                    </span>
+                    <StarRow rating={review.rating} />
+                  </div>
+                  <p className="font-bold text-sm">{review.author_name}</p>
+                  {review.author_email && (
+                    <p className="text-xs text-muted-foreground">{review.author_email}</p>
+                  )}
+                  <p className="text-sm text-foreground mt-2 leading-relaxed">&ldquo;{review.comment}&rdquo;</p>
+                  <p className="text-xs text-muted-foreground mt-2">{new Date(review.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                </div>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {review.status !== 'approved' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 text-xs gap-1"
+                      disabled={moderate.isPending}
+                      onClick={() => moderate.mutate({ id: review.id, action: 'approve' })}
+                    >
+                      <ThumbsUp className="w-3 h-3" /> Approve
+                    </Button>
+                  )}
+                  {review.status !== 'rejected' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-amber-600 border-amber-300 hover:bg-amber-50 text-xs gap-1"
+                      disabled={moderate.isPending}
+                      onClick={() => moderate.mutate({ id: review.id, action: 'reject' })}
+                    >
+                      <ThumbsDown className="w-3 h-3" /> Reject
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs gap-1"
+                    disabled={deleteReview.isPending}
+                    onClick={() => {
+                      if (confirm('Delete this review permanently?')) {
+                        deleteReview.mutate(review.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" /> Delete
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}

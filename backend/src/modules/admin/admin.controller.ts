@@ -32,6 +32,7 @@ import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.in
 import { AdminService } from './admin.service';
 import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto, OrderStatus } from './admin.dto';
 import { CargoService } from '../cargo/cargo.service';
+import { ReviewsService } from '../reviews/reviews.service';
 import { Request } from 'express';
 import { Req, Delete, UploadedFile, UseInterceptors as UseFileInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -52,6 +53,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly cargoService: CargoService,
+    private readonly reviewsService: ReviewsService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -252,5 +254,38 @@ export class AdminController {
     @CurrentUser('id') adminId: string,
   ) {
     return this.adminService.uploadProductImage(productId, file, adminId);
+  }
+
+  // ── Reviews Management ───────────────────────────────────────────────────
+
+  @Get('reviews')
+  @ApiOperation({ summary: 'List all reviews with optional status filter (admin)' })
+  @ApiQuery({ name: 'status', enum: ['pending', 'approved', 'rejected'], required: false })
+  @ApiQuery({ name: 'limit', type: Number, required: false })
+  async listReviews(
+    @Query('status') status?: 'pending' | 'approved' | 'rejected',
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit = 50,
+  ) {
+    return this.reviewsService.listAllReviews(status, limit);
+  }
+
+  @Patch('reviews/:id/moderate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Approve or reject a review (admin)' })
+  @ApiParam({ name: 'id', description: 'Review UUID' })
+  async moderateReview(
+    @Param('id') id: string,
+    @Body() body: { action: 'approve' | 'reject' },
+    @CurrentUser('email') adminEmail: string,
+  ) {
+    return this.reviewsService.moderateReview(id, body.action, adminEmail);
+  }
+
+  @Delete('reviews/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete a review (admin)' })
+  @ApiParam({ name: 'id', description: 'Review UUID' })
+  async deleteReview(@Param('id') id: string) {
+    return this.reviewsService.deleteReview(id);
   }
 }

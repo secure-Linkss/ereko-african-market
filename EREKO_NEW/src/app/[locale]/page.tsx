@@ -1,5 +1,5 @@
 'use client';
-// v3 - production build
+// v4 - reviews section added
 import React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -9,6 +9,7 @@ import { ShoppingCart, Truck, ShieldCheck, Star, ArrowRight } from 'lucide-react
 import { useProducts } from '@/services/products';
 import { useCartStore } from '@/store/cart';
 import { motion } from 'framer-motion';
+import ReviewsSection from '@/components/ReviewsSection';
 
 export default function HomePage() {
   const params = useParams();
@@ -196,6 +197,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Reviews */}
+      <ReviewsSection />
 
       {/* CTA Banner */}
       <section className="w-full max-w-7xl mx-auto px-4 md:px-8 py-16 text-center">
