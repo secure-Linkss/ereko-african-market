@@ -17,8 +17,9 @@ const prisma = new PrismaClient();
 // IMPORTANT: each slug must match exactly what's in the products table.
 const PRODUCT_SLUG_MAP: Record<string, string> = {
   // ── Flour & Swallows ────────────────────────────────────────────────────────
-  'oluolu_pounded_yam.jpg':      'olu-olu-pounded-yam-flour-2kg',   // Olu Olu 2kg ← primary Olu Olu pounded yam image
-  'oluolu_poundo_iyan.jpg':      'olu-olu-pounded-yam-flour-2kg',   // same product — skip if already has image
+  'oluolu_pounded_yam.jpg':      'olu-olu-pounded-yam-flour-2kg',   // Olu Olu 2kg — primary Olu Olu pounded yam image
+  // oluolu_poundo_iyan.jpg intentionally NOT mapped — same product, would overwrite correct image
+  // 'oluolu_poundo_iyan.jpg': ← SKIP (was Poundo Iyan 1.2kg image, wrong for 2kg product)
   'honeywell_pounded_yam.jpg':   'honeywell-pounded-yam-flour-1-5kg', // ← MUST be Honeywell brand image, NOT Olu Olu
   'poundo_yam_generic.jpg':      'pounded-yam-flour-poundo-1kg',    // generic 1kg
   'fufu_cassava.jpg':            'olu-olu-fufu-flour-1kg',
@@ -55,6 +56,9 @@ const PRODUCT_SLUG_MAP: Record<string, string> = {
   'dried_stockfish.jpg':         'stockfish-fillet-dried-500g',
   'titus_sardines.jpg':          'titus-sardines-in-oil-125g',
   'canned_snail.jpg':            'giant-african-land-snail-canned',
+
+  // ── Grains & Rice (additional) ──────────────────────────────────────────────
+  'tastic_rice_5kg.jpg':         'tastic-long-grain-rice-5kg',
 
   // ── Frozen & Fresh Produce ──────────────────────────────────────────────────
   'frozen_plantain.jpg':         'frozen-plantain-slices-500g',

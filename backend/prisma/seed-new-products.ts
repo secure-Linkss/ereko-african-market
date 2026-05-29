@@ -2,190 +2,214 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const CATS: Record<string, string> = {};
-
-async function catId(slug: string): Promise<string | null> {
-  if (CATS[slug]) return CATS[slug];
-  const cat = await prisma.category.findUnique({ where: { slug } });
-  if (cat) { CATS[slug] = cat.id; return cat.id; }
-  console.warn(`  ⚠  Category not found: ${slug}`);
-  return null;
+async function ensureCategory(slug: string, name: string): Promise<string> {
+  const cat = await prisma.category.upsert({
+    where: { slug },
+    create: { slug, name, isActive: true },
+    update: {},
+  });
+  return cat.id;
 }
 
-async function ensureProduct(data: {
-  slug: string;
-  title: string;
-  brand?: string;
-  originCountry?: string;
-  descriptionShort: string;
-  descriptionLong: string;
-  storageType: string;
-  categorySlug: string;
-  sku: string;
-  priceAmountMinor: number;
-  stockOnHand: number;
-  weightGrams?: number;
-}) {
-  const existing = await prisma.product.findUnique({ where: { slug: data.slug } });
-  if (existing) {
-    console.log(`  ↷  Exists: ${data.title}`);
-    return existing;
-  }
+const products = [
+  // ── Drinks & Beverages ───────────────────────────────────────────────────
+  {
+    slug: 'guinness-nigerian-stout-33cl',
+    title: 'Guinness Nigeria Stout 33cl',
+    brand: 'Guinness Nigeria',
+    originCountry: 'Nigeria',
+    descriptionShort: 'The iconic Nigerian Guinness stout — rich, dark, and full-bodied in a 33cl bottle.',
+    descriptionLong: "Guinness Nigeria is brewed locally for the Nigerian market and has a distinct taste that differs from the Irish original. Darker, sweeter, and higher in strength, it's a staple at Nigerian celebrations and a favourite across West Africa. Best enjoyed chilled.",
+    storageType: 'chilled',
+    categorySlug: 'drinks-beverages',
+    sku: 'GUIN-NG-33CL',
+    priceAmountMinor: 189,
+    stockOnHand: 100,
+    weightGrams: 400,
+  },
+  {
+    slug: 'guinness-nigerian-stout-60cl',
+    title: 'Guinness Nigeria Stout 60cl',
+    brand: 'Guinness Nigeria',
+    originCountry: 'Nigeria',
+    descriptionShort: 'The full-size Nigerian Guinness 60cl — for celebrations and sharing.',
+    descriptionLong: "The large format Nigerian Guinness Stout. Same rich, dark flavour of the iconic Nigerian Guinness but in a generous 60cl bottle — perfect for parties, events, and Nigerian occasions where only the big bottle will do.",
+    storageType: 'chilled',
+    categorySlug: 'drinks-beverages',
+    sku: 'GUIN-NG-60CL',
+    priceAmountMinor: 299,
+    stockOnHand: 80,
+    weightGrams: 750,
+  },
+  {
+    slug: 'nkulenu-palm-wine',
+    title: "Nkulenu's Palm Wine 75cl",
+    brand: "Nkulenu's",
+    originCountry: 'Ghana',
+    descriptionShort: "Nkulenu's authentic Ghanaian palm wine — naturally sweet and traditionally tapped.",
+    descriptionLong: "Nkulenu's Palm Wine is one of West Africa's most beloved traditional drinks, tapped directly from oil palm or raphia palms. This Ghanaian brand bottles a lightly fermented, naturally sweet palm wine that pairs beautifully with spicy food and brings the authentic West African drinking experience to your home.",
+    storageType: 'chilled',
+    categorySlug: 'drinks-beverages',
+    sku: 'NKU-PW-75CL',
+    priceAmountMinor: 399,
+    stockOnHand: 60,
+    weightGrams: 900,
+  },
 
-  const categoryId = await catId(data.categorySlug);
-  const product = await prisma.product.create({
-    data: {
-      slug: data.slug,
-      title: data.title,
-      brand: data.brand ?? null,
-      originCountry: data.originCountry ?? 'Nigeria',
-      descriptionShort: data.descriptionShort,
-      descriptionLong: data.descriptionLong,
-      storageType: data.storageType as any,
-      isActive: true,
-      isFeatured: false,
-      ...(categoryId ? { categoryId } : {}),
-    },
-  });
+  // ── Dried & Preserved Meats ──────────────────────────────────────────────
+  {
+    slug: 'dried-ponmo-cow-skin',
+    title: 'Dried Ponmo (Cow Skin)',
+    brand: '',
+    originCountry: 'Nigeria',
+    descriptionShort: 'Authentic dried Nigerian ponmo — hard cow skin for soups, sold by weight or per box.',
+    descriptionLong: "Ponmo (also known as kanda or cow skin) is a beloved Nigerian delicacy. This is the hard, dried version — ideal for adding to egusi soup, ogbono, or pepper soup. It has a firm, chewy texture that becomes tender after cooking and absorbs the flavours of your pot beautifully. Available per KG or as a full box. A staple in any Nigerian kitchen.",
+    storageType: 'ambient',
+    categorySlug: 'dried-fish-seafood',
+    sku: 'DRY-PONMO-KG',
+    priceAmountMinor: 1499,
+    stockOnHand: 50,
+    weightGrams: 1000,
+    extraVariants: [
+      { sku: 'DRY-PONMO-BOX', name: 'Per Box (~5kg)', priceAmountMinor: 5999, weightGrams: 5000 },
+    ],
+  },
 
-  await prisma.productVariant.create({
-    data: {
-      productId: product.id,
-      sku: data.sku,
-      name: data.title,
-      priceAmountMinor: data.priceAmountMinor,
-      compareAtAmountMinor: null,
-      currency: 'GBP',
-      stockOnHand: data.stockOnHand,
-      stockReserved: 0,
-      safetyStockThreshold: 5,
-      weightGrams: data.weightGrams ?? 500,
-      isActive: true,
-    },
-  });
+  // ── Fish & Seafood ───────────────────────────────────────────────────────
+  {
+    slug: 'giant-african-land-snail-canned',
+    title: 'Giant African Land Snail (Canned) 400g',
+    brand: '',
+    originCountry: 'Nigeria',
+    descriptionShort: 'Pre-cooked giant African land snails — ready for soups and pepper soup.',
+    descriptionLong: "Giant African land snails (igbin in Yoruba) are a prized delicacy across West Africa, especially in pepper soup, egusi, and ila alasepo. This canned version is pre-cooked and ready to add to your pot — saving you the lengthy preparation time while retaining the authentic taste.",
+    storageType: 'ambient',
+    categorySlug: 'dried-fish-seafood',
+    sku: 'SNAIL-CAN-400G',
+    priceAmountMinor: 349,
+    stockOnHand: 40,
+    weightGrams: 400,
+  },
 
-  console.log(`  ✅  Created: ${data.title}`);
-  return product;
-}
+  // ── Specialties ─────────────────────────────────────────────────────────
+  {
+    slug: 'bitter-cola-garcinia-kola',
+    title: 'Bitter Cola (Garcinia Kola) 100g',
+    brand: '',
+    originCountry: 'Nigeria',
+    descriptionShort: 'Traditional West African bitter kola — a cherished cultural gift and natural remedy.',
+    descriptionLong: "Bitter cola (Garcinia kola), known as obi in Yoruba and oji in Igbo, holds deep cultural significance across West Africa — offered to guests as a welcome gesture and used in traditional ceremonies. Beyond culture, it's prized for its powerful natural properties including immune support and anti-inflammatory benefits.",
+    storageType: 'ambient',
+    categorySlug: 'snacks-biscuits',
+    sku: 'BIT-COLA-100G',
+    priceAmountMinor: 299,
+    stockOnHand: 60,
+    weightGrams: 100,
+  },
+
+  // ── Kitchen Essentials ───────────────────────────────────────────────────
+  {
+    slug: 'wooden-mortar-pestle',
+    title: 'Wooden Mortar & Pestle Set',
+    brand: '',
+    originCountry: 'Nigeria',
+    descriptionShort: 'Traditional hand-carved African wooden mortar and pestle — for pounding yam and grinding spices.',
+    descriptionLong: "The traditional wooden mortar and pestle is the heart of many African kitchens. Hand-carved from hardwood, this set is used to pound yam into smooth, stretchy swallow, grind fresh peppers and spices, and crush garlic and ginger. Durable, natural, and culturally authentic.",
+    storageType: 'ambient',
+    categorySlug: 'cupboard-staples',
+    sku: 'WD-MORT-PEST',
+    priceAmountMinor: 2499,
+    stockOnHand: 20,
+    weightGrams: 2500,
+  },
+] as const;
 
 async function main() {
   console.log('\n🌍 EREKO — New Products Seed\n');
 
-  const newProducts = [
-    // ── Drinks & Beverages ───────────────────────────────────────────────────
-    {
-      slug: 'guinness-nigerian-stout-33cl',
-      title: 'Guinness Nigeria Stout 33cl',
-      brand: 'Guinness Nigeria',
-      originCountry: 'Nigeria',
-      descriptionShort: 'The iconic Nigerian Guinness stout — rich, dark, and full-bodied.',
-      descriptionLong: "Guinness Nigeria is brewed locally for the Nigerian market and has a distinct taste that differs from the Irish original. Darker, sweeter, and higher in strength, it's a staple at Nigerian celebrations and a favourite across West Africa. Best enjoyed chilled.",
-      storageType: 'chilled',
-      categorySlug: 'drinks-beverages',
-      sku: 'GUIN-NG-33CL',
-      priceAmountMinor: 189,
-      stockOnHand: 100,
-      weightGrams: 400,
-    },
-    {
-      slug: 'guinness-nigerian-stout-60cl',
-      title: 'Guinness Nigeria Stout 60cl',
-      brand: 'Guinness Nigeria',
-      originCountry: 'Nigeria',
-      descriptionShort: 'The full-size Nigerian Guinness — the big bottle for sharing or celebrating.',
-      descriptionLong: "The large format Nigerian Guinness Stout. Same rich, dark flavour of the iconic Nigerian Guinness but in a generous 60cl bottle — perfect for parties, events, and Nigerian occasions where only the big bottle will do.",
-      storageType: 'chilled',
-      categorySlug: 'drinks-beverages',
-      sku: 'GUIN-NG-60CL',
-      priceAmountMinor: 299,
-      stockOnHand: 80,
-      weightGrams: 750,
-    },
-    {
-      slug: 'nkulenu-palm-wine',
-      title: "Nkulenu's Palm Wine 75cl",
-      brand: "Nkulenu's",
-      originCountry: 'Ghana',
-      descriptionShort: "Nkulenu's sweet, natural Ghanaian palm wine — bottled fresh from the palm tree.",
-      descriptionLong: "Nkulenu's Palm Wine is one of West Africa's most beloved traditional drinks, tapped directly from oil palm or raphia palms. This Ghanaian brand bottles a lightly fermented, naturally sweet palm wine that pairs beautifully with spicy food and brings the authentic West African drinking experience to your home.",
-      storageType: 'chilled',
-      categorySlug: 'drinks-beverages',
-      sku: 'NKU-PW-75CL',
-      priceAmountMinor: 399,
-      stockOnHand: 60,
-      weightGrams: 900,
-    },
+  const now = new Date();
 
-    // ── Dried & Preserved Meats ──────────────────────────────────────────────
-    {
-      slug: 'dried-ponmo-cow-skin',
-      title: 'Dried Ponmo (Cow Skin) 200g',
-      brand: null,
-      originCountry: 'Nigeria',
-      descriptionShort: 'Authentic dried Nigerian ponmo — hard cow skin for soups and stews.',
-      descriptionLong: "Ponmo (also known as kanda or cow skin) is a beloved Nigerian delicacy. This is the hard, dried version — ideal for adding to egusi soup, ogbono, or pepper soup. It has a firm, chewy texture that becomes tender after cooking and absorbs the flavours of your pot beautifully. A staple in any Nigerian kitchen.",
-      storageType: 'ambient',
-      categorySlug: 'dried-fish-seafood',
-      sku: 'DRY-PONMO-200G',
-      priceAmountMinor: 449,
-      stockOnHand: 50,
-      weightGrams: 200,
-    },
+  const catIds: Record<string, string> = {
+    'drinks-beverages': await ensureCategory('drinks-beverages', 'Drinks & Beverages'),
+    'dried-fish-seafood': await ensureCategory('dried-fish-seafood', 'Dried Fish & Seafood'),
+    'snacks-biscuits': await ensureCategory('snacks-biscuits', 'Snacks & Biscuits'),
+    'cupboard-staples': await ensureCategory('cupboard-staples', 'Cupboard Staples'),
+  };
 
-    // ── Fish & Seafood ───────────────────────────────────────────────────────
-    {
-      slug: 'giant-african-land-snail-canned',
-      title: 'Giant African Land Snail (Canned) 400g',
-      brand: null,
-      originCountry: 'Nigeria',
-      descriptionShort: 'Pre-cooked giant African land snails — ready for soups and pepper soup.',
-      descriptionLong: "Giant African land snails (igbin in Yoruba) are a prized delicacy across West Africa, especially in pepper soup, egusi, and ila alasepo. This canned version is pre-cooked and ready to add to your pot — saving you the lengthy preparation time while retaining the authentic taste.",
-      storageType: 'ambient',
-      categorySlug: 'dried-fish-seafood',
-      sku: 'SNAIL-CAN-400G',
-      priceAmountMinor: 349,
-      stockOnHand: 40,
-      weightGrams: 400,
-    },
+  let seeded = 0;
+  let skipped = 0;
 
-    // ── Specialties / African Superfoods ─────────────────────────────────────
-    {
-      slug: 'bitter-cola-garcinia-kola',
-      title: 'Bitter Cola (Garcinia Kola) 100g',
-      brand: null,
-      originCountry: 'Nigeria',
-      descriptionShort: 'Traditional West African bitter kola — a cherished cultural gift and natural remedy.',
-      descriptionLong: "Bitter cola (Garcinia kola), known as obi in Yoruba and oji in Igbo, holds deep cultural significance across West Africa — offered to guests as a welcome gesture and used in traditional ceremonies. Beyond culture, it's prized for its powerful natural properties including immune support and anti-inflammatory benefits. Enjoy as a traditional chew.",
-      storageType: 'ambient',
-      categorySlug: 'snacks-biscuits',
-      sku: 'BIT-COLA-100G',
-      priceAmountMinor: 299,
-      stockOnHand: 60,
-      weightGrams: 100,
-    },
+  for (const p of products) {
+    const existing = await prisma.product.findUnique({ where: { slug: p.slug } });
+    if (existing) { console.log(`  SKIP (exists): ${p.title}`); skipped++; continue; }
 
-    // ── Kitchen Essentials ───────────────────────────────────────────────────
-    {
-      slug: 'wooden-mortar-pestle',
-      title: 'Wooden Mortar & Pestle Set',
-      brand: null,
-      originCountry: 'Nigeria',
-      descriptionShort: 'Traditional hand-carved African wooden mortar and pestle — for pounding yam and spices.',
-      descriptionLong: "The traditional wooden mortar and pestle is the heart of many African kitchens. Hand-carved from hardwood, this set is used to pound yam into smooth, stretchy eba, grind fresh peppers and spices, and crush garlic and ginger. Durable, natural, and culturally authentic — a must-have for any African home cook.",
-      storageType: 'ambient',
-      categorySlug: 'cupboard-staples',
-      sku: 'WD-MORT-PEST',
-      priceAmountMinor: 2499,
-      stockOnHand: 20,
-      weightGrams: 2500,
-    },
-  ];
+    const product = await prisma.product.create({
+      data: {
+        slug: p.slug,
+        title: p.title,
+        brand: p.brand || undefined,
+        originCountry: p.originCountry,
+        descriptionShort: p.descriptionShort,
+        descriptionLong: p.descriptionLong,
+        storageType: p.storageType as any,
+        isPublished: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
 
-  for (const p of newProducts) {
-    await ensureProduct(p);
+    // Primary variant
+    await prisma.productVariant.create({
+      data: {
+        productId: product.id,
+        sku: p.sku,
+        name: p.title,
+        priceAmountMinor: p.priceAmountMinor,
+        currency: 'GBP',
+        stockOnHand: p.stockOnHand,
+        stockReserved: 0,
+        safetyStockThreshold: 5,
+        isActive: true,
+        weightGrams: p.weightGrams,
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+
+    // Extra variants (e.g. ponmo per box)
+    if ((p as any).extraVariants) {
+      for (const v of (p as any).extraVariants) {
+        await prisma.productVariant.create({
+          data: {
+            productId: product.id,
+            sku: v.sku,
+            name: v.name,
+            priceAmountMinor: v.priceAmountMinor,
+            currency: 'GBP',
+            stockOnHand: 10,
+            stockReserved: 0,
+            safetyStockThreshold: 2,
+            isActive: true,
+            weightGrams: v.weightGrams,
+            createdAt: now,
+            updatedAt: now,
+          },
+        });
+      }
+    }
+
+    const catId = catIds[p.categorySlug];
+    if (catId) {
+      await prisma.productCategory.create({
+        data: { productId: product.id, categoryId: catId },
+      });
+    }
+
+    console.log(`  ✅  Seeded: ${p.title}`);
+    seeded++;
   }
 
-  console.log('\n✅ New products seed complete\n');
+  console.log(`\nDone. Seeded: ${seeded}, Skipped: ${skipped}\n`);
 }
 
 main()

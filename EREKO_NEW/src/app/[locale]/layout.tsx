@@ -80,9 +80,13 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
+        {/* Favicon — EREKO African Markets logo */}
+        <link rel="icon" href="/logo.jpeg" type="image/jpeg" sizes="any" />
+        <link rel="apple-touch-icon" href="/logo.jpeg" />
         {/* Preconnect to key third-party origins */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://wulkzddeuhkawrstbcge.supabase.co" />
       </head>
       <body className="min-h-full bg-background text-foreground flex flex-col font-sans">
         <NextIntlClientProvider messages={messages} locale={locale}>

@@ -57,6 +57,7 @@ You are an e-commerce image editor for EREKO African Market. Edit product images
 | `fresh_plantain.jpg` | Fresh Unripe Plantain | N/A | Green plantain, natural product |
 | `indomie_onion_chicken.jpg` | Instant Noodles Onion Chicken | Indomie | Different variant to indomie_chicken.jpg |
 | `caprice_rice_10kg.jpg` | Long Grain Parboiled Rice 10kg | Caprice | Large rice bag |
+| `tastic_rice_5kg.jpg` | Long Grain Rice 5kg | Tastic | South African/Nigerian rice brand, yellow/red packaging |
 | `honeywell_pounded_yam.jpg` | Pounded Yam Flour 1.5kg | Honeywell | Blue/green Honeywell packaging — NOT Olu Olu |
 | `poundo_yam_generic.jpg` | Poundo Yam Flour 1kg | Generic/Trocadero | Plain packaging |
 | `dried_ponmo.jpg` | Dried Ponmo (Cow Skin) | N/A | Hard yellowish-brown pieces |
