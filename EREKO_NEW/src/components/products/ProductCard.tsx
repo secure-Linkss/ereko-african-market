@@ -119,7 +119,10 @@ export function ProductCard({
   return (
     <motion.article
       className={cn(
-        "group relative rounded-2xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col",
+        "group relative rounded-2xl border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col transition-shadow duration-300",
+        hasDiscount
+          ? "border-primary/40 shadow-[0_0_0_2px_hsl(var(--primary)/0.15)] hover:shadow-[0_0_0_3px_hsl(var(--primary)/0.25)]"
+          : "border-border",
         className
       )}
       whileHover={{ scale: 1.03, y: -2 }}
@@ -198,6 +201,17 @@ export function ProductCard({
               </span>
             </div>
           </motion.div>
+        )}
+
+        {/* Shimmer sweep — only when discount is active */}
+        {hasDiscount && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none z-20"
+            initial={{ x: '-100%' }}
+            animate={{ x: '200%' }}
+            transition={{ duration: 1.6, ease: 'easeInOut', repeat: Infinity, repeatDelay: 3 }}
+            style={{ background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)' }}
+          />
         )}
 
         {/* Compare-at discount badge (original variant-level compare) */}

@@ -15,6 +15,8 @@ export interface ProblemDetails {
   errors?: Record<string, string[]>;
 }
 
+export type StaffRole = 'owner' | 'admin' | 'fulfillment' | 'support' | 'marketing' | 'viewer';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -23,6 +25,9 @@ export interface UserProfile {
   lastName?: string;
   isAdmin?: boolean;
   isActive?: boolean;
+  isSuperAdmin?: boolean;
+  staffRole?: StaffRole;
+  teamRole?: StaffRole;
   preferredLocale: string;
   marketingEmailOptIn: boolean;
   marketingSmsOptIn: boolean;

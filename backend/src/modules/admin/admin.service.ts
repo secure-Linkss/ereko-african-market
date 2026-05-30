@@ -669,4 +669,125 @@ export class AdminService {
     this.logger.log(`Image uploaded for product ${productId} by admin ${adminId}`);
     return { url, imageId };
   }
+
+  // ── User Management ─────────────────────────────────────────────────────────
+
+  async listUsers(limit = 30, cursor?: string, q?: string, role?: string) {
+    const safeQ = q ? String(q).replace(/[^a-zA-Z0-9 @.\-_+]/g, '').slice(0, 100) : '';
+
+    // Staff/team members come from TeamMember table; regular customers from User table
+    if (role === 'staff') {
+      const { data, error } = await this.supabase.db
+        .from('TeamMember')
+        .select('id, email, firstName, lastName, teamRole, status, lastLoginAt, createdAt, inviteToken')
+        .order('createdAt', { ascending: false })
+        .limit(limit);
+      if (error) throw new Error(error.message);
+      return { users: (data ?? []).map((m: any) => ({ ...m, _type: 'staff' })), nextCursor: null };
+    }
+
+    let q2 = this.supabase.db
+      .from('User')
+      .select('id, email, firstName, lastName, phone, isActive, isAdmin, isSuperAdmin, createdAt')
+      .order('createdAt', { ascending: false });
+
+    if (!q || role !== 'all') {
+      // Default: only regular customers (not admin/super admin)
+      if (role !== 'all') q2 = q2.eq('isAdmin', false);
+    }
+
+    if (safeQ) q2 = q2.or(`email.ilike.%${safeQ}%,firstName.ilike.%${safeQ}%,lastName.ilike.%${safeQ}%`);
+    if (cursor) q2 = q2.lt('createdAt', cursor);
+
+    q2 = q2.limit(limit + 1);
+    const { data, error } = await q2;
+    if (error) throw new Error(error.message);
+
+    const rows = data ?? [];
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+
+    // Fetch loyalty data for each user
+    const userIds = items.map((u: any) => u.id);
+    const { data: loyalty } = await this.supabase.db
+      .from('LoyaltyAccount')
+      .select('userId, pointsBalance, tier')
+      .in('userId', userIds);
+    const loyaltyMap = new Map((loyalty ?? []).map((l: any) => [l.userId, l]));
+
+    // Order counts
+    const { data: orderCounts } = await this.supabase.db
+      .from('Order')
+      .select('userId')
+      .in('userId', userIds)
+      .not('status', 'in', '(CANCELLED,PENDING_PAYMENT)');
+    const countMap = new Map<string, number>();
+    for (const o of orderCounts ?? []) {
+      countMap.set(o.userId, (countMap.get(o.userId) ?? 0) + 1);
+    }
+
+    const users = items.map((u: any) => ({
+      ...u,
+      _type: 'customer',
+      loyaltyTier: loyaltyMap.get(u.id)?.tier ?? 'Member',
+      loyaltyPoints: loyaltyMap.get(u.id)?.pointsBalance ?? 0,
+      totalOrders: countMap.get(u.id) ?? 0,
+    }));
+
+    return { users, nextCursor: hasMore ? items[items.length - 1]?.createdAt : null };
+  }
+
+  async getUserDetail(userId: string) {
+    const { data: user } = await this.supabase.db
+      .from('User')
+      .select('id, email, firstName, lastName, phone, isActive, isAdmin, isSuperAdmin, createdAt')
+      .eq('id', userId)
+      .single();
+    if (!user) throw new Error('User not found');
+
+    const [{ data: orders }, { data: addresses }, { data: loyalty }] = await Promise.all([
+      this.supabase.db.from('Order').select('id, orderNumber, status, totalMinor, placedAt').eq('userId', userId).order('placedAt', { ascending: false }).limit(10),
+      this.supabase.db.from('Address').select('*').eq('userId', userId).limit(5),
+      this.supabase.db.from('LoyaltyAccount').select('pointsBalance, tier').eq('userId', userId).single(),
+    ]);
+
+    return { ...user, orders: orders ?? [], addresses: addresses ?? [], loyalty: loyalty ?? { pointsBalance: 0, tier: 'Member' } };
+  }
+
+  async updateUserStatus(userId: string, isActive: boolean, reason?: string, actorId?: string) {
+    const { data: user } = await this.supabase.db.from('User').select('id, isAdmin, isSuperAdmin').eq('id', userId).single();
+    if (!user) throw new Error('User not found');
+    // Cannot suspend super admin or admin accounts via this endpoint
+    if (user.isAdmin || user.isSuperAdmin) throw new Error('Cannot modify admin accounts via user management');
+
+    await this.supabase.db.from('User').update({ isActive, updatedAt: new Date().toISOString() }).eq('id', userId);
+    // Audit log entry — non-fatal
+    try {
+      await this.supabase.db.from('OrderEvent').insert({
+        id: uuidv4(),
+        orderId: 'system',
+        eventType: isActive ? 'USER_ACTIVATED' : 'USER_SUSPENDED',
+        actorId: actorId ?? null,
+        payload: { userId, reason: reason ?? null },
+        createdAt: new Date().toISOString(),
+      });
+    } catch { /* non-fatal */ }
+
+    return { success: true, isActive };
+  }
+
+  // ── Audit Log ────────────────────────────────────────────────────────────────
+
+  async getAuditLog(staffId?: string, limit = 50) {
+    let q = this.supabase.db
+      .from('OrderEvent')
+      .select('id, orderId, eventType, actorId, payload, createdAt')
+      .not('actorId', 'is', null)
+      .order('createdAt', { ascending: false })
+      .limit(limit);
+    if (staffId) q = q.eq('actorId', staffId);
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    return { entries: data ?? [] };
+  }
 }

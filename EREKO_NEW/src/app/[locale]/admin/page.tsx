@@ -11,6 +11,7 @@ import {
   RefreshCcw, LogOut, Banknote, RotateCcw, MessageSquare, Mail, CheckCircle2,
   Star, Trash2, ThumbsUp, ThumbsDown, Edit2, Plus, Truck, Ship, Plane,
   Upload, X, ChevronDown, ChevronUp, Save, ImageIcon, Tag, BadgePercent,
+  Users, UsersRound,
 } from 'lucide-react';
 import {
   useAdminMetrics, useAdminOrders, useAdminInventory, useUpdateStock,
@@ -20,6 +21,8 @@ import {
   UpdateProductRequest, CreateProductRequest,
 } from '@/services/admin';
 import { DiscountsTab } from './DiscountsTab';
+import { UserManagementTab } from './UserManagementTab';
+import { TeamManagementTab } from './TeamManagementTab';
 import { useAdminReviews, useModerateReview, useDeleteReview } from '@/services/reviews';
 import { useAuthStore } from '@/store/auth';
 import { useLogout } from '@/services/auth';
@@ -62,7 +65,7 @@ const NEXT_STATUSES: Record<string, string[]> = {
   ON_HOLD: ['PAID', 'ALLOCATED', 'PICKING', 'PACKED', 'CANCELLED'],
 };
 
-type Tab = 'dashboard' | 'orders' | 'inventory' | 'products' | 'returns' | 'contacts' | 'reviews' | 'cargo-rates' | 'discounts';
+type Tab = 'dashboard' | 'orders' | 'inventory' | 'products' | 'returns' | 'contacts' | 'reviews' | 'cargo-rates' | 'discounts' | 'users' | 'team';
 
 // ─── Root Page ─────────────────────────────────────────────────────────────────
 
@@ -99,6 +102,10 @@ export default function AdminDashboardPage() {
 
   const initials = user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() : 'A';
 
+  const isSuperAdmin = user?.isSuperAdmin;
+  const isOwner = (user as any)?.teamRole === 'owner' || (user as any)?.staffRole === 'owner';
+  const canSeeTeam = isSuperAdmin || isOwner;
+
   const NAV_ITEMS: { tab: Tab; icon: any; label: string; badge?: string }[] = [
     { tab: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { tab: 'orders', icon: ShoppingBag, label: 'Orders' },
@@ -109,6 +116,8 @@ export default function AdminDashboardPage() {
     { tab: 'reviews', icon: Star, label: 'Reviews' },
     { tab: 'cargo-rates', icon: Truck, label: 'Cargo Rates' },
     { tab: 'discounts', icon: BadgePercent, label: 'Discounts' },
+    { tab: 'users', icon: Users, label: 'Users' },
+    ...(canSeeTeam ? [{ tab: 'team' as Tab, icon: UsersRound, label: 'Team' }] : []),
   ];
 
   return (
@@ -184,6 +193,8 @@ export default function AdminDashboardPage() {
           {activeTab === 'reviews' && <ReviewsTab />}
           {activeTab === 'cargo-rates' && <CargoRatesTab />}
           {activeTab === 'discounts' && <DiscountsTab />}
+          {activeTab === 'users' && <UserManagementTab currentUser={user} />}
+          {activeTab === 'team' && <TeamManagementTab currentUser={user} />}
         </div>
       </main>
     </div>

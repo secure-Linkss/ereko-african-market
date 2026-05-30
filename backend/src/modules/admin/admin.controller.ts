@@ -312,4 +312,51 @@ export class AdminController {
   async deleteReview(@Param('id') id: string) {
     return this.reviewsService.deleteReview(id);
   }
+
+  // ── User Management ───────────────────────────────────────────────────────
+
+  @Get('users')
+  @ApiOperation({ summary: 'List customer/user accounts (admin)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'cursor', required: false })
+  @ApiQuery({ name: 'q', required: false, description: 'Search by name or email' })
+  @ApiQuery({ name: 'role', required: false, enum: ['customer', 'staff', 'all'] })
+  async listUsers(
+    @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
+    @Query('cursor') cursor?: string,
+    @Query('q') q?: string,
+    @Query('role') role?: string,
+  ) {
+    return this.adminService.listUsers(limit, cursor, q, role);
+  }
+
+  @Patch('users/:userId/status')
+  @ApiOperation({ summary: 'Suspend or activate a user account (owner+ only)' })
+  @ApiParam({ name: 'userId', description: 'User UUID' })
+  async updateUserStatus(
+    @Param('userId') userId: string,
+    @Body() body: { isActive: boolean; reason?: string },
+    @CurrentUser() actor: any,
+  ) {
+    return this.adminService.updateUserStatus(userId, body.isActive, body.reason, actor.id);
+  }
+
+  @Get('users/:userId')
+  @ApiOperation({ summary: 'Get user detail with orders and loyalty (admin)' })
+  async getUserDetail(@Param('userId') userId: string) {
+    return this.adminService.getUserDetail(userId);
+  }
+
+  // ── Audit Log ─────────────────────────────────────────────────────────────
+
+  @Get('audit-log')
+  @ApiOperation({ summary: 'Get audit log entries (super admin / owner)' })
+  @ApiQuery({ name: 'staffId', required: false, description: 'Filter by staff member ID' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getAuditLog(
+    @Query('staffId') staffId?: string,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit?: number,
+  ) {
+    return this.adminService.getAuditLog(staffId, limit);
+  }
 }
