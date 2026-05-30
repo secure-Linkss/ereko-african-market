@@ -151,7 +151,11 @@ export class AdminService {
       .limit(take + 1);
 
     if (status) query = query.eq('status', status);
-    if (q) query = query.or(`orderNumber.ilike.%${q}%,email.ilike.%${q}%`);
+    if (q) {
+      // Sanitize search query: allow only alphanumeric, spaces, hyphens, @, and dots
+      const safeQ = String(q).replace(/[^a-zA-Z0-9 @.\-_+]/g, '').slice(0, 100);
+      if (safeQ) query = query.or(`orderNumber.ilike.%${safeQ}%,email.ilike.%${safeQ}%`);
+    }
 
     if (cursor) {
       const decoded = decodeCursor(cursor);

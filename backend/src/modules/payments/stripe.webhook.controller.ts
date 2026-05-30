@@ -18,6 +18,7 @@ import { PaymentsService } from './payments.service';
 import { SupabaseService } from '../../supabase/supabase.service';
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
+import { Public } from '../../common/decorators/public.decorator';
 
 enum OrderStatus {
   PAID = 'PAID',
@@ -25,6 +26,7 @@ enum OrderStatus {
   DISPUTED = 'DISPUTED',
 }
 
+@Public()
 @ApiTags('Webhooks')
 @Controller('webhooks/stripe')
 export class StripeWebhookController {

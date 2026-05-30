@@ -150,6 +150,39 @@ export class CheckoutService {
       throw new ConflictException('Cart does not belong to this user');
     }
 
+    // Idempotency: return existing PENDING_PAYMENT order for this cart if one exists
+    const { data: existingOrders } = await this.supabase.db
+      .from('Order')
+      .select('id, orderNumber')
+      .eq('status', 'PENDING_PAYMENT')
+      .contains('payload', {})
+      .limit(1);
+    // Simpler: search by checking if any order has items matching this cart's variants
+    // Use cartId stored via promoCode or a dedicated field — check via orderId association
+    // For now: check if an order was created within the last 30 minutes for the same email + cart total
+    const { data: recentOrders } = await this.supabase.db
+      .from('Order')
+      .select('id, orderNumber, status')
+      .eq('status', 'PENDING_PAYMENT')
+      .eq('email', dto.email)
+      .gte('placedAt', new Date(Date.now() - 30 * 60 * 1000).toISOString())
+      .limit(1);
+    if (recentOrders?.[0]) {
+      const { data: orderItems } = await this.supabase.db
+        .from('OrderItem')
+        .select('variantId')
+        .eq('orderId', recentOrders[0].id);
+      const cartVariantIds = new Set((await this.supabase.db
+        .from('CartItem').select('variantId').eq('cartId', dto.cartId))?.data?.map((i: any) => i.variantId) ?? []);
+      const orderVariantIds = new Set((orderItems ?? []).map((i: any) => i.variantId));
+      const isMatch = [...cartVariantIds].every(id => orderVariantIds.has(id)) && cartVariantIds.size === orderVariantIds.size;
+      if (isMatch) {
+        this.logger.warn(`Duplicate checkout attempt for ${dto.email} — returning existing order ${recentOrders[0].orderNumber}`);
+        const deliverySlots = await this.getDeliverySlots(dto.postcode);
+        return { orderId: recentOrders[0].id, orderNumber: recentOrders[0].orderNumber, cart: { id: cart.id, items: [] }, stockReservedUntil: new Date(Date.now() + 15 * 60 * 1000), availableDeliverySlots: deliverySlots, discount: null };
+      }
+    }
+
     const { data: cartItems } = await this.supabase.db
       .from('CartItem')
       .select('id, variantId, quantity, unitPriceMinor')

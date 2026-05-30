@@ -1,7 +1,9 @@
 import {
-  IsString, IsEnum, IsNumber, IsOptional, IsBoolean,
+  IsString, IsEnum, IsNumber, IsOptional, IsBoolean, IsIn,
   IsEmail, IsDateString, IsPositive, Min, Max, MinLength, MaxLength, Matches,
 } from 'class-validator';
+
+const VALID_BADGE_VALUES = ['SALE', 'HOT_DEAL', 'LIMITED', 'CLEARANCE', 'NEW_PRICE', 'SPECIAL'] as const;
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
@@ -127,6 +129,6 @@ export class SetProductDiscountDto {
     enum: ['SALE', 'HOT_DEAL', 'LIMITED', 'CLEARANCE', 'NEW_PRICE', 'SPECIAL'],
   })
   @IsOptional()
-  @IsString()
+  @IsIn(VALID_BADGE_VALUES, { message: `discountBadge must be one of: ${VALID_BADGE_VALUES.join(', ')}` })
   discountBadge?: string;
 }

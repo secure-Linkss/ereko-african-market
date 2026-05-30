@@ -261,12 +261,22 @@ export class AdminController {
 
   @Post('products/:productId/images')
   @ApiOperation({ summary: 'Upload product image to Supabase CDN (admin)' })
-  @UseFileInterceptors(FileInterceptor('file'))
+  @UseFileInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+    fileFilter: (_req, file, cb) => {
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
+      if (!allowed.includes(file.mimetype)) {
+        return cb(new Error(`Invalid file type: ${file.mimetype}. Allowed: jpeg, png, webp, avif, gif`), false);
+      }
+      cb(null, true);
+    },
+  }))
   async uploadProductImage(
     @Param('productId') productId: string,
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser('id') adminId: string,
   ) {
+    if (!file) throw new BadRequestException('No file uploaded or file type not allowed');
     return this.adminService.uploadProductImage(productId, file, adminId);
   }
 

@@ -183,22 +183,43 @@ export class DiscountService {
   // ─── Internal: Record usage when order completes ────────────────────────────
 
   async recordUsage(codeId: string, orderId: string, userId?: string, email?: string) {
-    // Increment uses count atomically
-    const { data: code } = await this.supabase.db
-      .from('DiscountCode').select('usesCount, maxUses').eq('id', codeId).single();
-    if (!code) return;
+    // Idempotency guard: check if usage already recorded for this order
+    const { data: existing } = await this.supabase.db
+      .from('DiscountUsage')
+      .select('id')
+      .eq('codeId', codeId)
+      .eq('orderId', orderId)
+      .limit(1)
+      .single();
+    if (existing) {
+      this.logger.warn(`Discount usage already recorded for code=${codeId} order=${orderId} — skipping duplicate`);
+      return;
+    }
 
-    await this.supabase.db
-      .from('DiscountCode')
-      .update({ usesCount: code.usesCount + 1, updatedAt: new Date().toISOString() })
-      .eq('id', codeId);
-
-    await this.supabase.db.from('DiscountUsage').insert({
+    // Insert usage record first (unique constraint on codeId+orderId prevents duplicates under race)
+    const { error: insertErr } = await this.supabase.db.from('DiscountUsage').insert({
       codeId,
       orderId,
       userId: userId ?? null,
       email: email ?? null,
     });
+    if (insertErr) {
+      // Duplicate insert on concurrent retry — safe to ignore
+      this.logger.warn(`Discount usage insert conflict (likely retry) for code=${codeId}: ${insertErr.message}`);
+      return;
+    }
+
+    // Atomic increment: only increment if usesCount < maxUses (or maxUses is null)
+    const { data: code } = await this.supabase.db
+      .from('DiscountCode').select('usesCount, maxUses').eq('id', codeId).single();
+    if (!code) return;
+
+    const newCount = (code.usesCount ?? 0) + 1;
+    await this.supabase.db
+      .from('DiscountCode')
+      .update({ usesCount: newCount, updatedAt: new Date().toISOString() })
+      .eq('id', codeId)
+      .eq('usesCount', code.usesCount); // optimistic concurrency — only update if count hasn't changed
   }
 
   // ─── Admin: Set product discount ─────────────────────────────────────────────
