@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Check, CreditCard, MapPin, Truck, ChevronRight, Loader2, Lock, ShoppingBag, Store, Package } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
-import { useStartCheckout, useCreatePaymentIntent, useConfirmCheckout } from '@/services/checkout';
+import { useStartCheckout, useCreatePaymentIntent, useConfirmCheckout, useSyncCart, useConfirmInStore } from '@/services/checkout';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useForm } from 'react-hook-form';
@@ -134,14 +134,18 @@ export default function CheckoutPage() {
   const [contactData, setContactData] = useState<ContactForm | null>(null);
   const [addressData, setAddressData] = useState<AddressForm | null>(null);
   const [fulfillment, setFulfillment] = useState<'delivery' | 'collect'>('delivery');
+  const [paymentMode, setPaymentMode] = useState<'card' | 'in_store'>('card');
   const [checkoutData, setCheckoutData] = useState<{ orderId: string; clientSecret: string; publishableKey: string } | null>(null);
+  const [inStoreOrderId, setInStoreOrderId] = useState<string | null>(null);
   const [stepError, setStepError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const { items, getSubtotalMinor, shippingMinor, discountMinor, promoCode, clearCart } = useCartStore();
   const { user } = useAuthStore();
+  const syncCart = useSyncCart();
   const startCheckout = useStartCheckout();
   const createPaymentIntent = useCreatePaymentIntent();
+  const confirmInStore = useConfirmInStore();
 
   const subtotal = getSubtotalMinor();
   const isCollect = fulfillment === 'collect';
@@ -203,8 +207,14 @@ export default function CheckoutPage() {
     const formData = { ...data, fulfillment };
     setAddressData(formData);
     try {
-      const cartId = `local-${Date.now()}`;
+      // 1. Sync local Zustand cart to server → get real cart ID
+      const synced = await syncCart.mutateAsync({
+        items: items.map(i => ({ variantId: i.variantId, quantity: i.quantity })),
+      });
+      const cartId = synced.id;
       const postcode = isCollect ? STORE_ADDRESS.postcode : (data.postcode ?? '');
+
+      // 2. Start checkout (reserves stock, creates order)
       const startRes = await startCheckout.mutateAsync({
         postcode,
         cartId,
@@ -212,6 +222,25 @@ export default function CheckoutPage() {
         firstName: data.firstName,
         lastName: data.lastName,
       });
+
+      // 3a. Pay in store — skip Stripe, confirm directly
+      if (isCollect && paymentMode === 'in_store') {
+        const shippingAddress = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          line1: STORE_ADDRESS.line1,
+          city: STORE_ADDRESS.city,
+          postcode: STORE_ADDRESS.postcode,
+          countryCode: 'GB',
+          phone: data.phone,
+        };
+        await confirmInStore.mutateAsync({ orderId: startRes.orderId, shippingAddress });
+        clearCart();
+        setSuccess(true);
+        return;
+      }
+
+      // 3b. Online card payment — create Stripe payment intent
       const piRes = await createPaymentIntent.mutateAsync({
         orderId: startRes.orderId,
         paymentMethod: 'card',
@@ -223,7 +252,8 @@ export default function CheckoutPage() {
       });
       setStep(3);
     } catch (err: any) {
-      setStepError(err?.response?.data?.detail ?? err?.message ?? 'Failed to initialise checkout. Please try again.');
+      const detail = err?.response?.data?.detail ?? err?.response?.data?.message ?? err?.message ?? 'Failed to initialise checkout. Please try again.';
+      setStepError(detail);
     }
   }
 
@@ -352,7 +382,7 @@ export default function CheckoutPage() {
                     {addressForm.formState.errors.phone && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.phone.message)}</p>}
                   </div>
 
-                  {/* Click & Collect info */}
+                  {/* Click & Collect info + Payment mode */}
                   {isCollect && (
                     <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
                       <div className="flex items-start gap-3">
@@ -362,15 +392,52 @@ export default function CheckoutPage() {
                           <p className="text-sm text-muted-foreground">5 Broadway, Barking, IG11 7LS</p>
                         </div>
                       </div>
+
+                      {/* Payment mode selector */}
+                      <div>
+                        <p className="font-semibold text-sm mb-2">How would you like to pay?</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMode('card')}
+                            className={`p-3 border-2 rounded-xl text-left transition-all ${paymentMode === 'card' ? 'border-primary bg-white' : 'border-border bg-white/50 hover:border-muted-foreground'}`}
+                          >
+                            <CreditCard className={`w-4 h-4 mb-1 ${paymentMode === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <p className="font-semibold text-xs">Pay Online</p>
+                            <p className="text-xs text-muted-foreground">Card / Apple Pay</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMode('in_store')}
+                            className={`p-3 border-2 rounded-xl text-left transition-all ${paymentMode === 'in_store' ? 'border-primary bg-white' : 'border-border bg-white/50 hover:border-muted-foreground'}`}
+                          >
+                            <Store className={`w-4 h-4 mb-1 ${paymentMode === 'in_store' ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <p className="font-semibold text-xs">Pay in Store</p>
+                            <p className="text-xs text-muted-foreground">Cash or card at collection</p>
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="flex items-start gap-3">
                         <Package className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="font-semibold text-sm">How it works</p>
                           <ol className="text-sm text-muted-foreground space-y-1 mt-1 list-decimal list-inside">
-                            <li>Place your order and pay online</li>
-                            <li>We'll pack your items ready for collection</li>
-                            <li>You'll receive a "Ready to Collect" notification</li>
-                            <li>Collect from our store during opening hours</li>
+                            {paymentMode === 'in_store' ? (
+                              <>
+                                <li>Place your order — no payment now</li>
+                                <li>We'll pack your items ready for collection</li>
+                                <li>You'll receive a "Ready to Collect" notification</li>
+                                <li>Pay cash or card when you collect</li>
+                              </>
+                            ) : (
+                              <>
+                                <li>Place your order and pay online</li>
+                                <li>We'll pack your items ready for collection</li>
+                                <li>You'll receive a "Ready to Collect" notification</li>
+                                <li>Collect from our store during opening hours</li>
+                              </>
+                            )}
                           </ol>
                         </div>
                       </div>
@@ -434,10 +501,12 @@ export default function CheckoutPage() {
 
                   <div className="pt-2 flex justify-between">
                     <Button type="button" variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                    <Button type="submit" size="lg" disabled={startCheckout.isPending || createPaymentIntent.isPending}>
-                      {(startCheckout.isPending || createPaymentIntent.isPending)
+                    <Button type="submit" size="lg" disabled={syncCart.isPending || startCheckout.isPending || createPaymentIntent.isPending || confirmInStore.isPending}>
+                      {(syncCart.isPending || startCheckout.isPending || createPaymentIntent.isPending || confirmInStore.isPending)
                         ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-                        : <>Continue to Payment <ChevronRight className="w-4 h-4 ml-1" /></>}
+                        : isCollect && paymentMode === 'in_store'
+                          ? <>Confirm Order — Pay at Store <ChevronRight className="w-4 h-4 ml-1" /></>
+                          : <>Continue to Payment <ChevronRight className="w-4 h-4 ml-1" /></>}
                     </Button>
                   </div>
                 </form>

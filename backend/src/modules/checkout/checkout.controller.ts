@@ -21,6 +21,7 @@ import {
   StartCheckoutDto,
   PaymentIntentDto,
   ConfirmOrderDto,
+  ConfirmInStoreOrderDto,
 } from './checkout.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
@@ -84,5 +85,19 @@ export class CheckoutController {
     @CurrentUser() user: any,
   ) {
     return this.checkoutService.confirmOrder(dto, user?.id);
+  }
+
+  @Post('confirm-in-store')
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Confirm Click & Collect order with pay-in-store — no Stripe payment required' })
+  @ApiOkResponse({ description: 'Returns { order, success }' })
+  async confirmInStoreOrder(
+    @Body() dto: ConfirmInStoreOrderDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.checkoutService.confirmInStoreOrder(dto, user?.id);
   }
 }

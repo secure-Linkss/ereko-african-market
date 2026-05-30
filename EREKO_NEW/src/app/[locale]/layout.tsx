@@ -36,11 +36,6 @@ export const metadata: Metadata = {
     default: "EREKO Market | Authentic African Food Store UK",
     template: "%s | EREKO Market",
   },
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/apple-icon.jpg",
-  },
 };
 
 // ── JSON-LD data (serialised once at build time) ───────────────────────────────

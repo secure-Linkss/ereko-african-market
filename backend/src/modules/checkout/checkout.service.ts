@@ -480,6 +480,49 @@ export class CheckoutService {
     };
   }
 
+  // ─── Confirm in-store / pay at collection ──────────────────────────────────
+
+  async confirmInStoreOrder(dto: import('./checkout.dto').ConfirmInStoreOrderDto, userId?: string) {
+    const { data: orders } = await this.supabase.db
+      .from('Order').select('*').eq('id', dto.orderId).limit(1);
+    const order = orders?.[0];
+    if (!order) throw new NotFoundException('Order not found');
+    if (userId && order.userId && order.userId !== userId) {
+      throw new ConflictException('Order does not belong to this user');
+    }
+
+    const now = new Date().toISOString();
+    await this.upsertOrderAddress(order.id, 'shipping', dto.shippingAddress);
+    await this.upsertOrderAddress(order.id, 'billing', dto.shippingAddress);
+
+    // Mark as ALLOCATED — order confirmed, payment collected at store
+    await this.supabase.db.from('Order').update({
+      deliveryMethod: 'click_and_collect',
+      status: 'ALLOCATED',
+      updatedAt: now,
+    }).eq('id', order.id);
+
+    await this.supabase.db.from('OrderEvent').insert({
+      id: uuidv4(),
+      orderId: order.id,
+      eventType: 'IN_STORE_ORDER_CONFIRMED',
+      payload: { notes: dto.notes ?? 'Pay in store at collection', timestamp: now },
+      createdAt: now,
+    });
+
+    const [{ data: items }, { data: events }, { data: addresses }] = await Promise.all([
+      this.supabase.db.from('OrderItem').select('*').eq('orderId', order.id),
+      this.supabase.db.from('OrderEvent').select('*').eq('orderId', order.id).order('createdAt', { ascending: true }),
+      this.supabase.db.from('OrderAddress').select('*').eq('orderId', order.id),
+    ]);
+
+    const updated = (await this.supabase.db.from('Order').select('*').eq('id', order.id).limit(1)).data?.[0];
+    return {
+      order: serializeOrderLocal({ ...updated, items: items ?? [], events: events ?? [], addresses: addresses ?? [], deliverySlotBooking: null }),
+      success: true,
+    };
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   private async upsertOrderAddress(orderId: string, type: 'shipping' | 'billing', addr: AddressDto): Promise<void> {

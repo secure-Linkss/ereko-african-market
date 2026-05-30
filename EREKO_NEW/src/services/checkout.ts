@@ -2,6 +2,32 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, API_ENDPOINTS, clearIdempotencyKey } from "@/lib/api/client";
 import { Cart, DeliverySlot, Order } from "@/types";
 
+export interface SyncCartRequest {
+  items: { variantId: string; quantity: number }[];
+  currency?: string;
+}
+
+export interface SyncCartResponse {
+  id: string;
+  items: any[];
+  subtotalMinor: number;
+}
+
+export interface ConfirmInStoreRequest {
+  orderId: string;
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    line1: string;
+    city: string;
+    postcode: string;
+    countryCode: string;
+    phone: string;
+    line2?: string;
+  };
+  notes?: string;
+}
+
 // --- Request/Response Interfaces ---
 export interface StartCheckoutRequest {
   postcode: string;
@@ -65,6 +91,11 @@ export interface ConfirmCheckoutResponse {
 
 // --- Service Implementation ---
 export const checkoutService = {
+  syncCart: async (payload: SyncCartRequest): Promise<SyncCartResponse> => {
+    const response = await apiClient.post<SyncCartResponse>(API_ENDPOINTS.CART.SYNC, payload);
+    return response.data;
+  },
+
   startCheckout: async (payload: StartCheckoutRequest): Promise<StartCheckoutResponse> => {
     const response = await apiClient.post<StartCheckoutResponse>(
       API_ENDPOINTS.CHECKOUT.START,
@@ -78,6 +109,11 @@ export const checkoutService = {
       API_ENDPOINTS.CHECKOUT.PAYMENT_INTENT,
       payload
     );
+    return response.data;
+  },
+
+  confirmInStore: async (payload: ConfirmInStoreRequest): Promise<ConfirmCheckoutResponse> => {
+    const response = await apiClient.post<ConfirmCheckoutResponse>('/api/v1/checkout/confirm-in-store', payload);
     return response.data;
   },
 
@@ -111,9 +147,23 @@ import axios from "axios";
 
 // --- TanStack Query Hooks ---
 
+export function useSyncCart() {
+  return useMutation({ mutationFn: checkoutService.syncCart });
+}
+
 export function useStartCheckout() {
   return useMutation({
     mutationFn: checkoutService.startCheckout,
+  });
+}
+
+export function useConfirmInStore() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: checkoutService.confirmInStore,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
   });
 }
 

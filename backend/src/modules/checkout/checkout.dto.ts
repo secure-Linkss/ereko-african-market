@@ -155,3 +155,18 @@ export class ConfirmOrderDto {
   deliveryMethod: DeliveryMethod;
 }
 
+export class ConfirmInStoreOrderDto {
+  @ApiProperty({ description: 'Order ID' })
+  @IsUUID()
+  orderId: string;
+
+  @ApiProperty({ type: AddressDto })
+  @ValidateNested()
+  @Type(() => AddressDto)
+  shippingAddress: AddressDto;
+
+  @ApiPropertyOptional({ description: 'Customer note' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
