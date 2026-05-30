@@ -242,6 +242,17 @@ export default function ShopPage() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
                 >
+                {(() => {
+                  const hasDiscount = product.discountEnabled && !!product.discountPercent;
+                  const discountedPriceMinor = hasDiscount && variant
+                    ? Math.round(variant.priceMinor * (1 - (product.discountPercent! / 100))) : null;
+                  const BADGE_COLORS: Record<string, string> = {
+                    SALE: 'bg-red-500', HOT_DEAL: 'bg-orange-500', LIMITED: 'bg-purple-600',
+                    CLEARANCE: 'bg-blue-600', NEW_PRICE: 'bg-emerald-500', SPECIAL: 'bg-amber-500',
+                  };
+                  const badgeColor = BADGE_COLORS[product.discountBadge ?? 'SALE'] ?? 'bg-red-500';
+                  const badgeLabel = (product.discountBadge ?? 'SALE').replace('_', ' ');
+                  return (
                 <Card hoverable className="flex flex-col h-full border-border/50 shadow-sm hover:shadow-md transition-all">
                   <Link href={`/${locale}/product/${product.slug}`} className="block">
                     <div className="aspect-square bg-white rounded-t-xl overflow-hidden relative group">
@@ -255,6 +266,19 @@ export default function ShopPage() {
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl">
                           🥬
                         </div>
+                      )}
+                      {hasDiscount && (
+                        <motion.div
+                          className="absolute bottom-2 left-2 z-10"
+                          initial={{ scale: 0, rotate: -12 }}
+                          animate={{ scale: 1, rotate: -6 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                        >
+                          <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-full shadow-xl ring-2 ring-white/60 ${badgeColor}`}>
+                            <span className="text-[8px] font-black text-white leading-none">{badgeLabel}</span>
+                            <span className="text-[13px] font-black text-white leading-tight">-{product.discountPercent}%</span>
+                          </div>
+                        </motion.div>
                       )}
                     </div>
                   </Link>
@@ -278,9 +302,16 @@ export default function ShopPage() {
                     </div>
                     <div className="flex items-center justify-between pt-2">
                       <div>
-                        <span className="font-bold text-lg">
-                          {variant ? `£${(variant.priceMinor / 100).toFixed(2)}` : 'TBC'}
-                        </span>
+                        {hasDiscount && discountedPriceMinor !== null ? (
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="font-bold text-lg text-primary">£{(discountedPriceMinor / 100).toFixed(2)}</span>
+                            <span className="text-sm text-muted-foreground line-through">£{(variant!.priceMinor / 100).toFixed(2)}</span>
+                          </div>
+                        ) : (
+                          <span className="font-bold text-lg">
+                            {variant ? `£${(variant.priceMinor / 100).toFixed(2)}` : 'TBC'}
+                          </span>
+                        )}
                         {!available && (
                           <span className="ml-2 text-xs text-destructive font-medium">Out of stock</span>
                         )}
@@ -297,6 +328,8 @@ export default function ShopPage() {
                     </div>
                   </CardContent>
                 </Card>
+                  );
+                })()}
                 </motion.div>
               );
             })}
