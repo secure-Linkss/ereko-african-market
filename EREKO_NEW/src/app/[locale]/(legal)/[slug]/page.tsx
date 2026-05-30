@@ -327,6 +327,65 @@ If you are not satisfied with our response, you can contact the Equality and Hum
     ],
   },
 
+  returns: {
+    title: 'Returns & Refunds Policy',
+    updated: '1 June 2025',
+    sections: [
+      {
+        heading: '1. Your Right to Cancel',
+        body: `Under the Consumer Contracts Regulations 2013, you have the right to cancel non-perishable orders within 14 days of receipt without giving a reason. You then have a further 14 days to return the goods to us.
+
+Perishable goods (fresh produce, chilled, and frozen items) are exempt from the 14-day cancellation right unless they are faulty, damaged, or incorrectly supplied.`,
+      },
+      {
+        heading: '2. How to Request a Return',
+        body: `To request a return, email hello@ereko.co.uk within 14 days of delivery with:
+
+- Your order number
+- The item(s) you wish to return
+- The reason for the return
+
+We will respond within 1 business day with return instructions. Do not send items back without contacting us first.`,
+      },
+      {
+        heading: '3. Condition of Returned Goods',
+        body: `Returned items must be:
+
+- In their original, unopened packaging
+- In a resaleable condition
+- Free from damage caused after delivery
+
+We reserve the right to refuse a return or deduct a restocking fee if these conditions are not met.`,
+      },
+      {
+        heading: '4. Faulty or Incorrect Items',
+        body: `If your order arrives damaged, faulty, or incorrect, please contact us at hello@ereko.co.uk within 48 hours of delivery. Please include a photo of the affected item(s) and your order number.
+
+We will arrange a replacement or full refund at no cost to you, including any original delivery charge paid.`,
+      },
+      {
+        heading: '5. Refunds',
+        body: `Approved refunds are processed to your original payment method within 3–5 business days of us receiving the returned goods (or within 14 days of you providing proof of return, whichever is sooner).
+
+For faulty or incorrect items resolved without a physical return, refunds are processed within 3–5 business days of approval.
+
+You will receive an email confirmation once your refund has been issued.`,
+      },
+      {
+        heading: '6. Return Shipping Costs',
+        body: `For standard returns (change of mind), return postage costs are the customer's responsibility. We recommend using a tracked service, as we cannot be held responsible for items lost in transit.
+
+For faulty, damaged, or incorrectly supplied items, we will cover the cost of return shipping. We will provide a prepaid returns label upon request.`,
+      },
+      {
+        heading: '7. Contact',
+        body: `Returns queries: hello@ereko.co.uk
+Ereko African Market, 5 Broadway, Barking, London, IG11 7LS
+Phone: 020 3633 7503 (Mon–Sat, 9am–6pm)`,
+      },
+    ],
+  },
+
 };
 
 // Modern Slavery → 404 (page removed)

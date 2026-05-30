@@ -67,8 +67,8 @@ export function Footer() {
             <h3 className="font-bold text-lg mb-6 border-b border-background/20 pb-2 inline-block">Support</h3>
             <ul className="space-y-3 text-sm text-muted">
               <li><Link href="/help" className="hover:text-primary transition-colors">Help Centre & FAQs</Link></li>
-              <li><Link href="/en-gb/track" className="hover:text-primary transition-colors">Track My Order</Link></li>
-              <li><Link href="/account" className="hover:text-primary transition-colors">Returns & Refunds</Link></li>
+              <li><Link href="/track" className="hover:text-primary transition-colors">Track My Order</Link></li>
+              <li><Link href="/returns" className="hover:text-primary transition-colors">Returns & Refunds</Link></li>
               <li><Link href="/help" className="hover:text-primary transition-colors">Shipping Info</Link></li>
               <li><Link href="/account" className="hover:text-primary transition-colors">Loyalty Programme</Link></li>
               <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
