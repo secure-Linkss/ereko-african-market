@@ -19,6 +19,7 @@ import {
   AddressDto,
 } from './checkout.dto';
 import { PaymentsService } from '../payments/payments.service';
+import { DiscountService } from '../discounts/discount.service';
 import { v4 as uuidv4 } from 'uuid';
 
 const FREE_SHIPPING_THRESHOLD = 5500;
@@ -85,6 +86,7 @@ export class CheckoutService {
     private readonly supabase: SupabaseService,
     private readonly config: ConfigService,
     private readonly paymentsService: PaymentsService,
+    private readonly discountService: DiscountService,
     @Optional() @InjectQueue('orders') private readonly ordersQueue: Queue | null,
   ) {}
 
@@ -224,8 +226,29 @@ export class CheckoutService {
 
     const taxMinor = cart.taxMinor;
     const subtotal = cart.subtotalMinor;
-    const discount = cart.discountMinor + cart.loyaltyDiscountMinor;
-    const discountedSubtotal = Math.max(0, subtotal - discount);
+    let cartDiscount = cart.discountMinor + cart.loyaltyDiscountMinor;
+    let appliedDiscountCodeId: string | null = null;
+    let appliedPromoCode: string | null = cart.promoCode ?? null;
+
+    // Apply discount code if provided
+    let discountCodeMessage: string | null = null;
+    let discountCodeAmountMinor = 0;
+    if (dto.discountCode) {
+      const discountResult = await this.discountService.validate({
+        code: dto.discountCode.toUpperCase().trim(),
+        cartTotalMinor: subtotal,
+        email: dto.email,
+      });
+      discountCodeMessage = discountResult.message;
+      if (discountResult.valid) {
+        cartDiscount += discountResult.discountAmountMinor;
+        discountCodeAmountMinor = discountResult.discountAmountMinor;
+        appliedDiscountCodeId = discountResult.codeId;
+        appliedPromoCode = discountResult.code;
+      }
+    }
+
+    const discountedSubtotal = Math.max(0, subtotal - cartDiscount);
     const shipping = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
     const total = discountedSubtotal + shipping;
     const now = new Date().toISOString();
@@ -241,11 +264,12 @@ export class CheckoutService {
         status: 'PENDING_PAYMENT',
         currency: cart.currency,
         subtotalMinor: subtotal,
-        discountMinor: discount,
+        discountMinor: cartDiscount,
         shippingMinor: shipping,
         taxMinor,
         totalMinor: total,
-        promoCode: cart.promoCode,
+        promoCode: appliedPromoCode,
+        discountCodeId: appliedDiscountCodeId,
         loyaltyPointsRedeemed: cart.loyaltyPointsRedeemed,
         loyaltyPointsEarned: 0,
         deliveryMethod: 'standard',
@@ -329,6 +353,12 @@ export class CheckoutService {
       cart: serializedCart,
       stockReservedUntil: new Date(Date.now() + 15 * 60 * 1000),
       availableDeliverySlots: deliverySlots,
+      discount: appliedDiscountCodeId ? {
+        applied: true,
+        code: appliedPromoCode,
+        discountAmountMinor: discountCodeAmountMinor,
+        message: discountCodeMessage,
+      } : null,
     };
   }
 
@@ -438,6 +468,11 @@ export class CheckoutService {
       .eq('id', order.id);
 
     if (newStatus === 'PAID') {
+      // Record discount code usage
+      if (order.discountCodeId) {
+        await this.discountService.recordUsage(order.discountCodeId, order.id, order.userId ?? undefined, order.email);
+      }
+
       if (this.ordersQueue) {
         await this.ordersQueue.add(
           'order.placed',
@@ -494,6 +529,11 @@ export class CheckoutService {
     const now = new Date().toISOString();
     await this.upsertOrderAddress(order.id, 'shipping', dto.shippingAddress);
     await this.upsertOrderAddress(order.id, 'billing', dto.shippingAddress);
+
+    // Record discount code usage for in-store orders
+    if (order.discountCodeId) {
+      await this.discountService.recordUsage(order.discountCodeId, order.id, order.userId ?? undefined, order.email);
+    }
 
     // Mark as ALLOCATED — order confirmed, payment collected at store
     await this.supabase.db.from('Order').update({

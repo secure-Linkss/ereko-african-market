@@ -35,6 +35,7 @@ export interface StartCheckoutRequest {
   email: string;
   firstName?: string;
   lastName?: string;
+  discountCode?: string;
 }
 
 export interface StartCheckoutResponse {

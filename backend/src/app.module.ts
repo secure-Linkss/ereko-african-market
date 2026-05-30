@@ -34,6 +34,7 @@ import { TeamModule } from './modules/team/team.module';
 import { SeoModule } from './modules/seo/seo.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { DiscountModule } from './modules/discounts/discount.module';
 
 const hasRedis = (): boolean =>
   !!(process.env.REDIS_URL || process.env.REDIS_HOST);
@@ -126,6 +127,7 @@ function buildBullModule(): DynamicModule[] {
     SeoModule,
     ContactModule,
     ReviewsModule,
+    DiscountModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

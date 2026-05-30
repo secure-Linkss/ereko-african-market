@@ -6,10 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Check, CreditCard, MapPin, Truck, ChevronRight, Loader2, Lock, ShoppingBag, Store, Package } from 'lucide-react';
+import { Check, CreditCard, MapPin, Truck, ChevronRight, Loader2, Lock, ShoppingBag, Store, Package, Tag, X, CheckCircle } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
 import { useStartCheckout, useCreatePaymentIntent, useConfirmCheckout, useSyncCart, useConfirmInStore } from '@/services/checkout';
+import { useValidateDiscount, ValidateDiscountResponse } from '@/services/discounts';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useForm } from 'react-hook-form';
@@ -140,6 +141,13 @@ export default function CheckoutPage() {
   const [stepError, setStepError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Discount / promo code state
+  const [promoInput, setPromoInput] = useState('');
+  const [promoResult, setPromoResult] = useState<ValidateDiscountResponse | null>(null);
+  const [promoError, setPromoError] = useState('');
+  const [promoValidating, setPromoValidating] = useState(false);
+  const validateDiscount = useValidateDiscount();
+
   const { items, getSubtotalMinor, shippingMinor, discountMinor, promoCode, clearCart } = useCartStore();
   const { user } = useAuthStore();
   const syncCart = useSyncCart();
@@ -151,7 +159,8 @@ export default function CheckoutPage() {
   const isCollect = fulfillment === 'collect';
   const activeShipping = subtotal >= 5500 ? 0 : shippingMinor;
   const deliveryFee = isCollect ? 0 : ((addressData as DeliveryAddressForm)?.deliveryMethod === 'nextday' ? 599 : (activeShipping || 399));
-  const total = Math.max(0, subtotal - discountMinor) + deliveryFee;
+  const promoDiscountMinor = promoResult?.valid ? promoResult.discountAmountMinor : 0;
+  const total = Math.max(0, subtotal - discountMinor - promoDiscountMinor) + deliveryFee;
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
 
   const contactForm = useForm<ContactForm>({
@@ -199,6 +208,31 @@ export default function CheckoutPage() {
     );
   }
 
+  async function handleApplyPromo() {
+    if (!promoInput.trim()) return;
+    setPromoError('');
+    setPromoValidating(true);
+    try {
+      const result = await validateDiscount.mutateAsync({
+        code: promoInput.toUpperCase().trim(),
+        cartTotalMinor: subtotal,
+        email: contactData?.email,
+      });
+      setPromoResult(result);
+      if (!result.valid) setPromoError(result.message);
+    } catch {
+      setPromoError('Failed to validate code. Please try again.');
+    } finally {
+      setPromoValidating(false);
+    }
+  }
+
+  function handleRemovePromo() {
+    setPromoResult(null);
+    setPromoInput('');
+    setPromoError('');
+  }
+
   async function onContactSubmit(data: ContactForm) {
     setContactData(data);
     setStep(2);
@@ -216,13 +250,14 @@ export default function CheckoutPage() {
       const cartId = synced.id;
       const postcode = isCollect ? STORE_ADDRESS.postcode : (data.postcode ?? '');
 
-      // 2. Start checkout (reserves stock, creates order)
+      // 2. Start checkout (reserves stock, creates order, applies discount code server-side)
       const startRes = await startCheckout.mutateAsync({
         postcode,
         cartId,
         email: contactData!.email,
         firstName: data.firstName,
         lastName: data.lastName,
+        discountCode: promoResult?.valid ? promoResult.code : undefined,
       });
 
       // 3a. Pay in store — skip Stripe, confirm directly
@@ -590,6 +625,39 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Promo code input */}
+              <div className="pt-2 border-t border-border space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5"><Tag className="w-3 h-3" /> Promo Code</p>
+                {promoResult?.valid ? (
+                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-emerald-700">{promoResult.code}</p>
+                      <p className="text-xs text-emerald-600">{promoResult.message}</p>
+                    </div>
+                    <button onClick={handleRemovePromo} className="text-muted-foreground hover:text-destructive flex-shrink-0">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={promoInput}
+                      onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(''); }}
+                      onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
+                      placeholder="Enter promo code"
+                      className="flex-1 min-w-0 border rounded-xl px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      maxLength={20}
+                      disabled={promoValidating}
+                    />
+                    <Button size="sm" variant="outline" onClick={handleApplyPromo} disabled={promoValidating || !promoInput.trim()}>
+                      {promoValidating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Apply'}
+                    </Button>
+                  </div>
+                )}
+                {promoError && <p className="text-xs text-destructive">{promoError}</p>}
+              </div>
+
               <div className="space-y-2 text-sm pt-2 border-t border-border">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal ({totalItems} items)</span>
@@ -597,8 +665,14 @@ export default function CheckoutPage() {
                 </div>
                 {discountMinor > 0 && (
                   <div className="flex justify-between text-emerald-600">
-                    <span>Promo {promoCode ? `(${promoCode})` : ''}</span>
+                    <span>Cart discount {promoCode ? `(${promoCode})` : ''}</span>
                     <span>-{formatGBP(discountMinor)}</span>
+                  </div>
+                )}
+                {promoResult?.valid && (
+                  <div className="flex justify-between text-emerald-600 font-medium">
+                    <span>Promo ({promoResult.code})</span>
+                    <span>-{formatGBP(promoResult.discountAmountMinor)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">

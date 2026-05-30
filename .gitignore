@@ -53,3 +53,7 @@ __MACOSX/
 # Package manager locks (keep these)
 # package-lock.json - keep
 # yarn.lock - keep
+
+.vercel
+backend/.env.vercel
+backend/scripts/migrate-discounts.js

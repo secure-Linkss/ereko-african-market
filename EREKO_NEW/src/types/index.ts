@@ -127,6 +127,9 @@ export interface Product {
   images: ProductImage[];
   categories: string[]; // Category IDs
   tags?: string[];
+  discountEnabled?: boolean;
+  discountPercent?: number | null;
+  discountBadge?: string | null;
   createdAt: string;
   updatedAt: string;
 }

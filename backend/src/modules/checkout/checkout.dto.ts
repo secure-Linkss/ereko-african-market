@@ -107,6 +107,11 @@ export class StartCheckoutDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @ApiPropertyOptional({ description: 'Discount/promo code to apply at checkout' })
+  @IsOptional()
+  @IsString()
+  discountCode?: string;
 }
 
 export class PaymentIntentDto {

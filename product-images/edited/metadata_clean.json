@@ -1,0 +1,337 @@
+Cleaned images: 33
+{
+  "generated": "2026-05-29T15:15:07.644696+00:00",
+  "watermark_version": "ereko-logo-v2",
+  "images": [
+    {
+      "filename": "amala_yam_flour.jpg",
+      "product_name": "Amala Yam Flour 1kg",
+      "brand": "Various",
+      "alt_text": "Various Amala Yam Flour 1kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 52
+    },
+    {
+      "filename": "basmati_rice_5kg.jpg",
+      "product_name": "Basmati Rice 5kg",
+      "brand": "Various",
+      "alt_text": "Various Basmati Rice 5kg — authentic African market product",
+      "category": "Grains & Rice",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 76
+    },
+    {
+      "filename": "bitter_cola.jpg",
+      "product_name": "Bitter Cola (Garcinia Kola)",
+      "brand": "N/A",
+      "alt_text": "Bitter Cola (Garcinia Kola) — authentic African market product",
+      "category": "Fresh Produce",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 32
+    },
+    {
+      "filename": "cameroon_pepper.jpg",
+      "product_name": "Cameroon Pepper 100g",
+      "brand": "Various",
+      "alt_text": "Various Cameroon Pepper 100g — authentic African market product",
+      "category": "Spices & Seasonings",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 92
+    },
+    {
+      "filename": "canned_snail.jpg",
+      "product_name": "Giant African Snail (Canned)",
+      "brand": "Fortune",
+      "alt_text": "Fortune Giant African Snail (Canned) — authentic African market product",
+      "category": "Canned Goods",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 98
+    },
+    {
+      "filename": "caprice_rice_10kg.jpg",
+      "product_name": "Long Grain Parboiled Rice 10kg",
+      "brand": "Caprice",
+      "alt_text": "Caprice Long Grain Parboiled Rice 10kg — authentic African market product",
+      "category": "Grains & Rice",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 66
+    },
+    {
+      "filename": "dried_ponmo.jpg",
+      "product_name": "Dried Ponmo (Cow Skin)",
+      "brand": "N/A",
+      "alt_text": "Dried Ponmo (Cow Skin) — authentic African market product",
+      "category": "Meat & Poultry",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 57
+    },
+    {
+      "filename": "dried_stockfish.jpg",
+      "product_name": "Dried Stockfish Fillet 500g",
+      "brand": "Various",
+      "alt_text": "Various Dried Stockfish Fillet 500g — authentic African market product",
+      "category": "Dried Fish & Seafood",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 87
+    },
+    {
+      "filename": "fresh_plantain.jpg",
+      "product_name": "Fresh Unripe Plantain",
+      "brand": "N/A",
+      "alt_text": "Fresh Unripe Plantain — authentic African market product",
+      "category": "Fresh Produce",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 43
+    },
+    {
+      "filename": "frozen_plantain.jpg",
+      "product_name": "Frozen Ripe Plantain 500g",
+      "brand": "Various",
+      "alt_text": "Various Frozen Ripe Plantain 500g — authentic African market product",
+      "category": "Frozen",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 64
+    },
+    {
+      "filename": "fufu_cassava.jpg",
+      "product_name": "Cassava Fufu 1kg",
+      "brand": "Olu Olu",
+      "alt_text": "Olu Olu Cassava Fufu 1kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 103
+    },
+    {
+      "filename": "golden_penny_semolina.jpg",
+      "product_name": "Semolina Fine 1kg",
+      "brand": "Golden Penny",
+      "alt_text": "Golden Penny Semolina Fine 1kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 78
+    },
+    {
+      "filename": "golden_penny_semovita.jpg",
+      "product_name": "Golden Penny Semovita 1kg",
+      "brand": "Golden Penny",
+      "alt_text": "Golden Penny Golden Penny Semovita 1kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 82
+    },
+    {
+      "filename": "ground_egusi.jpg",
+      "product_name": "Ground Egusi 500g",
+      "brand": "Various",
+      "alt_text": "Various Ground Egusi 500g — authentic African market product",
+      "category": "Cupboard Staples",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 75
+    },
+    {
+      "filename": "guinness_nigerian_33cl.jpg",
+      "product_name": "Nigerian Guinness Stout 33cl",
+      "brand": "Guinness Nigeria",
+      "alt_text": "Guinness Nigeria Nigerian Guinness Stout 33cl — authentic African market product",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 49
+    },
+    {
+      "filename": "guinness_nigerian_60cl.jpg",
+      "product_name": "Nigerian Guinness Stout 60cl",
+      "brand": "Guinness Nigeria",
+      "alt_text": "Guinness Nigeria Nigerian Guinness Stout 60cl — authentic African market product",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 40
+    },
+    {
+      "filename": "honeywell_pounded_yam.jpg",
+      "product_name": "Pounded Yam Flour 1.5kg",
+      "brand": "Honeywell",
+      "alt_text": "Honeywell Pounded Yam Flour 1.5kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 65
+    },
+    {
+      "filename": "indomie_chicken.jpg",
+      "product_name": "Indomie Chicken Noodles",
+      "brand": "Indomie",
+      "alt_text": "Indomie Indomie Chicken Noodles — authentic African market product",
+      "category": "Cupboard Staples",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 65
+    },
+    {
+      "filename": "indomie_onion_chicken.jpg",
+      "product_name": "Instant Noodles Onion Chicken",
+      "brand": "Indomie",
+      "alt_text": "Indomie Instant Noodles Onion Chicken — authentic African market product",
+      "category": "Cupboard Staples",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 95
+    },
+    {
+      "filename": "maggi_naija.jpg",
+      "product_name": "Maggi Naija Pot Seasoning",
+      "brand": "Maggi",
+      "alt_text": "Maggi Maggi Naija Pot Seasoning — authentic African market product",
+      "category": "Cupboard Staples",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 87
+    },
+    {
+      "filename": "malta_guinness.jpg",
+      "product_name": "Malta Guinness 33cl",
+      "brand": "Guinness",
+      "alt_text": "Guinness Malta Guinness 33cl — authentic African market product",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 80
+    },
+    {
+      "filename": "milo_tin.jpg",
+      "product_name": "Milo 400g Tin",
+      "brand": "Nestlé",
+      "alt_text": "Nestlé Milo 400g Tin — authentic African market product",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 113
+    },
+    {
+      "filename": "mortar_pestle.jpg",
+      "product_name": "Wooden Mortar & Pestle",
+      "brand": "N/A",
+      "alt_text": "Wooden Mortar & Pestle — authentic African market product",
+      "category": "Home & Kitchen",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 80
+    },
+    {
+      "filename": "nigerian_coca_cola.jpg",
+      "product_name": "Coca-Cola 35cl Glass Bottle",
+      "brand": "Coca-Cola",
+      "alt_text": "Coca-Cola Coca-Cola 35cl Glass Bottle — authentic African market product",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 34
+    },
+    {
+      "filename": "nigerian_fanta.jpg",
+      "product_name": "Nigerian Fanta Orange 35cl",
+      "brand": "Fanta",
+      "alt_text": "Fanta Nigerian Fanta Orange 35cl — authentic African market product",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 34
+    },
+    {
+      "filename": "nkulenu_palm_wine.jpg",
+      "product_name": "Nkulenu's Palm Wine",
+      "brand": "Nkulenu's",
+      "alt_text": "Nkulenu's Nkulenu's Palm Wine — authentic African market product",
+      "category": "Drinks & Beverages",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 39
+    },
+    {
+      "filename": "oluolu_pounded_yam.jpg",
+      "product_name": "Olu Olu Pounded Yam 2kg",
+      "brand": "Olu Olu",
+      "alt_text": "Olu Olu Olu Olu Pounded Yam 2kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 69
+    },
+    {
+      "filename": "oluolu_poundo_4kg.jpg",
+      "product_name": "Poundo Iyan 4kg",
+      "brand": "Olu Olu",
+      "alt_text": "Olu Olu Poundo Iyan 4kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 79
+    },
+    {
+      "filename": "oluolu_poundo_iyan.jpg",
+      "product_name": "Poundo Iyan 1.2kg",
+      "brand": "Olu Olu",
+      "alt_text": "Olu Olu Poundo Iyan 1.2kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 83
+    },
+    {
+      "filename": "palm_oil_red.jpg",
+      "product_name": "Red Palm Oil 1L",
+      "brand": "Various",
+      "alt_text": "Various Red Palm Oil 1L — authentic African market product",
+      "category": "Palm Oil & Cooking Oils",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 76
+    },
+    {
+      "filename": "poundo_yam_generic.jpg",
+      "product_name": "Poundo Yam Flour 1kg",
+      "brand": "Generic",
+      "alt_text": "Generic Poundo Yam Flour 1kg — authentic African market product",
+      "category": "Flour & Swallows",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 69
+    },
+    {
+      "filename": "tastic_rice_5kg.jpg",
+      "product_name": "Long Grain Rice 5kg",
+      "brand": "Tastic",
+      "alt_text": "Tastic Long Grain Rice 5kg — authentic African market product",
+      "category": "Grains & Rice",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 109
+    },
+    {
+      "filename": "titus_sardines.jpg",
+      "product_name": "Titus Sardines 125g",
+      "brand": "Titus",
+      "alt_text": "Titus Titus Sardines 125g — authentic African market product",
+      "category": "Dried Fish & Seafood",
+      "watermark_position": "bottom-right",
+      "dimensions": "800x800",
+      "file_size_kb": 48
+    }
+  ]
+}

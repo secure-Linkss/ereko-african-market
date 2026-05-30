@@ -60,6 +60,15 @@ export const API_ENDPOINTS = {
     CARGO_RATES: "/api/v1/admin/cargo-rates",
     REVIEWS: "/api/v1/admin/reviews",
   },
+  DISCOUNTS: {
+    LIST: "/api/v1/discounts",
+    CREATE: "/api/v1/discounts",
+    UPDATE: (id: string) => `/api/v1/discounts/${id}`,
+    DELETE: (id: string) => `/api/v1/discounts/${id}`,
+    USAGES: (id: string) => `/api/v1/discounts/${id}/usages`,
+    VALIDATE: "/api/v1/discounts/validate",
+    PRODUCT: (productId: string) => `/api/v1/discounts/products/${productId}`,
+  },
 };
 
 // Create Axios Instance

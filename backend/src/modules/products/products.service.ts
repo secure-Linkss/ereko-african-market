@@ -13,6 +13,7 @@ const TTL_PRODUCT_SINGLE = 10 * 60 * 1000;
 const PRODUCT_SELECT = `
   id, slug, title, brand, originCountry, descriptionShort, descriptionLong,
   storageType, isPublished, version, ingredients, createdAt, updatedAt, deletedAt,
+  discountEnabled, discountPercent, discountBadge,
   ProductVariant(id, productId, sku, ean, name, weightGrams, priceAmountMinor, currency, compareAtAmountMinor, taxClassId, stockOnHand, stockReserved, safetyStockThreshold, isActive),
   ProductImage(id, productId, url, alt, position),
   ProductCategory(categoryId),
@@ -36,6 +37,9 @@ function mapRow(row: any) {
     isPublished: row.isPublished,
     version: row.version,
     ingredients: row.ingredients,
+    discountEnabled: row.discountEnabled ?? false,
+    discountPercent: row.discountPercent ?? null,
+    discountBadge: row.discountBadge ?? null,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
     seo: row.ProductSeo ?? null,

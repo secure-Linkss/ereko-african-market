@@ -486,7 +486,7 @@ export class AdminService {
   async listProducts(limit: number, cursor?: string) {
     let query = this.supabase.db
       .from('Product')
-      .select('id, slug, title, brand, storageType, isPublished, originCountry, descriptionShort, createdAt, variants:ProductVariant(id,sku,name,priceAmountMinor,stockOnHand,stockReserved,isActive), images:ProductImage(id,url,alt,position), categories:ProductCategory(category:Category(id,slug,name))')
+      .select('id, slug, title, brand, storageType, isPublished, originCountry, descriptionShort, createdAt, discountEnabled, discountPercent, discountBadge, variants:ProductVariant(id,sku,name,priceAmountMinor,stockOnHand,stockReserved,isActive), images:ProductImage(id,url,alt,position), categories:ProductCategory(category:Category(id,slug,name))')
       .order('createdAt', { ascending: false })
       .limit(limit);
     if (cursor) query = query.lt('createdAt', cursor);

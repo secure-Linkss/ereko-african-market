@@ -1,0 +1,28 @@
+{
+  "cookies": [
+    {
+      "name": "refresh_token",
+      "value": "1cf0e52c-008e-4296-9795-7f92ef2b355b.67d4764f-db56-4055-97ae-af50a6af0364",
+      "domain": "ereko-african-market.vercel.app",
+      "path": "/api/v1/auth",
+      "expires": 1782680880.576515,
+      "size": 86,
+      "httpOnly": true,
+      "secure": true,
+      "session": false,
+      "sameSite": "Strict"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://ereko-african-market.vercel.app",
+      "localStorage": [
+        {
+          "name": "accessToken",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmZTc2NzcwNi1jYzNjLTRlZDgtOWRiOC05YmQwY2VhZjBhYWMiLCJlbWFpbCI6ImFkbWluQGVyZWtvLmNvLnVrIiwiaWF0IjoxNzgwMDg4ODc5LCJleHAiOjE3ODAwODk3Nzl9.-RC6QZVFY2feWd0ett7ofi-V3MShoLq7xHVb_4JGK3k"
+        }
+      ],
+      "sessionStorage": []
+    }
+  ]
+}

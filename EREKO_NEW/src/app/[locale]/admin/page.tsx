@@ -10,7 +10,7 @@ import {
   LayoutDashboard, ShoppingBag, Package, Search, PackageCheck, AlertCircle,
   RefreshCcw, LogOut, Banknote, RotateCcw, MessageSquare, Mail, CheckCircle2,
   Star, Trash2, ThumbsUp, ThumbsDown, Edit2, Plus, Truck, Ship, Plane,
-  Upload, X, ChevronDown, ChevronUp, Save, ImageIcon, Tag,
+  Upload, X, ChevronDown, ChevronUp, Save, ImageIcon, Tag, BadgePercent,
 } from 'lucide-react';
 import {
   useAdminMetrics, useAdminOrders, useAdminInventory, useUpdateStock,
@@ -19,6 +19,7 @@ import {
   useDeleteProduct, useUploadProductImage, useAdminCargoRates, useUpdateCargoRate,
   UpdateProductRequest, CreateProductRequest,
 } from '@/services/admin';
+import { DiscountsTab } from './DiscountsTab';
 import { useAdminReviews, useModerateReview, useDeleteReview } from '@/services/reviews';
 import { useAuthStore } from '@/store/auth';
 import { useLogout } from '@/services/auth';
@@ -60,7 +61,7 @@ const NEXT_STATUSES: Record<string, string[]> = {
   ON_HOLD: ['PAID', 'ALLOCATED', 'PICKING', 'PACKED', 'CANCELLED'],
 };
 
-type Tab = 'dashboard' | 'orders' | 'inventory' | 'products' | 'returns' | 'contacts' | 'reviews' | 'cargo-rates';
+type Tab = 'dashboard' | 'orders' | 'inventory' | 'products' | 'returns' | 'contacts' | 'reviews' | 'cargo-rates' | 'discounts';
 
 // ─── Root Page ─────────────────────────────────────────────────────────────────
 
@@ -106,6 +107,7 @@ export default function AdminDashboardPage() {
     { tab: 'contacts', icon: MessageSquare, label: 'Messages', badge: metrics?.unreadContactsCount ? String(metrics.unreadContactsCount) : undefined },
     { tab: 'reviews', icon: Star, label: 'Reviews' },
     { tab: 'cargo-rates', icon: Truck, label: 'Cargo Rates' },
+    { tab: 'discounts', icon: BadgePercent, label: 'Discounts' },
   ];
 
   return (
@@ -180,6 +182,7 @@ export default function AdminDashboardPage() {
           {activeTab === 'contacts' && <ContactsTab />}
           {activeTab === 'reviews' && <ReviewsTab />}
           {activeTab === 'cargo-rates' && <CargoRatesTab />}
+          {activeTab === 'discounts' && <DiscountsTab />}
         </div>
       </main>
     </div>

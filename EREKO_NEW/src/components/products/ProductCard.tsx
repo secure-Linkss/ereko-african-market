@@ -6,6 +6,19 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import type { Product, StorageType } from "@/types";
 
+// ─── Discount badge config ────────────────────────────────────────────────────
+const DISCOUNT_BADGE_STYLES: Record<string, { bg: string; text: string; ring: string }> = {
+  SALE:      { bg: 'bg-red-500',     text: 'text-white', ring: 'ring-red-600' },
+  HOT_DEAL:  { bg: 'bg-orange-500',  text: 'text-white', ring: 'ring-orange-600' },
+  LIMITED:   { bg: 'bg-purple-600',  text: 'text-white', ring: 'ring-purple-700' },
+  CLEARANCE: { bg: 'bg-blue-600',    text: 'text-white', ring: 'ring-blue-700' },
+  NEW_PRICE: { bg: 'bg-emerald-500', text: 'text-white', ring: 'ring-emerald-600' },
+  SPECIAL:   { bg: 'bg-amber-500',   text: 'text-white', ring: 'ring-amber-600' },
+};
+const DISCOUNT_BADGE_LABELS: Record<string, string> = {
+  SALE: 'SALE', HOT_DEAL: 'HOT', LIMITED: 'LIMITED', CLEARANCE: 'CLEARANCE', NEW_PRICE: 'NEW PRICE', SPECIAL: 'SPECIAL',
+};
+
 // ─── Storage badge config ─────────────────────────────────────────────────────
 const STORAGE_CONFIG: Record<
   StorageType,
@@ -82,6 +95,15 @@ export function ProductCard({
   const storage = STORAGE_CONFIG[product.storageType];
   const flag = getFlag(product.originCountry);
 
+  // Discount calculations
+  const hasDiscount = product.discountEnabled && !!product.discountPercent;
+  const discountedPriceMinor = hasDiscount && variant
+    ? Math.round(variant.priceAmountMinor * (1 - (product.discountPercent! / 100)))
+    : null;
+  const badgeKey = product.discountBadge ?? 'SALE';
+  const badgeStyle = DISCOUNT_BADGE_STYLES[badgeKey] ?? DISCOUNT_BADGE_STYLES.SALE;
+  const badgeLabel = DISCOUNT_BADGE_LABELS[badgeKey] ?? 'SALE';
+
   const handleAddToCart = useCallback(async () => {
     if (isOutOfStock || adding || !onAddToCart) return;
     setAdding(true);
@@ -156,8 +178,30 @@ export function ProductCard({
           </span>
         </div>
 
-        {/* Compare-at discount badge */}
-        {variant?.compareAtAmountMinor &&
+        {/* Discount stamp badge — bottom-left, shown when product discount is enabled */}
+        {hasDiscount && (
+          <motion.div
+            className="absolute bottom-2.5 left-2.5 z-10"
+            initial={{ scale: 0, rotate: -12 }}
+            animate={{ scale: 1, rotate: -6 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.1 }}
+          >
+            <div className={cn(
+              'relative flex flex-col items-center justify-center w-14 h-14 rounded-full shadow-xl ring-2 ring-white/60',
+              badgeStyle.bg, badgeStyle.ring
+            )}>
+              <span className={cn('text-[9px] font-black tracking-tight leading-none', badgeStyle.text)}>
+                {badgeLabel}
+              </span>
+              <span className={cn('text-[15px] font-black leading-tight', badgeStyle.text)}>
+                -{product.discountPercent}%
+              </span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Compare-at discount badge (original variant-level compare) */}
+        {!hasDiscount && variant?.compareAtAmountMinor &&
           variant.compareAtAmountMinor > variant.priceAmountMinor && (
             <div className="absolute bottom-2.5 left-2.5">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-[#E85D04] text-white">
@@ -193,19 +237,30 @@ export function ProductCard({
         )}
 
         {/* Price row */}
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 flex-wrap">
           {variant ? (
-            <>
-              <span className="text-xl font-extrabold text-foreground">
-                {formatPrice(variant.priceAmountMinor, variant.currency || "GBP")}
-              </span>
-              {variant.compareAtAmountMinor &&
-                variant.compareAtAmountMinor > variant.priceAmountMinor && (
-                  <span className="text-sm text-muted-foreground line-through">
-                    {formatPrice(variant.compareAtAmountMinor, variant.currency || "GBP")}
-                  </span>
-                )}
-            </>
+            hasDiscount && discountedPriceMinor !== null ? (
+              <>
+                <span className="text-xl font-extrabold text-primary">
+                  {formatPrice(discountedPriceMinor, variant.currency || "GBP")}
+                </span>
+                <span className="text-sm text-muted-foreground line-through">
+                  {formatPrice(variant.priceAmountMinor, variant.currency || "GBP")}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-xl font-extrabold text-foreground">
+                  {formatPrice(variant.priceAmountMinor, variant.currency || "GBP")}
+                </span>
+                {variant.compareAtAmountMinor &&
+                  variant.compareAtAmountMinor > variant.priceAmountMinor && (
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(variant.compareAtAmountMinor, variant.currency || "GBP")}
+                    </span>
+                  )}
+              </>
+            )
           ) : (
             <span className="text-sm text-muted-foreground">Price unavailable</span>
           )}
