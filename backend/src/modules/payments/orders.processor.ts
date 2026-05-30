@@ -224,6 +224,39 @@ export class OrdersProcessor {
         orderUrl: `${frontendUrl}/account/orders/${orderId}`,
       });
 
+      // ── 5. Notify admin/owner staff of new order ──────────────────────────
+      try {
+        const { data: adminUsers } = await this.supabase.db
+          .from('User')
+          .select('email')
+          .eq('isAdmin', true)
+          .eq('isActive', true);
+
+        const adminEmails = (adminUsers ?? []).map((u: any) => u.email).filter(Boolean);
+
+        if (adminEmails.length > 0) {
+          const { data: orderItems } = await this.supabase.db
+            .from('OrderItem')
+            .select('quantity')
+            .eq('orderId', orderId);
+
+          const itemCount = (orderItems ?? []).reduce((s: number, i: any) => s + (i.quantity ?? 1), 0);
+
+          await this.notifications.sendAdminNewOrderAlert({
+            adminEmails,
+            orderNumber,
+            customerEmail: email,
+            customerName: firstName,
+            totalFormatted: `£${(totalMinor / 100).toFixed(2)}`,
+            itemCount,
+            adminOrderUrl: `${this.config.get<string>('frontend.url') ?? frontendUrl}/en-gb/admin`,
+            paymentMethod: userId ? 'Online Payment' : 'Guest Order',
+          });
+        }
+      } catch (alertErr) {
+        this.logger.warn(`Admin new-order alert failed: ${alertErr.message}`);
+      }
+
       this.logger.log(`order.placed job completed for ${orderNumber}`);
     } catch (err) {
       this.logger.error(

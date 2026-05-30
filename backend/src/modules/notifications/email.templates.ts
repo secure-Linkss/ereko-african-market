@@ -488,3 +488,214 @@ EREKO Market
     text,
   };
 }
+
+// ─── Order Status Update ──────────────────────────────────────────────────────
+
+export interface OrderStatusUpdateContext {
+  firstName: string;
+  orderNumber: string;
+  status: string;
+  trackingNumber?: string;
+  carrierName?: string;
+  notes?: string;
+  orderUrl: string;
+  frontendUrl: string;
+}
+
+const STATUS_COPY: Record<string, { headline: string; body: string; emoji: string }> = {
+  SHIPPED: {
+    emoji: '🚚',
+    headline: 'Your order is on its way!',
+    body: 'Great news — your order has been dispatched and is heading to you.',
+  },
+  OUT_FOR_DELIVERY: {
+    emoji: '📦',
+    headline: 'Out for delivery today!',
+    body: 'Your order is out for delivery and should arrive today. Make sure someone is home to receive it.',
+  },
+  DELIVERED: {
+    emoji: '✅',
+    headline: 'Your order has been delivered!',
+    body: 'Your order has been successfully delivered. We hope you enjoy your authentic African groceries!',
+  },
+  READY_FOR_PICKUP: {
+    emoji: '🏪',
+    headline: 'Ready for collection!',
+    body: 'Your order is ready for collection at our store. Please bring your order confirmation.',
+  },
+  PICKED_UP: {
+    emoji: '🎉',
+    headline: 'Order collected — enjoy!',
+    body: 'Your order has been collected. Thank you for shopping with EREKO!',
+  },
+  CANCELLED: {
+    emoji: '❌',
+    headline: 'Your order has been cancelled',
+    body: 'Your order has been cancelled. If you paid online, a full refund will be processed within 3–5 business days.',
+  },
+  REFUNDED: {
+    emoji: '💳',
+    headline: 'Refund processed',
+    body: 'Your refund has been processed and should appear in your account within 3–5 business days.',
+  },
+  ON_HOLD: {
+    emoji: '⏸️',
+    headline: 'Your order is on hold',
+    body: 'Your order has been temporarily placed on hold. Our team will be in touch shortly with more information.',
+  },
+  RETURN_REQUESTED: {
+    emoji: '🔄',
+    headline: 'Return request received',
+    body: 'We have received your return request and our team is reviewing it. We will be in touch within 24 hours.',
+  },
+  RETURNED: {
+    emoji: '📬',
+    headline: 'Return confirmed',
+    body: 'Your return has been confirmed. A refund will be processed within 3–5 business days.',
+  },
+  DISPUTED: {
+    emoji: '⚠️',
+    headline: 'Dispute opened on your order',
+    body: 'A dispute has been opened on your order. Our team will review and contact you within 24 hours.',
+  },
+};
+
+export function orderStatusUpdateTemplate(ctx: OrderStatusUpdateContext): {
+  subject: string; html: string; text: string;
+} {
+  const copy = STATUS_COPY[ctx.status] ?? {
+    emoji: '📋', headline: `Order update: ${ctx.status.replace(/_/g, ' ')}`, body: 'There has been an update to your order.',
+  };
+  const firstName = escapeHtml(ctx.firstName);
+  const orderNumber = escapeHtml(ctx.orderNumber);
+
+  let trackingHtml = '';
+  let trackingText = '';
+  if (ctx.trackingNumber && ctx.carrierName) {
+    trackingHtml = `<div class="highlight-box"><strong>Tracking details</strong><br/>Carrier: ${escapeHtml(ctx.carrierName)}<br/>Tracking number: <strong>${escapeHtml(ctx.trackingNumber)}</strong></div>`;
+    trackingText = `\nTracking details:\nCarrier: ${ctx.carrierName}\nTracking #: ${ctx.trackingNumber}\n`;
+  }
+  if (ctx.notes) {
+    trackingHtml += `<p class="text"><strong>Note from our team:</strong> ${escapeHtml(ctx.notes)}</p>`;
+    trackingText += `\nNote: ${ctx.notes}\n`;
+  }
+
+  const html = baseLayout(
+    `Order ${orderNumber} — ${copy.headline}`,
+    `<p class="greeting">${copy.emoji} ${copy.headline}</p>
+    <p class="text">Hi ${firstName},</p>
+    <p class="text">${copy.body}</p>
+    <div class="highlight-box"><strong>Order</strong>: ${orderNumber}</div>
+    ${trackingHtml}
+    <div style="text-align:center; margin:28px 0;">
+      <a href="${escapeHtml(ctx.orderUrl)}" class="btn">View Order</a>
+    </div>
+    <p class="small-text">Questions? Email us at <a href="mailto:hello@ereko.market" style="color:#c17f42;">hello@ereko.market</a></p>`,
+  );
+
+  const text = `${copy.headline}
+
+Hi ${firstName},
+
+${copy.body}
+
+Order: ${orderNumber}${trackingText}
+
+View your order: ${ctx.orderUrl}
+
+---
+EREKO Market | hello@ereko.market
+`;
+
+  return { subject: `${copy.emoji} ${copy.headline} — Order ${orderNumber}`, html, text };
+}
+
+// ─── Admin New Order Alert ────────────────────────────────────────────────────
+
+export interface AdminNewOrderAlertContext {
+  orderNumber: string;
+  customerEmail: string;
+  customerName: string;
+  totalFormatted: string;
+  itemCount: number;
+  adminOrderUrl: string;
+  paymentMethod: string;
+}
+
+export function adminNewOrderAlertTemplate(ctx: AdminNewOrderAlertContext): {
+  subject: string; html: string; text: string;
+} {
+  const html = baseLayout(
+    `New Order — ${ctx.orderNumber}`,
+    `<p class="greeting">🛒 New Order Received!</p>
+    <p class="text">A new order has been placed and requires processing.</p>
+    <div class="highlight-box">
+      <strong>Order:</strong> ${escapeHtml(ctx.orderNumber)}<br/>
+      <strong>Customer:</strong> ${escapeHtml(ctx.customerName)} (${escapeHtml(ctx.customerEmail)})<br/>
+      <strong>Total:</strong> ${escapeHtml(ctx.totalFormatted)}<br/>
+      <strong>Items:</strong> ${ctx.itemCount}<br/>
+      <strong>Payment:</strong> ${escapeHtml(ctx.paymentMethod)}
+    </div>
+    <div style="text-align:center; margin:28px 0;">
+      <a href="${escapeHtml(ctx.adminOrderUrl)}" class="btn">View in Admin Panel</a>
+    </div>`,
+  );
+
+  const text = `New Order Received!
+
+Order: ${ctx.orderNumber}
+Customer: ${ctx.customerName} (${ctx.customerEmail})
+Total: ${ctx.totalFormatted}
+Items: ${ctx.itemCount}
+Payment: ${ctx.paymentMethod}
+
+View in admin: ${ctx.adminOrderUrl}
+
+EREKO Admin Notifications
+`;
+
+  return { subject: `🛒 New Order: ${ctx.orderNumber} — ${ctx.totalFormatted}`, html, text };
+}
+
+// ─── Admin Return/RMA Alert ───────────────────────────────────────────────────
+
+export interface AdminReturnAlertContext {
+  orderNumber: string;
+  customerEmail: string;
+  reason: string;
+  refundAmount: string;
+  adminOrderUrl: string;
+}
+
+export function adminReturnAlertTemplate(ctx: AdminReturnAlertContext): {
+  subject: string; html: string; text: string;
+} {
+  const html = baseLayout(
+    `Return Request — ${ctx.orderNumber}`,
+    `<p class="greeting">🔄 Return Request Received</p>
+    <p class="text">A customer has submitted a return request for order <strong>${escapeHtml(ctx.orderNumber)}</strong>.</p>
+    <div class="highlight-box">
+      <strong>Order:</strong> ${escapeHtml(ctx.orderNumber)}<br/>
+      <strong>Customer:</strong> ${escapeHtml(ctx.customerEmail)}<br/>
+      <strong>Reason:</strong> ${escapeHtml(ctx.reason.replace(/_/g, ' '))}<br/>
+      <strong>Refund requested:</strong> ${escapeHtml(ctx.refundAmount)}
+    </div>
+    <div style="text-align:center; margin:28px 0;">
+      <a href="${escapeHtml(ctx.adminOrderUrl)}" class="btn">Review Return</a>
+    </div>`,
+  );
+
+  const text = `Return Request Received
+
+Order: ${ctx.orderNumber}
+Customer: ${ctx.customerEmail}
+Reason: ${ctx.reason}
+Refund: ${ctx.refundAmount}
+
+Review: ${ctx.adminOrderUrl}
+
+EREKO Admin Notifications
+`;
+
+  return { subject: `🔄 Return Request: ${ctx.orderNumber}`, html, text };
+}

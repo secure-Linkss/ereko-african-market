@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ShoppingCart, Search, User, Menu, X, LogOut, Settings } from 'lucide-react';
+import { ShoppingCart, Search, User, Menu, X, LogOut, Settings, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import { useLogout } from '@/services/auth';
+import { useNotifications } from '@/services/notifications';
 
 export function Header() {
   const params = useParams();
@@ -21,6 +22,8 @@ export function Header() {
   const { user, isAuthenticated } = useAuthStore();
   const cartItems = useCartStore((s) => s.items);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const { data: notifData } = useNotifications({ enabled: isAuthenticated, limit: 5 });
+  const unreadCount = notifData?.unreadCount ?? 0;
 
   const logoutMutation = useLogout();
 
@@ -105,6 +108,20 @@ export function Header() {
             <Link href={`/${locale}/login`} className="hidden sm:flex">
               <Button variant="ghost" size="sm" className="font-semibold">
                 Sign in
+              </Button>
+            </Link>
+          )}
+
+          {/* Notification Bell (authenticated users) */}
+          {isAuthenticated && (
+            <Link href={`/${locale}/account`} onClick={() => {}} className="hidden sm:block">
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Button>
             </Link>
           )}

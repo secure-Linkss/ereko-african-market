@@ -41,6 +41,10 @@ export default function HomePage() {
   function handleAddToCart(product: any) {
     const variant = product.variants?.[0];
     if (!variant) return;
+    const hasDiscount = product.discountEnabled && !!product.discountPercent;
+    const discountedPrice = hasDiscount
+      ? Math.round(variant.priceAmountMinor * (1 - product.discountPercent / 100))
+      : variant.priceAmountMinor;
     addItem({
       variantId: variant.id,
       productId: product.id,
@@ -48,7 +52,8 @@ export default function HomePage() {
       variantName: variant.name,
       slug: product.slug,
       image: product.images?.[0]?.url ?? product.images?.[0] ?? '',
-      unitPriceMinor: variant.priceAmountMinor,
+      unitPriceMinor: discountedPrice,
+      originalPriceMinor: hasDiscount ? variant.priceAmountMinor : undefined,
       quantity: 1,
       availableStock: variant.stockOnHand - variant.stockReserved,
       storageType: product.storageType,
@@ -186,10 +191,19 @@ export default function HomePage() {
             {products.map((product: any) => {
               const variant = product.variants?.[0];
               const available = variant ? variant.stockOnHand - variant.stockReserved > 0 : false;
+              const hasDiscount = product.discountEnabled && !!product.discountPercent;
+              const discountedPriceMinor = hasDiscount && variant
+                ? Math.round(variant.priceAmountMinor * (1 - product.discountPercent / 100))
+                : null;
+              const BADGE_LABELS: Record<string, string> = {
+                SALE: 'SALE', HOT_DEAL: 'HOT', LIMITED: 'LTD', CLEARANCE: 'CLEAR',
+                NEW_PRICE: 'NEW', SPECIAL: 'SPECIAL',
+              };
+              const badgeLabel = BADGE_LABELS[product.discountBadge ?? 'SALE'] ?? 'SALE';
               return (
-                <Card key={product.id} hoverable className="flex flex-col">
+                <Card key={product.id} hoverable className={`flex flex-col relative overflow-hidden ${hasDiscount ? 'ring-1 ring-primary/20' : ''}`}>
                   <Link href={`/${locale}/product/${product.slug}`} className="block">
-                    <div className="aspect-square bg-muted rounded-t-xl overflow-hidden">
+                    <div className="relative aspect-square bg-muted rounded-t-xl overflow-hidden">
                       {product.images?.[0] ? (
                         <img
                           src={product.images[0]?.url ?? product.images[0]}
@@ -198,6 +212,12 @@ export default function HomePage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-3xl">🥬</div>
+                      )}
+                      {hasDiscount && (
+                        <div className="absolute bottom-2 left-2 z-10 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-red-500 shadow-lg ring-2 ring-white/60" style={{ transform: 'rotate(-6deg)' }}>
+                          <span className="text-[8px] font-black text-white leading-none">{badgeLabel}</span>
+                          <span className="text-[12px] font-black text-white leading-tight">-{product.discountPercent}%</span>
+                        </div>
                       )}
                     </div>
                   </Link>
@@ -209,7 +229,16 @@ export default function HomePage() {
                       {product.originCountry && <p className="text-xs text-muted-foreground mt-0.5">From {product.originCountry}</p>}
                     </div>
                     <div className="flex items-center justify-between pt-1">
-                      <span className="font-bold">{variant ? `£${(variant.priceAmountMinor / 100).toFixed(2)}` : 'TBC'}</span>
+                      <div>
+                        <span className="font-bold text-primary">
+                          {variant ? `£${((discountedPriceMinor ?? variant.priceAmountMinor) / 100).toFixed(2)}` : 'TBC'}
+                        </span>
+                        {hasDiscount && variant && (
+                          <span className="ml-1.5 text-xs text-muted-foreground line-through">
+                            £{(variant.priceAmountMinor / 100).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(product)}

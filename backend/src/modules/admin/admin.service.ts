@@ -11,6 +11,7 @@ import { SupabaseService } from '../../supabase/supabase.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { ContactService } from '../contact/contact.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto, OrderStatus, ReturnStatus } from './admin.dto';
 import { serializeOrder } from '../orders/orders.serializer';
 import { encodeCursor, decodeCursor } from '../../common/utils/pagination.util';
@@ -50,6 +51,7 @@ export class AdminService {
     private readonly webhooks: WebhooksService,
     private readonly contact: ContactService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {
     this.stripe = new Stripe(this.config.get<string>('stripe.secretKey') ?? '', {
       apiVersion: '2024-06-20',
@@ -296,6 +298,58 @@ export class AdminService {
       .catch((err) =>
         this.logger.error(`Webhook dispatch failed for order ${orderId}: ${err.message}`),
       );
+
+    // ── Email + in-app notification to customer ───────────────────────────────
+    const EMAIL_NOTIFY_STATUSES = [
+      OrderStatus.SHIPPED, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED,
+      OrderStatus.READY_FOR_PICKUP, OrderStatus.PICKED_UP, OrderStatus.CANCELLED,
+      OrderStatus.REFUNDED, OrderStatus.ON_HOLD, OrderStatus.RETURN_REQUESTED,
+      OrderStatus.RETURNED, OrderStatus.DISPUTED,
+    ] as string[];
+
+    if (EMAIL_NOTIFY_STATUSES.includes(status as string)) {
+      const frontendUrl = this.config.get<string>('frontend.url') ?? 'https://ereko-african-market.vercel.app/en-gb';
+      const customerEmail = full.email;
+      let customerName = 'Customer';
+      if (full.userId) {
+        const { data: ur } = await this.supabase.db.from('User').select('firstName').eq('id', full.userId).single();
+        customerName = ur?.firstName ?? 'Customer';
+      }
+
+      this.notifications.sendOrderStatusUpdate({
+        email: customerEmail,
+        firstName: customerName,
+        orderNumber: full.orderNumber,
+        status,
+        trackingNumber: trackingNumber ?? undefined,
+        carrierName: carrierName ?? undefined,
+        notes: notes ?? undefined,
+        orderUrl: `${frontendUrl}/track?order=${full.orderNumber}&email=${encodeURIComponent(customerEmail)}`,
+        frontendUrl,
+      }).catch(err => this.logger.error(`Status email failed for ${full.orderNumber}: ${err.message}`));
+
+      // In-app notification for account holders
+      if (full.userId) {
+        const IN_APP_TITLES: Record<string, string> = {
+          SHIPPED: '📦 Order shipped!', OUT_FOR_DELIVERY: '🚚 Out for delivery!',
+          DELIVERED: '✅ Order delivered!', READY_FOR_PICKUP: '🏪 Ready to collect!',
+          PICKED_UP: '🎉 Order collected!', CANCELLED: '❌ Order cancelled',
+          REFUNDED: '💳 Refund processed', ON_HOLD: '⏸️ Order on hold',
+          RETURN_REQUESTED: '🔄 Return request received',
+        };
+        const inAppTitle = IN_APP_TITLES[status as string] ?? `Order update: ${(status as string).replace(/_/g, ' ')}`;
+        await this.supabase.db.from('Notification').insert({
+          id: uuidv4(),
+          userId: full.userId,
+          type: `order_${(status as string).toLowerCase()}`,
+          title: inAppTitle,
+          body: `Order ${full.orderNumber} status updated to ${(status as string).replace(/_/g, ' ').toLowerCase()}.`,
+          data: { orderId, orderNumber: full.orderNumber, status },
+          isRead: false,
+          createdAt: now,
+        }).catch(err => this.logger.error(`In-app notification insert failed: ${err.message}`));
+      }
+    }
 
     const updated = await this.fetchOrderWithRelations(orderId);
     return serializeOrder(updated);

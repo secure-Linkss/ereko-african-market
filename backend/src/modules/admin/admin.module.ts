@@ -5,6 +5,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
 import { ContactModule } from '../contact/contact.module';
 import { CargoModule } from '../cargo/cargo.module';
 import { ReviewsModule } from '../reviews/reviews.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 // InventoryModule is @Global() — InventoryService is available without importing here.
 // CacheModule is @Global() — CACHE_MANAGER token is available project-wide.
 
@@ -14,6 +15,7 @@ import { ReviewsModule } from '../reviews/reviews.module';
     ContactModule,
     CargoModule,
     ReviewsModule,
+    NotificationsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

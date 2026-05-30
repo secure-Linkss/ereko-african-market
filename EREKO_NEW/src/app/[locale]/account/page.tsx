@@ -11,11 +11,13 @@ import {
   User, Package, MapPin, CreditCard, Heart, LogOut,
   Star, TrendingUp, RefreshCw, ChevronRight, Settings,
   ShoppingBag, CheckCircle2, Clock, Truck, Edit2, Save, X, PackageSearch,
+  Bell, BellRing, CheckCheck,
 } from 'lucide-react';
 import { useProfile, useLogout } from '@/services/auth';
 import { useOrders } from '@/services/orders';
 import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '@/services/notifications';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,7 +56,7 @@ export default function AccountPage() {
   const router = useRouter();
   const locale = (params?.locale as string) ?? 'en-gb';
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'profile' | 'notifications'>('dashboard');
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
@@ -65,6 +67,10 @@ export default function AccountPage() {
 
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useProfile();
   const { data: ordersData, isLoading: ordersLoading } = useOrders(5);
+  const { data: notifData } = useNotifications({ enabled: isAuthenticated });
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+  const unreadCount = notifData?.unreadCount ?? 0;
 
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -142,6 +148,18 @@ export default function AccountPage() {
             <NavItem tab="dashboard" icon={User} label="Dashboard" />
             <NavItem tab="orders" icon={Package} label="Orders & Returns" />
             <NavItem tab="profile" icon={Settings} label="My Profile" />
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`flex items-center gap-3 p-3 rounded-lg w-full text-left transition-colors ${activeTab === 'notifications' ? 'bg-primary text-primary-foreground font-medium' : 'text-foreground hover:bg-muted/50'}`}
+            >
+              <Bell className="w-5 h-5" />
+              <span className="flex-1">Notifications</span>
+              {unreadCount > 0 && (
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${activeTab === 'notifications' ? 'bg-white/20' : 'bg-primary text-primary-foreground'}`}>
+                  {unreadCount}
+                </span>
+              )}
+            </button>
             <Link href={`/${locale}/shop`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 text-foreground transition-colors w-full">
               <Heart className="w-5 h-5 text-muted-foreground" /> Wishlist
             </Link>
@@ -427,6 +445,75 @@ export default function AccountPage() {
                 </Link>
               </CardContent>
             </Card>
+          </>
+        )}
+
+        {activeTab === 'notifications' && (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Notifications</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Your order updates and account alerts</p>
+              </div>
+              {unreadCount > 0 && (
+                <button
+                  onClick={() => markAllRead.mutate()}
+                  disabled={markAllRead.isPending}
+                  className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  <CheckCheck className="w-4 h-4" /> Mark all as read
+                </button>
+              )}
+            </div>
+
+            {!notifData || notifData.notifications.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center space-y-3">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                    <Bell className="w-8 h-8 text-muted-foreground/40" />
+                  </div>
+                  <p className="font-semibold">No notifications yet</p>
+                  <p className="text-sm text-muted-foreground">Order updates and account alerts will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {notifData.notifications.map(n => (
+                  <Card
+                    key={n.id}
+                    className={`transition-all cursor-pointer hover:shadow-md ${!n.isRead ? 'border-primary/30 bg-primary/5' : ''}`}
+                    onClick={() => { if (!n.isRead) markRead.mutate(n.id); }}
+                  >
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <div className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-lg ${!n.isRead ? 'bg-primary/10' : 'bg-muted'}`}>
+                        {n.title[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-sm font-semibold leading-snug ${!n.isRead ? 'text-foreground' : 'text-foreground/80'}`}>
+                            {n.title}
+                          </p>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                            {new Date(n.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
+                        {n.data?.orderNumber && (
+                          <Link
+                            href={`/${locale}/track?order=${n.data.orderNumber}`}
+                            onClick={e => e.stopPropagation()}
+                            className="text-xs text-primary hover:underline mt-1 inline-block"
+                          >
+                            View order →
+                          </Link>
+                        )}
+                      </div>
+                      {!n.isRead && <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>

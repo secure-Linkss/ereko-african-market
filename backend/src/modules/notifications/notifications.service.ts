@@ -7,10 +7,16 @@ import {
   orderConfirmationTemplate,
   magicLinkTemplate,
   welcomeTemplate,
+  orderStatusUpdateTemplate,
+  adminNewOrderAlertTemplate,
+  adminReturnAlertTemplate,
   PasswordResetContext,
   OrderConfirmationContext,
   MagicLinkContext,
   WelcomeContext,
+  OrderStatusUpdateContext,
+  AdminNewOrderAlertContext,
+  AdminReturnAlertContext,
 } from './email.templates';
 
 export interface SendEmailOptions {
@@ -158,6 +164,27 @@ export class NotificationsService implements OnModuleInit {
       html: template.html,
       text: template.text,
     });
+  }
+
+  async sendOrderStatusUpdate(ctx: OrderStatusUpdateContext & { email: string }): Promise<void> {
+    const template = orderStatusUpdateTemplate(ctx);
+    await this.sendEmail({ to: ctx.email, subject: template.subject, html: template.html, text: template.text });
+  }
+
+  async sendAdminNewOrderAlert(ctx: AdminNewOrderAlertContext & { adminEmails: string[] }): Promise<void> {
+    if (!ctx.adminEmails.length) return;
+    const template = adminNewOrderAlertTemplate(ctx);
+    for (const email of ctx.adminEmails) {
+      await this.sendEmail({ to: email, subject: template.subject, html: template.html, text: template.text });
+    }
+  }
+
+  async sendAdminReturnAlert(ctx: AdminReturnAlertContext & { adminEmails: string[] }): Promise<void> {
+    if (!ctx.adminEmails.length) return;
+    const template = adminReturnAlertTemplate(ctx);
+    for (const email of ctx.adminEmails) {
+      await this.sendEmail({ to: email, subject: template.subject, html: template.html, text: template.text });
+    }
   }
 
   async sendGeneric(opts: {
