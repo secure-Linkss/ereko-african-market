@@ -167,18 +167,8 @@ export default function CheckoutPage() {
     },
   });
 
-  if (items.length === 0 && !success) {
-    return (
-      <main className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center space-y-4">
-          <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground opacity-40" />
-          <h2 className="text-2xl font-bold">Your cart is empty</h2>
-          <Link href={`/${locale}/shop`}><Button>Browse the shop</Button></Link>
-        </div>
-      </main>
-    );
-  }
-
+  // Success screen takes priority — must come before empty-cart check
+  // because clearCart() and setSuccess(true) may not batch across Zustand+React
   if (success) {
     return (
       <main className="flex-1 flex items-center justify-center p-8">
@@ -192,6 +182,18 @@ export default function CheckoutPage() {
             <Link href={`/${locale}/account`}><Button variant="outline">View Orders</Button></Link>
             <Link href={`/${locale}/shop`}><Button>Continue Shopping</Button></Link>
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <main className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center space-y-4">
+          <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground opacity-40" />
+          <h2 className="text-2xl font-bold">Your cart is empty</h2>
+          <Link href={`/${locale}/shop`}><Button>Browse the shop</Button></Link>
         </div>
       </main>
     );
@@ -235,8 +237,8 @@ export default function CheckoutPage() {
           phone: data.phone,
         };
         await confirmInStore.mutateAsync({ orderId: startRes.orderId, shippingAddress });
+        setSuccess(true); // set before clearCart to avoid empty-cart flash
         clearCart();
-        setSuccess(true);
         return;
       }
 
@@ -258,8 +260,8 @@ export default function CheckoutPage() {
   }
 
   function handlePaymentSuccess() {
-    clearCart();
     setSuccess(true);
+    clearCart();
   }
 
   const stripePromise = checkoutData?.publishableKey
