@@ -124,6 +124,9 @@ export class TeamService {
     const expiry = new Date(Date.now() + INVITE_EXPIRY_HOURS * 3600 * 1000).toISOString();
     const now = new Date().toISOString();
 
+    // viewer role gets read-only access; all other staff roles get isAdmin=true
+    const grantAdmin = dto.role !== StaffRole.viewer;
+
     let userId: string;
     if (!existingUser) {
       userId = uuidv4();
@@ -132,7 +135,7 @@ export class TeamService {
         email: dto.email,
         firstName: dto.firstName ?? null,
         lastName: dto.lastName ?? null,
-        isAdmin: true,
+        isAdmin: grantAdmin,
         isActive: false,
         emailVerified: false,
         createdAt: now,
@@ -142,7 +145,7 @@ export class TeamService {
       userId = existingUser.id;
       await this.supabase.db
         .from('User')
-        .update({ isAdmin: true, updatedAt: now })
+        .update({ isAdmin: grantAdmin, updatedAt: now })
         .eq('id', userId);
     }
 

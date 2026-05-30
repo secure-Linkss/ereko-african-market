@@ -14,6 +14,7 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -322,12 +323,16 @@ export class AdminController {
   @ApiQuery({ name: 'q', required: false, description: 'Search by name or email' })
   @ApiQuery({ name: 'role', required: false, enum: ['customer', 'staff', 'all'] })
   async listUsers(
+    @CurrentUser() actor: any,
     @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
     @Query('cursor') cursor?: string,
     @Query('q') q?: string,
     @Query('role') role?: string,
   ) {
-    return this.adminService.listUsers(limit, cursor, q, role);
+    // Only owners and super admins may query staff/all accounts (which includes admin privilege flags)
+    const canSeeElevated = actor.isSuperAdmin || actor.teamRole === 'owner';
+    const effectiveRole = (role === 'staff' || role === 'all') && !canSeeElevated ? 'customer' : role;
+    return this.adminService.listUsers(limit, cursor, q, effectiveRole);
   }
 
   @Patch('users/:userId/status')
@@ -338,6 +343,9 @@ export class AdminController {
     @Body() body: { isActive: boolean; reason?: string },
     @CurrentUser() actor: any,
   ) {
+    if (!actor.isSuperAdmin && actor.teamRole !== 'owner') {
+      throw new ForbiddenException('Only owners and super admins can change user account status');
+    }
     return this.adminService.updateUserStatus(userId, body.isActive, body.reason, actor.id);
   }
 
@@ -354,9 +362,13 @@ export class AdminController {
   @ApiQuery({ name: 'staffId', required: false, description: 'Filter by staff member ID' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getAuditLog(
+    @CurrentUser() actor: any,
     @Query('staffId') staffId?: string,
     @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit?: number,
   ) {
+    if (!actor.isSuperAdmin && actor.teamRole !== 'owner') {
+      throw new ForbiddenException('Only owners and super admins can access the audit log');
+    }
     return this.adminService.getAuditLog(staffId, limit);
   }
 }
