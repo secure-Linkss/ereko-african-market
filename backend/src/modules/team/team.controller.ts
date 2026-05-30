@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -43,10 +44,13 @@ export class TeamController {
 
   @Post('invite')
   @UseGuards(AdminGuard)
-  @ApiOperation({ summary: 'Invite a new team member' })
+  @ApiOperation({ summary: 'Invite a new team member (owner / super admin only)' })
   @ApiResponse({ status: 201, description: 'Invite sent' })
-  inviteMember(@Body() dto: InviteTeamMemberDto, @CurrentUser('id') actorId: string) {
-    return this.teamService.inviteMember(dto, actorId);
+  inviteMember(@Body() dto: InviteTeamMemberDto, @CurrentUser() actor: any) {
+    if (!actor.isSuperAdmin && actor.teamRole !== 'owner') {
+      throw new ForbiddenException('Only owners and super admins can invite team members');
+    }
+    return this.teamService.inviteMember(dto, actor.id);
   }
 
   @Post('accept-invite')
@@ -58,34 +62,43 @@ export class TeamController {
 
   @Patch(':memberId')
   @UseGuards(AdminGuard)
-  @ApiOperation({ summary: 'Update team member role' })
+  @ApiOperation({ summary: 'Update team member role (owner / super admin only)' })
   updateMember(
     @Param('memberId', ParseUUIDPipe) memberId: string,
     @Body() dto: UpdateTeamMemberDto,
     @CurrentUser() actor: any,
   ) {
+    if (!actor.isSuperAdmin && actor.teamRole !== 'owner') {
+      throw new ForbiddenException('Only owners and super admins can update team members');
+    }
     return this.teamService.updateMember(memberId, dto, actor.teamRole);
   }
 
   @Post(':memberId/suspend')
   @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Suspend team member' })
+  @ApiOperation({ summary: 'Suspend team member (owner / super admin only)' })
   suspendMember(
     @Param('memberId', ParseUUIDPipe) memberId: string,
     @CurrentUser() actor: any,
   ) {
+    if (!actor.isSuperAdmin && actor.teamRole !== 'owner') {
+      throw new ForbiddenException('Only owners and super admins can suspend team members');
+    }
     return this.teamService.suspendMember(memberId, actor.id, actor.teamRole);
   }
 
   @Delete(':memberId')
   @UseGuards(AdminGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Remove team member' })
+  @ApiOperation({ summary: 'Remove team member (super admin only)' })
   removeMember(
     @Param('memberId', ParseUUIDPipe) memberId: string,
     @CurrentUser() actor: any,
   ) {
+    if (!actor.isSuperAdmin && actor.teamRole !== 'owner') {
+      throw new ForbiddenException('Only owners and super admins can remove team members');
+    }
     return this.teamService.removeMember(memberId, actor.id, actor.teamRole);
   }
 
