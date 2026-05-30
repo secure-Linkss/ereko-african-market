@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { ChevronDown, ChevronUp, HelpCircle, Package, RefreshCw, CreditCard, Truck, User, MessageSquare } from 'lucide-react';
+import { ChevronDown, HelpCircle, Package, RefreshCw, CreditCard, Truck, User, MessageSquare } from 'lucide-react';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 interface FAQ { q: string; a: string; }
 
@@ -60,19 +61,34 @@ const FAQS: { category: string; icon: any; items: FAQ[] }[] = [
 function FAQItem({ item }: { item: FAQ }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-border last:border-0">
+    <div className="border-b border-border/50 last:border-0 overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-4 text-left gap-4 hover:text-primary transition-colors"
+        className="w-full flex items-center justify-between py-6 text-left gap-4 hover:text-primary transition-colors outline-none group"
       >
-        <span className="font-medium text-sm md:text-base">{item.q}</span>
-        {open ? <ChevronUp className="w-4 h-4 flex-shrink-0 text-primary" /> : <ChevronDown className="w-4 h-4 flex-shrink-0 text-muted-foreground" />}
+        <span className="font-bold text-base md:text-lg group-hover:translate-x-1 transition-transform">{item.q}</span>
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "anticipate" }}
+          className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10"
+        >
+          <ChevronDown className="w-4 h-4 text-primary" />
+        </motion.div>
       </button>
-      {open && (
-        <div className="pb-4 text-sm text-muted-foreground leading-relaxed">
-          {item.a}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="pb-6 pr-12 text-base text-muted-foreground leading-relaxed">
+              {item.a}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -81,49 +97,95 @@ export default function HelpPage() {
   const params = useParams();
   const locale = (params?.locale as string) ?? 'en-gb';
 
+  const fadeUp: Variants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
+  const staggerContainer: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  };
+
   return (
-    <main className="flex-1 bg-background">
+    <main className="flex-1 bg-background overflow-hidden">
 
       {/* Hero */}
-      <section className="bg-primary text-primary-foreground py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 bg-primary-foreground/20 px-4 py-2 rounded-full text-sm font-semibold">
-            <HelpCircle className="w-4 h-4" /> Help Centre
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">How Can We Help?</h1>
-          <p className="text-lg opacity-90">Find answers to the most common questions about shopping with EREKO.</p>
-        </div>
+      <section className="relative bg-black text-white py-24 md:py-32 px-4 overflow-hidden">
+        <motion.div 
+           className="absolute inset-0 opacity-30 pointer-events-none bg-cover bg-center"
+           initial={{ scale: 1.05 }}
+           animate={{ scale: 1 }}
+           transition={{ duration: 1.5, ease: "easeOut" }}
+           style={{ backgroundImage: 'url(/generated_images/store_front_edited.png)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/40 pointer-events-none" />
+        
+        <motion.div 
+          className="relative z-10 max-w-4xl mx-auto text-center space-y-6"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
+          <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-5 py-2.5 rounded-full text-sm font-semibold tracking-wide">
+            <HelpCircle className="w-4 h-4 text-primary" /> Help Centre
+          </motion.div>
+          <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl font-black tracking-tight drop-shadow-xl">
+            How Can We <span className="text-primary">Help?</span>
+          </motion.h1>
+          <motion.p variants={fadeUp} className="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
+            Find answers to the most common questions about shopping with EREKO.
+          </motion.p>
+        </motion.div>
       </section>
 
       {/* FAQ Sections */}
-      <section className="max-w-3xl mx-auto px-4 md:px-8 py-16 space-y-12">
-        {FAQS.map((section) => (
-          <div key={section.category}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <section.icon className="w-5 h-5 text-primary" />
+      <section className="max-w-4xl mx-auto px-4 md:px-8 py-20 md:py-32 space-y-16">
+        {FAQS.map((section, index) => (
+          <motion.div 
+            key={section.category}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeUp}
+          >
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm border border-primary/10">
+                <section.icon className="w-6 h-6 text-primary" />
               </div>
-              <h2 className="text-xl font-bold">{section.category}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{section.category}</h2>
             </div>
-            <div className="bg-background border border-border rounded-xl px-5">
+            <div className="bg-background/80 backdrop-blur-sm border border-border/50 rounded-2xl px-6 md:px-8 shadow-sm hover:shadow-md transition-shadow">
               {section.items.map((item) => (
                 <FAQItem key={item.q} item={item} />
               ))}
             </div>
-          </div>
+          </motion.div>
         ))}
 
         {/* Still need help */}
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-8 text-center space-y-4">
-          <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-            <MessageSquare className="w-7 h-7 text-primary" />
+        <motion.div 
+          className="bg-muted/30 border border-border/50 rounded-3xl p-10 md:p-16 text-center space-y-6 shadow-sm"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={fadeUp}
+        >
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MessageSquare className="w-10 h-10 text-primary" />
           </div>
-          <h3 className="text-xl font-bold">Still need help?</h3>
-          <p className="text-muted-foreground">Can&apos;t find the answer you&apos;re looking for? Our team is here for you.</p>
-          <Link href={`/${locale}/contact`}>
-            <Button size="lg">Contact Our Team</Button>
-          </Link>
-        </div>
+          <h3 className="text-3xl font-black tracking-tight">Still need help?</h3>
+          <p className="text-xl text-muted-foreground leading-relaxed max-w-lg mx-auto">
+            Can&apos;t find the answer you&apos;re looking for? Our dedicated team is here for you.
+          </p>
+          <div className="pt-4">
+            <Link href={`/${locale}/contact`}>
+              <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-lg hover:scale-105 transition-transform">
+                Contact Our Team
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
       </section>
     </main>
   );

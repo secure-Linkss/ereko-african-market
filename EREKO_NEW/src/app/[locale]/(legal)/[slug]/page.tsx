@@ -1,5 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 // ─── Real Content Map ─────────────────────────────────────────────────────────
 
@@ -342,31 +343,44 @@ export default async function LegalPage({
   const page = PAGES[slug];
   if (!page) notFound();
 
-  return (
-    <main className="flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 py-12 md:py-20">
-      <div className="space-y-10">
-        {/* Header */}
-        <div className="border-b border-border pb-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-            Legal
-          </p>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-4">
-            {page.title}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Last updated: {page.updated}
-          </p>
-        </div>
+  // We need to use a client component wrapper or just standard CSS animations if we don't want to make the whole page a client component.
+  // Since it's a legal page, we can just use CSS animations or make it a client component. Wait, this is an async server component. We can't use framer-motion directly in a server component.
+  // Let's create a Client wrapper or just use standard Tailwind animate-in.
+  // Actually, I can just use Tailwind classes `animate-in fade-in slide-in-from-bottom-4 duration-700` for a CSS-only luxury fade up! This avoids breaking the Server Component.
 
+  return (
+    <main className="flex-1 bg-background">
+      {/* Editorial Header */}
+      <div className="bg-muted/30 border-b border-border/50 py-16 md:py-24">
+        <div className="max-w-3xl mx-auto w-full px-4 md:px-8">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary mb-4">
+              Legal Document
+            </p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-foreground mb-6">
+              {page.title}
+            </h1>
+            <p className="text-base text-muted-foreground font-medium">
+              Last updated: <span className="text-foreground">{page.updated}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto w-full px-4 md:px-8 py-16 md:py-24 space-y-16">
         {/* Sections */}
-        <div className="space-y-10">
-          {page.sections.map((section) => (
-            <section key={section.heading} className="space-y-4">
-              <h2 className="text-xl font-bold text-foreground">
+        <div className="space-y-16">
+          {page.sections.map((section, index) => (
+            <section 
+              key={section.heading} 
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+              style={{ animationDelay: `${index * 100 + 200}ms` }}
+            >
+              <h2 className="text-2xl font-bold text-foreground tracking-tight border-l-4 border-primary pl-4 -ml-4 md:-ml-5">
                 {section.heading}
               </h2>
-              <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
-                {section.body.split('\n\n').map((para, i) => (
+              <div className="text-lg text-muted-foreground leading-relaxed space-y-5">
+                {section.body.split('\\n\\n').map((para, i) => (
                   <p key={i} className="whitespace-pre-line">
                     {para}
                   </p>
@@ -377,18 +391,20 @@ export default async function LegalPage({
         </div>
 
         {/* Footer CTA */}
-        <div className="border-t border-border pt-8 text-sm text-muted-foreground space-y-1">
-          <p className="font-semibold text-foreground">Ereko African Market</p>
-          <p>5 Broadway, Barking, London, IG11 7LS</p>
-          <p>
-            <a href="mailto:hello@ereko.co.uk" className="text-primary hover:underline">
-              hello@ereko.co.uk
-            </a>{' '}
-            ·{' '}
-            <a href="tel:02036337503" className="text-primary hover:underline">
-              020 3633 7503
-            </a>
-          </p>
+        <div className="border-t border-border/50 pt-12 mt-12 text-base text-muted-foreground space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '1000ms' }}>
+          <p className="font-bold text-foreground text-lg mb-4">Ereko African Market</p>
+          <div className="flex flex-col space-y-1">
+            <p>5 Broadway, Barking, London, IG11 7LS</p>
+            <p>
+              <a href="mailto:hello@ereko.co.uk" className="text-primary font-medium hover:underline transition-all">
+                hello@ereko.co.uk
+              </a>
+              {' '}·{' '}
+              <a href="tel:02036337503" className="text-primary font-medium hover:underline transition-all">
+                020 3633 7503
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </main>
