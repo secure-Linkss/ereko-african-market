@@ -25,7 +25,7 @@ export class UsersService {
     return 'Member';
   }
 
-  private formatUserProfile(user: any, loyalty?: any) {
+  private formatUserProfile(user: any, loyalty?: any, teamMember?: any) {
     return {
       id: user.id,
       email: user.email,
@@ -35,6 +35,10 @@ export class UsersService {
       preferredLocale: user.preferredLocale,
       marketingEmailOptIn: user.marketingEmailOptIn,
       marketingSmsOptIn: user.marketingSmsOptIn,
+      isAdmin: user.isAdmin ?? false,
+      isSuperAdmin: user.isSuperAdmin ?? false,
+      staffRole: teamMember?.role ?? null,
+      teamRole: teamMember?.role ?? null,
       loyaltyTier: loyalty?.tier ?? 'Member',
       loyaltyPointsBalance: loyalty?.pointsBalance ?? 0,
       createdAt: user.createdAt,
@@ -47,20 +51,19 @@ export class UsersService {
   async getProfile(userId: string) {
     const { data: users } = await this.supabase.db
       .from('User')
-      .select('id, email, phone, firstName, lastName, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, deletedAt, createdAt, updatedAt')
+      .select('id, email, phone, firstName, lastName, preferredLocale, marketingEmailOptIn, marketingSmsOptIn, isAdmin, isSuperAdmin, deletedAt, createdAt, updatedAt')
       .eq('id', userId)
       .limit(1);
 
     const user = users?.[0];
     if (!user || user.deletedAt) throw new NotFoundException('User not found');
 
-    const { data: loyaltyRows } = await this.supabase.db
-      .from('LoyaltyAccount')
-      .select('tier, pointsBalance')
-      .eq('userId', userId)
-      .limit(1);
+    const [{ data: loyaltyRows }, { data: teamRows }] = await Promise.all([
+      this.supabase.db.from('LoyaltyAccount').select('tier, pointsBalance').eq('userId', userId).limit(1),
+      this.supabase.db.from('TeamMember').select('role').eq('userId', userId).eq('status', 'active').limit(1),
+    ]);
 
-    return this.formatUserProfile(user, loyaltyRows?.[0]);
+    return this.formatUserProfile(user, loyaltyRows?.[0], teamRows?.[0]);
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
