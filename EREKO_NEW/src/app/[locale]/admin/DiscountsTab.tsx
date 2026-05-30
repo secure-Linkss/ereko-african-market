@@ -135,8 +135,10 @@ function DiscountCodesSubTab() {
                   {form.type === 'PERCENTAGE' ? 'Percentage Value (1–99)' : 'Amount (£)'} *
                 </label>
                 <input
-                  type="number" step={form.type === 'PERCENTAGE' ? '1' : '0.01'}
-                  min="0.01" max={form.type === 'PERCENTAGE' ? '99' : undefined}
+                  type="number"
+                  step={form.type === 'PERCENTAGE' ? '1' : '0.01'}
+                  min={form.type === 'PERCENTAGE' ? '1' : '0.01'}
+                  max={form.type === 'PERCENTAGE' ? '99' : undefined}
                   value={form.value}
                   onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                   className="w-full border rounded-lg px-3 py-2 text-sm"
