@@ -46,18 +46,29 @@ export default function CartPage() {
     return `£${(minor / 100).toFixed(2)}`;
   }
 
+  const [promoValidating, setPromoValidating] = useState(false);
+
   async function handlePromo() {
     if (!promoInput.trim()) return;
     setPromoError('');
+    setPromoValidating(true);
     try {
-      const res = await apiClient.post<{ discountMinor: number; promoCode: string }>(
-        API_ENDPOINTS.CART.COUPON,
-        { code: promoInput.trim() },
+      const res = await apiClient.post<{
+        valid: boolean; code: string; discountAmountMinor: number; message: string;
+      }>(
+        API_ENDPOINTS.DISCOUNTS.VALIDATE,
+        { code: promoInput.toUpperCase().trim(), cartTotalMinor: subtotal },
       );
-      applyPromo(res.data.promoCode, res.data.discountMinor);
-      setPromoInput('');
+      if (!res.data.valid) {
+        setPromoError(res.data.message || 'Invalid or inactive promo code');
+      } else {
+        applyPromo(res.data.code, res.data.discountAmountMinor);
+        setPromoInput('');
+      }
     } catch (err: any) {
-      setPromoError(err?.response?.data?.detail ?? err?.message ?? 'Invalid promo code');
+      setPromoError(err?.response?.data?.detail ?? err?.message ?? 'Invalid or inactive promo code');
+    } finally {
+      setPromoValidating(false);
     }
   }
 
@@ -129,7 +140,12 @@ export default function CartPage() {
                         </span>
                       )}
                     </div>
-                    <span className="font-bold text-lg">{formatGBP(item.unitPriceMinor * item.quantity)}</span>
+                    <div className="text-right">
+                      <span className="font-bold text-lg">{formatGBP(item.unitPriceMinor * item.quantity)}</span>
+                      {item.originalPriceMinor && (
+                        <p className="text-xs text-muted-foreground line-through">{formatGBP(item.originalPriceMinor * item.quantity)}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between mt-4">
@@ -270,7 +286,9 @@ export default function CartPage() {
                         onChange={(e) => setPromoInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handlePromo()}
                       />
-                      <Button variant="secondary" onClick={handlePromo}>Apply</Button>
+                      <Button variant="secondary" onClick={handlePromo} disabled={promoValidating}>
+                        {promoValidating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                      </Button>
                     </div>
                     {promoError && <p className="mt-1 text-xs text-destructive">{promoError}</p>}
                   </>

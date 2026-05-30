@@ -9,6 +9,7 @@ export interface CartItem {
   slug: string;
   image: string;
   unitPriceMinor: number;
+  originalPriceMinor?: number; // set when product has a percentage discount applied
   quantity: number;
   availableStock: number;
   storageType: string;

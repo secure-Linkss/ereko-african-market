@@ -148,7 +148,15 @@ export default function CheckoutPage() {
   const [promoValidating, setPromoValidating] = useState(false);
   const validateDiscount = useValidateDiscount();
 
-  const { items, getSubtotalMinor, shippingMinor, discountMinor, promoCode, clearCart } = useCartStore();
+  const { items, getSubtotalMinor, shippingMinor, discountMinor, promoCode, removePromo, clearCart } = useCartStore();
+
+  // Pre-populate promoResult from cart store if user already applied a code on cart page
+  React.useEffect(() => {
+    if (promoCode && discountMinor > 0 && !promoResult) {
+      setPromoResult({ valid: true, code: promoCode, discountAmountMinor: discountMinor, message: 'Applied', codeId: '', type: 'FIXED_AMOUNT', value: discountMinor, finalTotalMinor: subtotal - discountMinor });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { user } = useAuthStore();
   const syncCart = useSyncCart();
   const startCheckout = useStartCheckout();
@@ -160,7 +168,7 @@ export default function CheckoutPage() {
   const activeShipping = subtotal >= 5500 ? 0 : shippingMinor;
   const deliveryFee = isCollect ? 0 : ((addressData as DeliveryAddressForm)?.deliveryMethod === 'nextday' ? 599 : (activeShipping || 399));
   const promoDiscountMinor = promoResult?.valid ? promoResult.discountAmountMinor : 0;
-  const total = Math.max(0, subtotal - discountMinor - promoDiscountMinor) + deliveryFee;
+  const total = Math.max(0, subtotal - promoDiscountMinor) + deliveryFee;
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
 
   const contactForm = useForm<ContactForm>({
@@ -231,6 +239,7 @@ export default function CheckoutPage() {
     setPromoResult(null);
     setPromoInput('');
     setPromoError('');
+    removePromo(); // also clear from cart store if promo was applied there
   }
 
   async function onContactSubmit(data: ContactForm) {
@@ -257,7 +266,7 @@ export default function CheckoutPage() {
         email: contactData!.email,
         firstName: data.firstName,
         lastName: data.lastName,
-        discountCode: promoResult?.valid ? promoResult.code : undefined,
+        discountCode: promoResult?.valid ? promoResult.code : (promoCode ?? undefined),
       });
 
       // 3a. Pay in store — skip Stripe, confirm directly
@@ -663,12 +672,6 @@ export default function CheckoutPage() {
                   <span className="text-muted-foreground">Subtotal ({totalItems} items)</span>
                   <span>{formatGBP(subtotal)}</span>
                 </div>
-                {discountMinor > 0 && (
-                  <div className="flex justify-between text-emerald-600">
-                    <span>Cart discount {promoCode ? `(${promoCode})` : ''}</span>
-                    <span>-{formatGBP(discountMinor)}</span>
-                  </div>
-                )}
                 {promoResult?.valid && (
                   <div className="flex justify-between text-emerald-600 font-medium">
                     <span>Promo ({promoResult.code})</span>

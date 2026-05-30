@@ -50,6 +50,10 @@ export default function ShopPage() {
   function handleAddToCart(product: any) {
     const variant = product.variants?.[0];
     if (!variant) return;
+    const hasDiscount = product.discountEnabled && !!product.discountPercent;
+    const discountedPrice = hasDiscount
+      ? Math.round(variant.priceAmountMinor * (1 - product.discountPercent / 100))
+      : variant.priceAmountMinor;
     addItem({
       variantId: variant.id,
       productId: product.id,
@@ -57,7 +61,8 @@ export default function ShopPage() {
       variantName: variant.name,
       slug: product.slug,
       image: product.images?.[0]?.url ?? '',
-      unitPriceMinor: variant.priceAmountMinor,
+      unitPriceMinor: discountedPrice,
+      originalPriceMinor: hasDiscount ? variant.priceAmountMinor : undefined,
       quantity: 1,
       availableStock: variant.stockOnHand - variant.stockReserved,
       storageType: product.storageType,
@@ -245,7 +250,7 @@ export default function ShopPage() {
                 {(() => {
                   const hasDiscount = product.discountEnabled && !!product.discountPercent;
                   const discountedPriceMinor = hasDiscount && variant
-                    ? Math.round(variant.priceMinor * (1 - (product.discountPercent! / 100))) : null;
+                    ? Math.round(variant.priceAmountMinor * (1 - (product.discountPercent! / 100))) : null;
                   const BADGE_COLORS: Record<string, string> = {
                     SALE: 'bg-red-500', HOT_DEAL: 'bg-orange-500', LIMITED: 'bg-purple-600',
                     CLEARANCE: 'bg-blue-600', NEW_PRICE: 'bg-emerald-500', SPECIAL: 'bg-amber-500',
@@ -309,7 +314,7 @@ export default function ShopPage() {
                           </div>
                         ) : (
                           <span className="font-bold text-lg">
-                            {variant ? `£${(variant.priceMinor / 100).toFixed(2)}` : 'TBC'}
+                            {variant ? `£${(variant.priceAmountMinor / 100).toFixed(2)}` : 'TBC'}
                           </span>
                         )}
                         {!available && (
