@@ -337,15 +337,23 @@ export class AdminService {
           REFUNDED: '💳 Refund processed', ON_HOLD: '⏸️ Order on hold',
           RETURN_REQUESTED: '🔄 Return request received',
         };
+        // Map to valid NotificationType enum values
+        const TYPE_MAP: Record<string, string> = {
+          SHIPPED: 'order_shipped', OUT_FOR_DELIVERY: 'order_shipped',
+          DELIVERED: 'order_delivered', READY_FOR_PICKUP: 'order_shipped',
+          PICKED_UP: 'order_delivered', CANCELLED: 'order_cancelled',
+          REFUNDED: 'order_cancelled', ON_HOLD: 'order_placed',
+          RETURN_REQUESTED: 'return_approved',
+        };
         const inAppTitle = IN_APP_TITLES[status as string] ?? `Order update: ${(status as string).replace(/_/g, ' ')}`;
+        const notifType = TYPE_MAP[status as string] ?? 'order_placed';
         await this.supabase.db.from('Notification').insert({
           id: uuidv4(),
           userId: full.userId,
-          type: `order_${(status as string).toLowerCase()}`,
+          type: notifType,
           title: inAppTitle,
           body: `Order ${full.orderNumber} status updated to ${(status as string).replace(/_/g, ' ').toLowerCase()}.`,
           data: { orderId, orderNumber: full.orderNumber, status },
-          isRead: false,
           createdAt: now,
         }).catch(err => this.logger.error(`In-app notification insert failed: ${err.message}`));
       }

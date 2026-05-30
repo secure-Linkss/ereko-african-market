@@ -25,18 +25,23 @@ export class NotificationsController {
   ) {
     let q = this.supabase.db
       .from('Notification')
-      .select('id, type, title, body, data, isRead, createdAt')
+      .select('id, type, title, body, data, readAt, createdAt')
       .eq('userId', userId)
       .order('createdAt', { ascending: false })
       .limit(limit);
 
-    if (unreadOnly === 'true') q = q.eq('isRead', false);
+    if (unreadOnly === 'true') q = q.is('readAt', null);
 
     const { data, error } = await q;
     if (error) throw new Error(error.message);
 
-    const unreadCount = (data ?? []).filter((n: any) => !n.isRead).length;
-    return { notifications: data ?? [], unreadCount };
+    const notifications = (data ?? []).map((n: any) => ({
+      ...n,
+      isRead: n.readAt !== null,
+    }));
+
+    const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+    return { notifications, unreadCount };
   }
 
   @Patch(':id/read')
@@ -46,7 +51,7 @@ export class NotificationsController {
   async markRead(@CurrentUser('id') userId: string, @Param('id') id: string) {
     await this.supabase.db
       .from('Notification')
-      .update({ isRead: true })
+      .update({ readAt: new Date().toISOString() })
       .eq('id', id)
       .eq('userId', userId);
     return { success: true };
@@ -56,11 +61,12 @@ export class NotificationsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark all notifications as read' })
   async markAllRead(@CurrentUser('id') userId: string) {
+    const now = new Date().toISOString();
     await this.supabase.db
       .from('Notification')
-      .update({ isRead: true })
+      .update({ readAt: now })
       .eq('userId', userId)
-      .eq('isRead', false);
+      .is('readAt', null);
     return { success: true };
   }
 }

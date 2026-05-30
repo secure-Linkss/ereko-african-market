@@ -7,7 +7,8 @@ export interface AppNotification {
   title: string;
   body: string;
   data?: Record<string, any>;
-  isRead: boolean;
+  readAt: string | null;
+  isRead: boolean; // computed: readAt !== null
   createdAt: string;
 }
 
