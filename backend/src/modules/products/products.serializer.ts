@@ -78,6 +78,9 @@ type PrismaProduct = {
   images: PrismaImage[];
   categories: { categoryId: string }[];
   tags: { tag: string }[];
+  discountEnabled?: boolean;
+  discountPercent?: number | null;
+  discountBadge?: string | null;
 };
 
 // ─── Serializers ──────────────────────────────────────────────────────────────
@@ -166,6 +169,11 @@ export function serializeProduct(p: PrismaProduct) {
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };
+
+  // Discount fields — always include so frontend can rely on their presence
+  base.discountEnabled = p.discountEnabled ?? false;
+  if (p.discountPercent != null) base.discountPercent = p.discountPercent;
+  if (p.discountBadge != null) base.discountBadge = p.discountBadge;
 
   // Optional fields — only include when non-null/non-empty
   if (p.brand != null) base.brand = p.brand;
