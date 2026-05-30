@@ -70,13 +70,18 @@ export class ProductsService {
     const cached = await this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const { limit = 20, cursor, sortBy, filter } = query;
+    const { limit = 20, cursor, sortBy, filter, q: searchQuery } = query as any;
 
     let q = this.supabase.db
       .from('Product')
       .select(PRODUCT_SELECT, { count: 'exact' })
       .eq('isPublished', true)
       .is('deletedAt', null);
+
+    // Full-text search on title (case-insensitive ILIKE)
+    if (searchQuery && searchQuery.length >= 2) {
+      q = q.ilike('title', `%${searchQuery}%`);
+    }
 
     if (filter?.category) {
       // Filter products that have this category via ProductCategory join table

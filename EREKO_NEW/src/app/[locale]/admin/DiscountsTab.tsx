@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Plus, Trash2, Edit2, X, ImageIcon, BadgePercent, Ticket } from 'lucide-react';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   useAdminDiscountCodes, useCreateDiscountCode, useUpdateDiscountCode,
   useDeleteDiscountCode, useSetProductDiscount,
@@ -23,29 +24,56 @@ const BADGE_OPTIONS: { value: DiscountBadge; label: string; color: string }[] = 
   { value: 'SPECIAL',   label: 'SPECIAL',   color: 'bg-amber-500' },
 ];
 
+// ─── Animations ───────────────────────────────────────────────────────────────
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
+
 // ─── Main Discounts Tab ───────────────────────────────────────────────────────
 
 export function DiscountsTab() {
   const [subTab, setSubTab] = React.useState<'codes' | 'products'>('codes');
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Discounts</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-black tracking-tight">Discounts & Offers</h2>
+        <div className="h-1 w-20 bg-gradient-to-r from-primary to-primary/20 rounded-full" />
       </div>
-      <div className="flex gap-2 border-b border-border">
+
+      <div className="flex gap-4 border-b border-border/50 relative">
         {(['codes', 'products'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setSubTab(t)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${subTab === t ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`relative px-4 py-3 text-sm font-bold transition-colors ${subTab === t ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
           >
             {t === 'codes' ? 'Discount Codes' : 'Product Discounts'}
+            {subTab === t && (
+              <motion.div
+                layoutId="discount-tab-indicator"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
           </button>
         ))}
       </div>
-      {subTab === 'codes' && <DiscountCodesSubTab />}
-      {subTab === 'products' && <ProductDiscountsSubTab />}
-    </>
+      <motion.div
+        key={subTab}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        {subTab === 'codes' && <DiscountCodesSubTab />}
+        {subTab === 'products' && <ProductDiscountsSubTab />}
+      </motion.div>
+    </div>
   );
 }
 
@@ -97,188 +125,223 @@ function DiscountCodesSubTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm(!showForm)} size="sm" className="gap-2">
+        <Button onClick={() => setShowForm(!showForm)} size="sm" className="gap-2 shadow-md hover:shadow-lg transition-all rounded-full px-5">
           <Plus className="w-4 h-4" /> New Discount Code
         </Button>
       </div>
 
-      {showForm && (
-        <Card className="border-primary/30 shadow-md">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Ticket className="w-4 h-4 text-primary" /> Create Discount Code
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Code *</label>
-                <input
-                  value={form.code}
-                  onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '') }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="WELCOME20"
-                  maxLength={20} required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Discount Type *</label>
-                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as DiscountType }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm">
-                  <option value="PERCENTAGE">Percentage (%) — e.g. 20 = 20% off</option>
-                  <option value="FIXED_AMOUNT">Fixed Amount (£) — e.g. 5 = £5 off</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {form.type === 'PERCENTAGE' ? 'Percentage Value (1–99)' : 'Amount (£)'} *
-                </label>
-                <input
-                  type="number"
-                  step={form.type === 'PERCENTAGE' ? '1' : '0.01'}
-                  min={form.type === 'PERCENTAGE' ? '1' : '0.01'}
-                  max={form.type === 'PERCENTAGE' ? '99' : undefined}
-                  value={form.value}
-                  onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                  placeholder={form.type === 'PERCENTAGE' ? '20' : '5.00'} required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Min Order Value (£)</label>
-                <input type="number" step="0.01" min="0" value={form.minOrderValuePounds}
-                  onChange={e => setForm(f => ({ ...f, minOrderValuePounds: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0.00 = no minimum" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Max Total Uses</label>
-                <input type="number" min="1" value={form.maxUses}
-                  onChange={e => setForm(f => ({ ...f, maxUses: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Leave blank = unlimited" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Expiry Date & Time</label>
-                <input type="datetime-local" value={form.expiresAt}
-                  onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lock to Customer Email</label>
-                <input type="email" value={form.customerEmail}
-                  onChange={e => setForm(f => ({ ...f, customerEmail: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Leave blank for public" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Internal Description</label>
-                <input value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="e.g. Welcome offer for new customers" maxLength={200} />
-              </div>
-              <div className="flex items-center gap-3 md:col-span-2">
-                <button type="button"
-                  onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}
-                  className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${form.isActive ? 'bg-primary' : 'bg-muted border'}`}
-                >
-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                </button>
-                <span className="text-sm">{form.isActive ? 'Active — customers can use this code immediately' : 'Inactive — hidden from customers'}</span>
-              </div>
-              {formError && <p className="text-destructive text-xs md:col-span-2 font-medium">{formError}</p>}
-              <div className="flex gap-2 md:col-span-2 justify-end">
-                <Button type="button" variant="outline" size="sm" onClick={resetForm}>Cancel</Button>
-                <Button type="submit" size="sm" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create Code'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="border-primary/20 shadow-xl bg-background/50 backdrop-blur-sm mb-6">
+              <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Ticket className="w-5 h-5 text-primary" /> Create Discount Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Code *</label>
+                    <input
+                      value={form.code}
+                      onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '') }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-mono font-bold focus:outline-none focus:border-primary transition-colors" placeholder="WELCOME20"
+                      maxLength={20} required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Discount Type *</label>
+                    <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as DiscountType }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors">
+                      <option value="PERCENTAGE">Percentage (%) — e.g. 20 = 20% off</option>
+                      <option value="FIXED_AMOUNT">Fixed Amount (£) — e.g. 5 = £5 off</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      {form.type === 'PERCENTAGE' ? 'Percentage Value (1–99)' : 'Amount (£)'} *
+                    </label>
+                    <input
+                      type="number"
+                      step={form.type === 'PERCENTAGE' ? '1' : '0.01'}
+                      min={form.type === 'PERCENTAGE' ? '1' : '0.01'}
+                      max={form.type === 'PERCENTAGE' ? '99' : undefined}
+                      value={form.value}
+                      onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors"
+                      placeholder={form.type === 'PERCENTAGE' ? '20' : '5.00'} required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Min Order Value (£)</label>
+                    <input type="number" step="0.01" min="0" value={form.minOrderValuePounds}
+                      onChange={e => setForm(f => ({ ...f, minOrderValuePounds: e.target.value }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors" placeholder="0.00 = no minimum" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Max Total Uses</label>
+                    <input type="number" min="1" value={form.maxUses}
+                      onChange={e => setForm(f => ({ ...f, maxUses: e.target.value }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors" placeholder="Leave blank = unlimited" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Expiry Date & Time</label>
+                    <input type="datetime-local" value={form.expiresAt}
+                      onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Lock to Customer Email</label>
+                    <input type="email" value={form.customerEmail}
+                      onChange={e => setForm(f => ({ ...f, customerEmail: e.target.value }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors" placeholder="Leave blank for public" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Internal Description</label>
+                    <input value={form.description}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      className="w-full border-b-2 border-border/50 bg-transparent px-0 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors" placeholder="e.g. Welcome offer for new customers" maxLength={200} />
+                  </div>
+                  <div className="flex items-center gap-4 md:col-span-2 py-2">
+                    <button type="button"
+                      onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}
+                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${form.isActive ? 'bg-primary' : 'bg-muted border'}`}
+                    >
+                      <motion.div 
+                        className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm"
+                        animate={{ x: form.isActive ? 26 : 2 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    </button>
+                    <span className="text-sm font-medium">{form.isActive ? 'Active — customers can use this code immediately' : 'Inactive — hidden from customers'}</span>
+                  </div>
+                  {formError && <p className="text-destructive text-sm md:col-span-2 font-bold">{formError}</p>}
+                  <div className="flex gap-3 md:col-span-2 justify-end pt-4 border-t border-border/50">
+                    <Button type="button" variant="ghost" onClick={resetForm} className="rounded-full">Cancel</Button>
+                    <Button type="submit" disabled={createMutation.isPending} className="rounded-full shadow-md hover:shadow-lg">
+                      {createMutation.isPending ? 'Creating...' : 'Create Code'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isLoading ? (
-        <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-16" />)}</div>
+        <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
       ) : codes.length === 0 ? (
-        <Card>
-          <CardContent className="p-10 text-center">
-            <Ticket className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">No discount codes yet. Create your first code above.</p>
-          </CardContent>
-        </Card>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+          <Card className="border-dashed border-2">
+            <CardContent className="p-16 text-center">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="inline-block"
+              >
+                <Ticket className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              </motion.div>
+              <p className="text-muted-foreground text-base font-medium">No discount codes yet. Create your first code above.</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
-        <div className="space-y-2">
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-4">
           {codes.map((code) => {
             const isExpired = code.expiresAt ? new Date(code.expiresAt) < new Date() : false;
             const isMaxed = code.maxUses !== null && code.usesCount >= code.maxUses;
             const isInvalid = !code.isActive || isExpired || isMaxed;
             return (
-              <Card key={code.id} className={isInvalid ? 'opacity-55' : ''}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3 flex-wrap">
-                    <span className="font-mono font-black text-base tracking-wider bg-muted px-3 py-1 rounded-lg">{code.code}</span>
-                    <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${code.type === 'PERCENTAGE' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {code.type === 'PERCENTAGE' ? `${code.value}% OFF` : `£${(code.value / 100).toFixed(2)} OFF`}
-                      </span>
-                      {code.minOrderValueMinor > 0 && (
-                        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                          Min £{(code.minOrderValueMinor / 100).toFixed(2)}
-                        </span>
-                      )}
-                      {code.customerEmail && (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                          🔒 {code.customerEmail}
-                        </span>
-                      )}
-                      {isExpired && <span className="text-xs text-destructive font-semibold bg-destructive/10 px-2 py-0.5 rounded-full">Expired</span>}
-                      {isMaxed && !isExpired && <span className="text-xs text-destructive font-semibold bg-destructive/10 px-2 py-0.5 rounded-full">Max uses reached</span>}
-                      {code.expiresAt && !isExpired && (
-                        <span className="text-xs text-muted-foreground">
-                          Expires {new Date(code.expiresAt).toLocaleDateString('en-GB')}
-                        </span>
-                      )}
+              <motion.div key={code.id} variants={fadeUp}>
+                <Card className={`overflow-hidden transition-all hover:shadow-md ${isInvalid ? 'opacity-60 bg-muted/20' : 'bg-background/40 backdrop-blur-md border-border/60 shadow-sm'}`}>
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4 flex-wrap">
+                      <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 px-4 py-2 rounded-xl flex-shrink-0 shadow-inner">
+                        <span className="font-mono font-black text-lg tracking-widest text-primary drop-shadow-sm">{code.code}</span>
+                      </div>
+                      <div className="flex flex-col gap-2 flex-1 min-w-0 py-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`text-xs font-black px-2.5 py-1 rounded-md shadow-sm ${code.type === 'PERCENTAGE' ? 'bg-blue-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                            {code.type === 'PERCENTAGE' ? `${code.value}% OFF` : `£${(code.value / 100).toFixed(2)} OFF`}
+                          </span>
+                          {code.minOrderValueMinor > 0 && (
+                            <span className="text-xs bg-muted text-muted-foreground font-bold px-2 py-1 rounded-md">
+                              Min £{(code.minOrderValueMinor / 100).toFixed(2)}
+                            </span>
+                          )}
+                          {code.customerEmail && (
+                            <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-md border border-purple-200">
+                              🔒 {code.customerEmail}
+                            </span>
+                          )}
+                          {isExpired && <span className="text-xs text-destructive font-bold bg-destructive/10 px-2 py-1 rounded-md">Expired</span>}
+                          {isMaxed && !isExpired && <span className="text-xs text-destructive font-bold bg-destructive/10 px-2 py-1 rounded-md">Max uses reached</span>}
+                          {code.expiresAt && !isExpired && (
+                            <span className="text-xs text-muted-foreground font-medium">
+                              Expires {new Date(code.expiresAt).toLocaleDateString('en-GB')}
+                            </span>
+                          )}
+                        </div>
+                        {code.description && <p className="text-sm text-muted-foreground font-medium">{code.description}</p>}
+                      </div>
+                      <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">{code.usesCount} / {code.maxUses ?? '∞'} uses</span>
+                          <button
+                            onClick={() => updateMutation.mutate({ id: code.id, isActive: !code.isActive })}
+                            disabled={updateMutation.isPending}
+                            title={code.isActive ? 'Deactivate' : 'Activate'}
+                            className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${code.isActive ? 'bg-primary' : 'bg-muted border'}`}
+                          >
+                            <motion.div 
+                              className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"
+                              animate={{ x: code.isActive ? 22 : 2 }}
+                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(code.id)}
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 ml-auto flex-shrink-0">
-                      <span className="text-xs text-muted-foreground">{code.usesCount} / {code.maxUses ?? '∞'} uses</span>
-                      <button
-                        onClick={() => updateMutation.mutate({ id: code.id, isActive: !code.isActive })}
-                        disabled={updateMutation.isPending}
-                        title={code.isActive ? 'Deactivate' : 'Activate'}
-                        className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${code.isActive ? 'bg-primary' : 'bg-muted border'}`}
-                      >
-                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${code.isActive ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(code.id)}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-1 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  {code.description && <p className="text-xs text-muted-foreground mt-1.5 pl-1 italic">{code.description}</p>}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
 
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-sm shadow-2xl">
-            <CardContent className="p-6 space-y-4">
-              <p className="font-bold text-base">Delete discount code?</p>
-              <p className="text-sm text-muted-foreground">This cannot be undone. All usage records will also be deleted.</p>
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" size="sm" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-                <Button variant="destructive" size="sm" disabled={deleteMutation.isPending}
-                  onClick={async () => { await deleteMutation.mutateAsync(deleteConfirm!); setDeleteConfirm(null); }}>
-                  {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-sm">
+            <Card className="shadow-2xl border-destructive/20">
+              <CardContent className="p-6 space-y-4">
+                <p className="font-black text-xl text-foreground">Delete discount code?</p>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">This cannot be undone. All usage records will also be deleted.</p>
+                <div className="flex gap-3 justify-end pt-2">
+                  <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="rounded-full">Cancel</Button>
+                  <Button variant="destructive" disabled={deleteMutation.isPending} className="rounded-full shadow-md hover:shadow-lg"
+                    onClick={async () => { await deleteMutation.mutateAsync(deleteConfirm!); setDeleteConfirm(null); }}>
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete Permanently'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       )}
     </div>
@@ -313,16 +376,19 @@ function ProductDiscountsSubTab() {
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        Enable a sale discount on any product. A coloured stamp badge will appear on the product image in the storefront, and the discounted price will be shown. Disable anytime to restore original pricing — no product data is modified.
-      </p>
+    <div className="space-y-6">
+      <div className="bg-primary/5 border border-primary/10 rounded-2xl p-5 shadow-inner">
+        <p className="text-sm text-primary/80 font-medium leading-relaxed">
+          Enable a sale discount on any product. A luxury coloured stamp badge will animate onto the product image in the storefront, and the discounted price will be highlighted. Disable anytime to restore original pricing — no product data is permanently modified.
+        </p>
+      </div>
+
       {isLoading ? (
-        <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-16" />)}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-28 rounded-2xl" />)}</div>
       ) : products.length === 0 ? (
-        <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">No products found.</CardContent></Card>
+        <Card className="border-dashed"><CardContent className="p-12 text-center text-muted-foreground font-medium">No products found.</CardContent></Card>
       ) : (
-        <div className="space-y-2">
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {products.map((product: any) => {
             const isEditing = editId === product.id;
             const primaryImage = product.images?.[0]?.url;
@@ -336,110 +402,141 @@ function ProductDiscountsSubTab() {
               ? Math.round(pricePence * (1 - previewPct / 100)) : null;
 
             return (
-              <Card key={product.id} className={product.discountEnabled ? 'border-primary/30 bg-primary/[0.02]' : ''}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-12 h-12 flex-shrink-0">
-                      {primaryImage
-                        ? <img src={primaryImage} alt={product.title} className="w-12 h-12 object-cover rounded-lg" />
-                        : <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center"><ImageIcon className="w-5 h-5 text-muted-foreground" /></div>
-                      }
-                      {product.discountEnabled && (
-                        <div className={`absolute -top-1.5 -right-1.5 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-md ${badgeInfo?.color ?? 'bg-red-500'}`}>
-                          -{product.discountPercent}%
+              <motion.div key={product.id} variants={fadeUp}>
+                <Card className={`overflow-hidden transition-all duration-300 ${product.discountEnabled ? 'border-primary/40 bg-gradient-to-br from-primary/5 to-transparent shadow-md' : 'hover:shadow-sm bg-background/50'}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-4">
+                      <div className="relative w-16 h-16 flex-shrink-0 bg-white rounded-xl overflow-hidden shadow-sm border border-border/50">
+                        {primaryImage
+                          ? <img src={primaryImage} alt={product.title} className="w-full h-full object-cover mix-blend-multiply p-1" />
+                          : <div className="w-full h-full bg-muted flex items-center justify-center"><ImageIcon className="w-6 h-6 text-muted-foreground/30" /></div>
+                        }
+                        <AnimatePresence>
+                          {product.discountEnabled && badgeInfo && (
+                            <motion.div 
+                              initial={{ scale: 0, rotate: -20 }}
+                              animate={{ scale: 1, rotate: -10 }}
+                              exit={{ scale: 0 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                              className={`absolute -bottom-2 -right-2 text-white font-black flex flex-col items-center justify-center w-8 h-8 rounded-full shadow-lg ring-2 ring-white ${badgeInfo.color}`}
+                            >
+                              <span className="text-[10px] leading-none">-{product.discountPercent}%</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0 py-1">
+                        <p className="font-bold text-sm leading-tight mb-1 truncate">{product.title}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {salePrice ? (
+                            <>
+                              <span className="text-lg font-black text-primary">£{(salePrice / 100).toFixed(2)}</span>
+                              <span className="text-xs font-semibold text-muted-foreground line-through">£{(pricePence / 100).toFixed(2)}</span>
+                              {badgeInfo && <span className={`text-[9px] font-black tracking-wider text-white px-1.5 py-0.5 rounded uppercase shadow-sm ${badgeInfo.color}`}>{badgeInfo.label}</span>}
+                            </>
+                          ) : (
+                            <span className="text-sm font-bold text-muted-foreground">£{(pricePence / 100).toFixed(2)}</span>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{product.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        {salePrice ? (
+                      </div>
+                      
+                      <div className="flex flex-col gap-2 flex-shrink-0 pt-1">
+                        {product.discountEnabled ? (
                           <>
-                            <span className="text-xs text-muted-foreground line-through">£{(pricePence / 100).toFixed(2)}</span>
-                            <span className="text-xs font-bold text-primary">£{(salePrice / 100).toFixed(2)}</span>
-                            {badgeInfo && <span className={`text-[10px] font-black text-white px-1.5 py-0.5 rounded ${badgeInfo.color}`}>{badgeInfo.label}</span>}
+                            <Button size="sm" variant="outline" className="text-xs h-7 px-3 rounded-full hover:bg-muted font-bold"
+                              onClick={() => { setEditId(isEditing ? null : product.id); setEditForm({ discountPercent: String(product.discountPercent ?? ''), discountBadge: (product.discountBadge ?? 'SALE') as DiscountBadge }); setSaveError(''); }}>
+                              <Edit2 className="w-3 h-3 mr-1" /> Edit
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-xs h-7 px-3 rounded-full text-destructive hover:bg-destructive/10 font-bold"
+                              onClick={() => handleDisable(product)} disabled={setDiscountMutation.isPending}>
+                              <X className="w-3 h-3 mr-1" /> Remove
+                            </Button>
                           </>
                         ) : (
-                          <span className="text-xs text-muted-foreground">£{(pricePence / 100).toFixed(2)}</span>
+                          <Button size="sm" className="text-xs h-8 px-4 rounded-full shadow-md font-bold"
+                            onClick={() => { setEditId(isEditing ? null : product.id); setEditForm({ discountPercent: '', discountBadge: 'SALE' }); setSaveError(''); }}>
+                            <BadgePercent className="w-3.5 h-3.5 mr-1" /> Add Discount
+                          </Button>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {product.discountEnabled ? (
-                        <>
-                          <Button size="sm" variant="outline" className="text-xs h-7 px-2 gap-1"
-                            onClick={() => { setEditId(isEditing ? null : product.id); setEditForm({ discountPercent: String(product.discountPercent ?? ''), discountBadge: (product.discountBadge ?? 'SALE') as DiscountBadge }); setSaveError(''); }}>
-                            <Edit2 className="w-3 h-3" /> Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" className="text-xs h-7 px-2 gap-1"
-                            onClick={() => handleDisable(product)} disabled={setDiscountMutation.isPending}>
-                            <X className="w-3 h-3" /> Remove
-                          </Button>
-                        </>
-                      ) : (
-                        <Button size="sm" className="text-xs h-7 px-2 gap-1"
-                          onClick={() => { setEditId(isEditing ? null : product.id); setEditForm({ discountPercent: '', discountBadge: 'SALE' }); setSaveError(''); }}>
-                          <BadgePercent className="w-3 h-3" /> Add Discount
-                        </Button>
-                      )}
-                    </div>
-                  </div>
 
-                  {isEditing && (
-                    <div className="mt-4 pt-4 border-t border-border/60 space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Discount % (1–90) *</label>
-                          <div className="flex items-center gap-2">
-                            <input type="number" min="1" max="90" step="1" value={editForm.discountPercent}
-                              onChange={e => setEditForm(f => ({ ...f, discountPercent: e.target.value }))}
-                              className="w-24 border rounded-lg px-3 py-2 text-sm font-bold" placeholder="15" />
-                            <span className="text-sm font-semibold text-muted-foreground">% off</span>
+                    <AnimatePresence>
+                      {isEditing && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-5 pt-5 border-t border-border/50 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Discount % (1–90) *</label>
+                                <div className="flex items-center gap-2">
+                                  <input type="number" min="1" max="90" step="1" value={editForm.discountPercent}
+                                    onChange={e => setEditForm(f => ({ ...f, discountPercent: e.target.value }))}
+                                    className="w-24 border-b-2 border-border bg-transparent px-2 py-1.5 text-lg font-black focus:outline-none focus:border-primary transition-colors text-center" placeholder="15" />
+                                  <span className="text-sm font-bold text-muted-foreground">% off</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Badge Style</label>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {BADGE_OPTIONS.map((b) => (
+                                    <button key={b.value} type="button"
+                                      onClick={() => setEditForm(f => ({ ...f, discountBadge: b.value }))}
+                                      className={`text-[10px] font-black px-2.5 py-1.5 rounded shadow-sm transition-all duration-300 ${b.color} ${editForm.discountBadge === b.value ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'} text-white`}>
+                                      {b.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <AnimatePresence>
+                              {previewPrice !== null && (
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                  className="bg-primary/5 rounded-xl p-3 flex flex-wrap items-center gap-3 border border-primary/10 shadow-inner"
+                                >
+                                  <BadgePercent className="w-5 h-5 text-primary flex-shrink-0" />
+                                  <div className="flex items-center flex-wrap gap-2">
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider mr-1">Preview:</span>
+                                    <span className="text-sm font-semibold line-through text-muted-foreground">£{(pricePence / 100).toFixed(2)}</span>
+                                    <span className="text-lg font-black text-primary">£{(previewPrice / 100).toFixed(2)}</span>
+                                    <span className={`text-[10px] font-black text-white px-2 py-1 rounded shadow-sm ${BADGE_OPTIONS.find(b => b.value === editForm.discountBadge)?.color}`}>
+                                      {editForm.discountBadge?.replace('_', ' ')}
+                                    </span>
+                                  </div>
+                                  <motion.div 
+                                    initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                                    className="ml-auto bg-emerald-100 text-emerald-800 text-[11px] font-black px-2.5 py-1 rounded-full shadow-sm border border-emerald-200"
+                                  >
+                                    SAVE £{((pricePence - previewPrice) / 100).toFixed(2)}
+                                  </motion.div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                            
+                            {saveError && <p className="text-destructive text-sm font-bold">{saveError}</p>}
+                            <div className="flex gap-3 justify-end pt-2">
+                              <Button type="button" variant="ghost" size="sm" onClick={() => { setEditId(null); setSaveError(''); }} className="rounded-full font-bold">Cancel</Button>
+                              <Button size="sm" onClick={() => handleSave(product)} disabled={setDiscountMutation.isPending} className="rounded-full shadow-md font-bold">
+                                {setDiscountMutation.isPending ? 'Saving...' : 'Apply Discount'}
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Badge Stamp Style</label>
-                          <div className="flex flex-wrap gap-1.5">
-                            {BADGE_OPTIONS.map((b) => (
-                              <button key={b.value} type="button"
-                                onClick={() => setEditForm(f => ({ ...f, discountBadge: b.value }))}
-                                className={`text-[11px] font-black px-2 py-1 rounded text-white transition-all ${b.color} ${editForm.discountBadge === b.value ? 'ring-2 ring-offset-1 ring-gray-700 scale-110' : 'opacity-55 hover:opacity-90'}`}>
-                                {b.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      {previewPrice !== null && (
-                        <div className="bg-muted/50 rounded-xl p-3 flex items-center gap-3">
-                          <BadgePercent className="w-4 h-4 text-primary flex-shrink-0" />
-                          <div>
-                            <span className="text-xs font-semibold text-muted-foreground mr-2">Preview:</span>
-                            <span className="text-sm line-through text-muted-foreground mr-1">£{(pricePence / 100).toFixed(2)}</span>
-                            <span className="text-sm font-bold text-primary mr-2">£{(previewPrice / 100).toFixed(2)}</span>
-                            <span className={`text-[11px] font-black text-white px-1.5 py-0.5 rounded mr-2 ${BADGE_OPTIONS.find(b => b.value === editForm.discountBadge)?.color}`}>
-                              {editForm.discountBadge?.replace('_', ' ')}
-                            </span>
-                            <span className="text-xs text-emerald-600 font-semibold">
-                              Save £{((pricePence - previewPrice) / 100).toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
+                        </motion.div>
                       )}
-                      {saveError && <p className="text-destructive text-xs font-medium">{saveError}</p>}
-                      <div className="flex gap-2 justify-end">
-                        <Button type="button" variant="outline" size="sm" onClick={() => { setEditId(null); setSaveError(''); }}>Cancel</Button>
-                        <Button size="sm" onClick={() => handleSave(product)} disabled={setDiscountMutation.isPending}>
-                          {setDiscountMutation.isPending ? 'Saving...' : 'Apply Discount'}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -50,13 +50,17 @@ function useProductsBySkus(skus: string[]) {
     queryKey: ['products-by-skus', skus],
     queryFn: async () => {
       if (!skus.length) return {};
+      // Load all published products and match variants by SKU client-side.
+      // This is more reliable than per-SKU search which depends on title matching.
+      const res = await apiClient.get('/api/v1/products', { params: { limit: 100 } });
+      const allProducts: any[] = (res.data as any)?.products ?? [];
       const results: Record<string, any> = {};
-      for (const sku of skus) {
-        try {
-          const res = await apiClient.get('/api/v1/products', { params: { limit: 5, q: sku } });
-          const products = (res.data as any)?.products ?? [];
-          if (products.length > 0) results[sku] = products[0];
-        } catch { /* skip */ }
+      for (const product of allProducts) {
+        for (const variant of product.variants ?? []) {
+          if (variant.sku && skus.includes(variant.sku)) {
+            results[variant.sku] = product;
+          }
+        }
       }
       return results;
     },

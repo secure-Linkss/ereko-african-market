@@ -25,16 +25,17 @@ const POST_SHIP_STATUSES: OrderStatus[] = [
 const ALLOWED_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
   [OrderStatus.PENDING_PAYMENT]: [OrderStatus.PAID, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.PAID]: [OrderStatus.ALLOCATED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
-  [OrderStatus.ALLOCATED]: [OrderStatus.PICKING, OrderStatus.READY_FOR_PICKUP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.ALLOCATED]: [OrderStatus.PICKING, OrderStatus.PACKED, OrderStatus.READY_FOR_PICKUP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.PICKING]: [OrderStatus.PACKED, OrderStatus.READY_FOR_PICKUP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
-  [OrderStatus.PACKED]: [OrderStatus.SHIPPED, OrderStatus.READY_FOR_PICKUP, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.PACKED]: [OrderStatus.SHIPPED, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED, OrderStatus.READY_FOR_PICKUP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.READY_FOR_PICKUP]: [OrderStatus.PICKED_UP, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.PICKED_UP]: [OrderStatus.DELIVERED],
-  [OrderStatus.SHIPPED]: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
+  [OrderStatus.SHIPPED]: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED, OrderStatus.ON_HOLD, OrderStatus.CANCELLED],
   [OrderStatus.DELIVERED]: [OrderStatus.RETURN_REQUESTED, OrderStatus.DISPUTED, OrderStatus.REFUNDED],
   [OrderStatus.RETURN_REQUESTED]: [OrderStatus.RETURNED],
   [OrderStatus.RETURNED]: [OrderStatus.REFUNDED],
+  [OrderStatus.DISPUTED]: [OrderStatus.REFUNDED, OrderStatus.DELIVERED],
   [OrderStatus.ON_HOLD]: [OrderStatus.PAID, OrderStatus.ALLOCATED, OrderStatus.PICKING, OrderStatus.PACKED, OrderStatus.CANCELLED],
 };
 
@@ -215,6 +216,49 @@ export class AdminService {
     if (status === OrderStatus.CANCELLED) updateData.cancelledAt = now;
 
     await this.supabase.db.from('Order').update(updateData).eq('id', orderId);
+
+    // Inventory lifecycle:
+    // DELIVERED or PICKED_UP → finalize sale: deduct stockOnHand AND release stockReserved
+    // CANCELLED → release reservation only
+    if (status === OrderStatus.DELIVERED || status === OrderStatus.PICKED_UP) {
+      const { data: items } = await this.supabase.db
+        .from('OrderItem')
+        .select('variantId, quantity')
+        .eq('orderId', orderId);
+      for (const item of items ?? []) {
+        const { data: variant } = await this.supabase.db
+          .from('ProductVariant')
+          .select('stockOnHand, stockReserved')
+          .eq('id', item.variantId)
+          .single();
+        if (variant) {
+          await this.supabase.db.from('ProductVariant').update({
+            stockOnHand: Math.max(0, (variant.stockOnHand ?? 0) - item.quantity),
+            stockReserved: Math.max(0, (variant.stockReserved ?? 0) - item.quantity),
+            updatedAt: now,
+          }).eq('id', item.variantId);
+        }
+      }
+    } else if (status === OrderStatus.CANCELLED) {
+      // Release reservation only (don't deduct stock — order was never fulfilled)
+      const { data: items } = await this.supabase.db
+        .from('OrderItem')
+        .select('variantId, quantity')
+        .eq('orderId', orderId);
+      for (const item of items ?? []) {
+        const { data: variant } = await this.supabase.db
+          .from('ProductVariant')
+          .select('stockReserved')
+          .eq('id', item.variantId)
+          .single();
+        if (variant) {
+          await this.supabase.db.from('ProductVariant').update({
+            stockReserved: Math.max(0, (variant.stockReserved ?? 0) - item.quantity),
+            updatedAt: now,
+          }).eq('id', item.variantId);
+        }
+      }
+    }
 
     // OrderEvent has NO updatedAt column
     await this.supabase.db.from('OrderEvent').insert({
