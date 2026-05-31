@@ -57,3 +57,5 @@ __MACOSX/
 .vercel
 backend/.env.vercel
 backend/scripts/migrate-discounts.js
+*.png
+*.webm
