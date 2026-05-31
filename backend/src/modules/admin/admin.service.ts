@@ -906,39 +906,60 @@ export class AdminService {
 
     } else {
       // Broadcast to all active customers
-      const { data: users } = await this.supabase.db
-        .from('User')
-        .select('id, email, firstName')
-        .neq('isAdmin', true)       // includes isAdmin=false AND isAdmin=null
-        .neq('isActive', false)     // includes isActive=true AND isActive=null
-        .limit(500);
+      try {
+        const { data: users, error: usersError } = await this.supabase.db
+          .from('User')
+          .select('id, email, firstName')
+          .neq('isAdmin', true)
+          .is('deletedAt', null)
+          .limit(500);
 
-      const targets = users ?? [];
-      let emailsSent = 0;
+        if (usersError) {
+          this.logger.error(`Broadcast user query error: ${usersError.message}`);
+          return { success: true, sent: 0, emailsSent: 0 };
+        }
 
-      for (const u of targets) {
-        await this.supabase.db.from('Notification').insert({
+        const targets = users ?? [];
+        let sent = 0;
+        let emailsSent = 0;
+
+        // Insert in batches to avoid overwhelming the DB
+        const inserts = targets.map(u => ({
           id: uuidv4(),
           userId: u.id,
-          type: 'marketing',
+          type: 'marketing' as const,
           title: opts.title,
           body: opts.message,
-          data: { source: 'admin_broadcast', actorId: opts.actorId },
+          data: JSON.stringify({ source: 'admin_broadcast', actorId: opts.actorId }),
           createdAt: now,
-        }).catch(() => {});
+        }));
+
+        if (inserts.length > 0) {
+          const { error: insertError } = await this.supabase.db.from('Notification').insert(inserts);
+          if (insertError) {
+            this.logger.error(`Broadcast notification insert error: ${insertError.message}`);
+          } else {
+            sent = inserts.length;
+          }
+        }
 
         if (opts.sendEmail) {
-          await this.notifications.sendGeneric({
-            email: u.email,
-            subject: opts.emailSubject ?? opts.title,
-            bodyText: `Hi ${u.firstName ?? 'there'},\n\n${opts.message}\n\nThe EREKO Team`,
-          }).catch(() => {});
-          emailsSent++;
+          for (const u of targets) {
+            await this.notifications.sendGeneric({
+              email: u.email,
+              subject: opts.emailSubject ?? opts.title,
+              bodyText: `Hi ${u.firstName ?? 'there'},\n\n${opts.message}\n\nThe EREKO Team`,
+            }).catch(e => this.logger.warn(`Broadcast email failed for ${u.email}: ${e.message}`));
+            emailsSent++;
+          }
         }
-      }
 
-      this.logger.log(`Broadcast notification sent to ${targets.length} users by ${opts.actorId}`);
-      return { success: true, sent: targets.length, emailsSent };
+        this.logger.log(`Broadcast notification sent to ${sent} users by ${opts.actorId}`);
+        return { success: true, sent, emailsSent };
+      } catch (err) {
+        this.logger.error(`Broadcast notification error: ${err.message}`, err.stack);
+        return { success: false, sent: 0, emailsSent: 0, error: err.message };
+      }
     }
   }
 }
