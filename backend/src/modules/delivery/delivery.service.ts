@@ -37,6 +37,9 @@ function haversineKm(a: GeoCoords, b: GeoCoords): number {
 export class DeliveryService {
   private readonly logger = new Logger(DeliveryService.name);
 
+  // Use IG11 7LS (actual store address: 5 Broadway, Barking) as default, not E1 6RF
+  private readonly DEFAULT_STORE_POSTCODE = 'IG11 7LS';
+
   private readonly coordCache = new Map<string, GeoCoords>();
 
   constructor(
@@ -133,7 +136,7 @@ export class DeliveryService {
       await this.supabase.db.from('DeliverySettings').insert({
         id: uuidv4(),
         storeId: 'default',
-        storePostcode: 'E1 6RF',
+        storePostcode: 'IG11 7LS',
         maxRadiusKm: 10,
         pricingMode: 'tiers',
         isActive: true,
