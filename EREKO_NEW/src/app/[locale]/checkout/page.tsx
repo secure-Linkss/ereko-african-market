@@ -186,20 +186,6 @@ export default function CheckoutPage() {
     }
   }, [deliverySettingsData]);
 
-  // Watch delivery speed from address form to update pre-start estimate
-  const selectedDeliverySpeed = addressForm.watch('deliveryMethod') as 'standard' | 'nextday' | undefined;
-
-  // Base fee estimate (used before startCheckout; after startCheckout serverDeliveryFee takes over)
-  const baseShippingEstimate = subtotal >= freeThreshold ? 0 : (shippingMinor || 399);
-  const speedPremium = !isCollect && selectedDeliverySpeed === 'nextday' ? nextDayPremium : 0;
-  const estimatedDeliveryFee = isCollect ? 0 : (baseShippingEstimate > 0 ? baseShippingEstimate + speedPremium : 0);
-
-  const deliveryFee = isCollect ? 0 : (serverDeliveryFee !== null ? serverDeliveryFee.feeMinor : estimatedDeliveryFee);
-  const deliveryFeeLabel = isCollect ? 'Free (Click & Collect)' : (serverDeliveryFee?.feeLabel ?? (selectedDeliverySpeed === 'nextday' ? 'Next Day Delivery' : 'Delivery'));
-  const promoDiscountMinor = promoResult?.valid ? promoResult.discountAmountMinor : 0;
-  const total = Math.max(0, subtotal - promoDiscountMinor) + deliveryFee;
-  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-
   const contactForm = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
     defaultValues: { email: user?.email ?? '', newsletter: false },
@@ -212,6 +198,20 @@ export default function CheckoutPage() {
       lastName: user?.lastName ?? '',
     },
   });
+
+  // Watch delivery speed to update fee estimate in real-time (must come AFTER addressForm declaration)
+  const selectedDeliverySpeed = addressForm.watch('deliveryMethod') as 'standard' | 'nextday' | undefined;
+
+  // Base fee estimate (before startCheckout; serverDeliveryFee replaces after submit)
+  const baseShippingEstimate = subtotal >= freeThreshold ? 0 : (shippingMinor || 399);
+  const speedPremium = !isCollect && selectedDeliverySpeed === 'nextday' ? nextDayPremium : 0;
+  const estimatedDeliveryFee = isCollect ? 0 : (baseShippingEstimate > 0 ? baseShippingEstimate + speedPremium : 0);
+
+  const deliveryFee = isCollect ? 0 : (serverDeliveryFee !== null ? serverDeliveryFee.feeMinor : estimatedDeliveryFee);
+  const deliveryFeeLabel = isCollect ? 'Free (Click & Collect)' : (serverDeliveryFee?.feeLabel ?? (selectedDeliverySpeed === 'nextday' ? 'Next Day Delivery' : 'Delivery'));
+  const promoDiscountMinor = promoResult?.valid ? promoResult.discountAmountMinor : 0;
+  const total = Math.max(0, subtotal - promoDiscountMinor) + deliveryFee;
+  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
 
   // Success screen takes priority — must come before empty-cart check
   // because clearCart() and setSuccess(true) may not batch across Zustand+React
