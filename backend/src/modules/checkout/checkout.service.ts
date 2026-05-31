@@ -284,13 +284,17 @@ export class CheckoutService {
 
     const discountedSubtotal = Math.max(0, subtotal - cartDiscount);
 
-    // Distance-based delivery fee
+    // Distance-based delivery fee (skip for Click & Collect — customer comes to store)
+    const isClickAndCollect = dto.deliveryMethod === 'click_and_collect' ||
+      (dto.postcode && ['IG11', 'IG1'].some(area => dto.postcode.trim().toUpperCase().startsWith(area)));
     await this.deliveryService.seedDefaultTiers();
-    const deliveryResult = await this.deliveryService.calculateDeliveryFee(dto.postcode);
+    const deliveryResult = isClickAndCollect
+      ? { distanceKm: 0, feeMinor: 0, feeLabel: 'Free (Click & Collect)', withinRadius: true, blocked: false }
+      : await this.deliveryService.calculateDeliveryFee(dto.postcode);
     if (deliveryResult.blocked) {
       throw new BadRequestException(deliveryResult.blockReason ?? 'Delivery not available to this area');
     }
-    const shipping = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : deliveryResult.feeMinor;
+    const shipping = isClickAndCollect ? 0 : (discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : deliveryResult.feeMinor);
     const total = discountedSubtotal + shipping;
     const now = new Date().toISOString();
     const orderId = uuidv4();
