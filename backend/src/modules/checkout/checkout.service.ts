@@ -20,10 +20,10 @@ import {
 } from './checkout.dto';
 import { PaymentsService } from '../payments/payments.service';
 import { DiscountService } from '../discounts/discount.service';
+import { DeliveryService } from '../delivery/delivery.service';
 import { v4 as uuidv4 } from 'uuid';
 
 const FREE_SHIPPING_THRESHOLD = 5500;
-const STANDARD_SHIPPING = 399;
 
 function generateOrderNumber(): string {
   const date = new Date();
@@ -87,6 +87,7 @@ export class CheckoutService {
     private readonly config: ConfigService,
     private readonly paymentsService: PaymentsService,
     private readonly discountService: DiscountService,
+    private readonly deliveryService: DeliveryService,
     @Optional() @InjectQueue('orders') private readonly ordersQueue: Queue | null,
   ) {}
 
@@ -282,7 +283,14 @@ export class CheckoutService {
     }
 
     const discountedSubtotal = Math.max(0, subtotal - cartDiscount);
-    const shipping = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
+
+    // Distance-based delivery fee
+    await this.deliveryService.seedDefaultTiers();
+    const deliveryResult = await this.deliveryService.calculateDeliveryFee(dto.postcode);
+    if (deliveryResult.blocked) {
+      throw new BadRequestException(deliveryResult.blockReason ?? 'Delivery not available to this area');
+    }
+    const shipping = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : deliveryResult.feeMinor;
     const total = discountedSubtotal + shipping;
     const now = new Date().toISOString();
     const orderId = uuidv4();
@@ -306,6 +314,7 @@ export class CheckoutService {
         loyaltyPointsRedeemed: cart.loyaltyPointsRedeemed,
         loyaltyPointsEarned: 0,
         deliveryMethod: 'standard',
+        deliveryDistanceKm: deliveryResult.distanceKm > 0 ? deliveryResult.distanceKm : null,
         placedAt: now,
         createdAt: now,
         updatedAt: now,
@@ -386,6 +395,11 @@ export class CheckoutService {
       cart: serializedCart,
       stockReservedUntil: new Date(Date.now() + 15 * 60 * 1000),
       availableDeliverySlots: deliverySlots,
+      deliveryFee: {
+        distanceKm: deliveryResult.distanceKm,
+        feeMinor: shipping,
+        feeLabel: deliveryResult.feeLabel,
+      },
       discount: appliedDiscountCodeId ? {
         applied: true,
         code: appliedPromoCode,

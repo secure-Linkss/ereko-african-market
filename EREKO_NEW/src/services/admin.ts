@@ -379,6 +379,176 @@ export function useUploadProductImage() {
   });
 }
 
+// ─── Delivery Settings ─────────────────────────────────────────────────────
+
+export interface DeliveryTier {
+  id?: string;
+  label?: string;
+  fromKm: number;
+  toKm: number;
+  priceMinor: number;
+  position?: number;
+}
+
+export interface DeliverySettings {
+  id?: string;
+  storePostcode: string;
+  maxRadiusKm: number;
+  pricingMode: 'tiers' | 'per_km';
+  perKmPriceMinor?: number;
+  baseFeePriceMinor?: number;
+}
+
+export interface UpdateDeliverySettingsRequest {
+  storePostcode?: string;
+  maxRadiusKm?: number;
+  pricingMode?: 'tiers' | 'per_km';
+  perKmPriceMinor?: number;
+  baseFeePriceMinor?: number;
+  tiers?: DeliveryTier[];
+}
+
+// ─── Stripe Webhook Log ────────────────────────────────────────────────────
+
+export interface StripeWebhookLog {
+  id: string;
+  stripeEventId: string;
+  eventType: string;
+  status: 'received' | 'processed' | 'failed' | 'ignored';
+  processingError?: string;
+  receivedAt: string;
+  processedAt?: string;
+}
+
+export interface StripeWebhookLogsResponse {
+  events: StripeWebhookLog[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// ─── Refunds ───────────────────────────────────────────────────────────────
+
+export interface RefundLineItem {
+  orderItemId: string;
+  quantity: number;
+}
+
+export interface ProcessRefundRequest {
+  items?: RefundLineItem[];
+  refundDelivery?: boolean;
+  customAmountMinor?: number;
+  reason: string;
+  notes?: string;
+}
+
+export interface OrderRefund {
+  id: string;
+  orderId: string;
+  stripeRefundId?: string;
+  amountMinor: number;
+  reason: string;
+  notes?: string;
+  processedBy: string;
+  refundEmailSent: boolean;
+  createdAt: string;
+}
+
+// ─── Service methods ───────────────────────────────────────────────────────
+
+const deliveryService = {
+  getSettings: () => apiClient.get('/api/v1/delivery/settings').then(r => r.data),
+  updateSettings: (body: UpdateDeliverySettingsRequest) => apiClient.put('/api/v1/delivery/settings', body).then(r => r.data),
+  calculateFee: (customerPostcode: string) => apiClient.post('/api/v1/delivery/calculate', { customerPostcode }).then(r => r.data),
+  seedDefaults: () => apiClient.post('/api/v1/delivery/seed-defaults').then(r => r.data),
+};
+
+const webhookService = {
+  list: (params?: { eventType?: string; status?: string; fromDate?: string; toDate?: string; page?: number; pageSize?: number }) =>
+    apiClient.get('/api/v1/admin/webhooks/stripe', { params }).then(r => r.data as StripeWebhookLogsResponse),
+  getPayload: (logId: string) => apiClient.get(`/api/v1/admin/webhooks/stripe/${logId}`).then(r => r.data),
+  retry: (logId: string) => apiClient.post(`/api/v1/admin/webhooks/stripe/${logId}/retry`).then(r => r.data),
+  resolve: (logId: string) => apiClient.post(`/api/v1/admin/webhooks/stripe/${logId}/resolve`).then(r => r.data),
+};
+
+const refundService = {
+  getSummary: (orderId: string) => apiClient.get(`/api/v1/admin/refunds/${orderId}/summary`).then(r => r.data),
+  process: (orderId: string, body: ProcessRefundRequest) => apiClient.post(`/api/v1/admin/refunds/${orderId}/process`, body).then(r => r.data),
+  getHistory: (orderId: string) => apiClient.get(`/api/v1/admin/refunds/${orderId}/history`).then(r => r.data as OrderRefund[]),
+};
+
+// Delivery Settings
+export function useDeliverySettings() {
+  return useQuery({ queryKey: ['delivery-settings'], queryFn: deliveryService.getSettings, staleTime: 60_000 });
+}
+
+export function useUpdateDeliverySettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateDeliverySettingsRequest) => deliveryService.updateSettings(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['delivery-settings'] }),
+  });
+}
+
+// Stripe Webhook Logs
+export function useStripeWebhookLogs(params?: Parameters<typeof webhookService.list>[0]) {
+  return useQuery({
+    queryKey: ['stripe-webhooks', params],
+    queryFn: () => webhookService.list(params),
+    refetchInterval: 30_000,
+    staleTime: 0,
+  });
+}
+
+export function useStripeWebhookPayload(logId: string | null) {
+  return useQuery({
+    queryKey: ['stripe-webhook-payload', logId],
+    queryFn: () => webhookService.getPayload(logId!),
+    enabled: !!logId,
+  });
+}
+
+export function useRetryStripeWebhook() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (logId: string) => webhookService.retry(logId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['stripe-webhooks'] }),
+  });
+}
+
+export function useResolveStripeWebhook() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (logId: string) => webhookService.resolve(logId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['stripe-webhooks'] }),
+  });
+}
+
+// Refunds
+export function useRefundSummary(orderId: string | null) {
+  return useQuery({
+    queryKey: ['refund-summary', orderId],
+    queryFn: () => refundService.getSummary(orderId!),
+    enabled: !!orderId,
+  });
+}
+
+export function useProcessRefund() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, body }: { orderId: string; body: ProcessRefundRequest }) => refundService.process(orderId, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-orders'] }),
+  });
+}
+
+export function useRefundHistory(orderId: string | null) {
+  return useQuery({
+    queryKey: ['refund-history', orderId],
+    queryFn: () => refundService.getHistory(orderId!),
+    enabled: !!orderId,
+  });
+}
+
 // Cargo Rates
 export function useAdminCargoRates() {
   return useQuery({

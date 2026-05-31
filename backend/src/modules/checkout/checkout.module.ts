@@ -4,6 +4,7 @@ import { CheckoutController } from './checkout.controller';
 import { CheckoutService } from './checkout.service';
 import { PaymentsModule } from '../payments/payments.module';
 import { DiscountModule } from '../discounts/discount.module';
+import { DeliveryModule } from '../delivery/delivery.module';
 
 const hasRedis = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
 
@@ -11,6 +12,7 @@ const hasRedis = !!(process.env.REDIS_URL || process.env.REDIS_HOST);
   imports: [
     PaymentsModule,
     DiscountModule,
+    DeliveryModule,
     ...(hasRedis ? [BullModule.registerQueue({ name: 'orders' })] : []),
   ],
   controllers: [CheckoutController],

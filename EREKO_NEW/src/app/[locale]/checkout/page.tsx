@@ -166,7 +166,10 @@ export default function CheckoutPage() {
   const subtotal = getSubtotalMinor();
   const isCollect = fulfillment === 'collect';
   const activeShipping = subtotal >= 5500 ? 0 : shippingMinor;
-  const deliveryFee = isCollect ? 0 : ((addressData as DeliveryAddressForm)?.deliveryMethod === 'nextday' ? 599 : (activeShipping || 399));
+  // Use server-calculated delivery fee after checkout started; fall back to local estimate
+  const [serverDeliveryFee, setServerDeliveryFee] = React.useState<{ feeMinor: number; feeLabel: string; distanceKm: number } | null>(null);
+  const deliveryFee = isCollect ? 0 : (serverDeliveryFee?.feeMinor ?? (activeShipping || 399));
+  const deliveryFeeLabel = isCollect ? 'Free (Click & Collect)' : (serverDeliveryFee?.feeLabel ?? 'Delivery');
   const promoDiscountMinor = promoResult?.valid ? promoResult.discountAmountMinor : 0;
   const total = Math.max(0, subtotal - promoDiscountMinor) + deliveryFee;
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
@@ -268,6 +271,11 @@ export default function CheckoutPage() {
         lastName: data.lastName,
         discountCode: promoResult?.valid ? promoResult.code : (promoCode ?? undefined),
       });
+
+      // Update delivery fee from server response
+      if (startRes.deliveryFee) {
+        setServerDeliveryFee(startRes.deliveryFee);
+      }
 
       // 3a. Pay in store — skip Stripe, confirm directly
       if (isCollect && paymentMode === 'in_store') {
@@ -679,7 +687,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{isCollect ? 'Collection' : 'Delivery'}</span>
+                  <span className="text-muted-foreground">{deliveryFeeLabel}</span>
                   <span className={deliveryFee === 0 ? 'text-emerald-600 font-medium' : ''}>{deliveryFee === 0 ? 'FREE' : formatGBP(deliveryFee)}</span>
                 </div>
               </div>

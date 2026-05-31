@@ -23,6 +23,9 @@ import {
 import { DiscountsTab } from './DiscountsTab';
 import { UserManagementTab } from './UserManagementTab';
 import { TeamManagementTab } from './TeamManagementTab';
+import { DeliverySettingsTab } from './DeliverySettingsTab';
+import { WebhookMonitorTab } from './WebhookMonitorTab';
+import { RefundPanel } from './RefundPanel';
 import { useAdminReviews, useModerateReview, useDeleteReview } from '@/services/reviews';
 import { useAuthStore } from '@/store/auth';
 import { useLogout } from '@/services/auth';
@@ -65,7 +68,7 @@ const NEXT_STATUSES: Record<string, string[]> = {
   ON_HOLD: ['PAID', 'ALLOCATED', 'PICKING', 'PACKED', 'CANCELLED'],
 };
 
-type Tab = 'dashboard' | 'orders' | 'inventory' | 'products' | 'returns' | 'contacts' | 'reviews' | 'cargo-rates' | 'discounts' | 'users' | 'team';
+type Tab = 'dashboard' | 'orders' | 'inventory' | 'products' | 'returns' | 'contacts' | 'reviews' | 'cargo-rates' | 'discounts' | 'users' | 'team' | 'delivery' | 'webhooks';
 
 // ─── Root Page ─────────────────────────────────────────────────────────────────
 
@@ -116,6 +119,8 @@ export default function AdminDashboardPage() {
     { tab: 'reviews', icon: Star, label: 'Reviews' },
     { tab: 'cargo-rates', icon: Truck, label: 'Cargo Rates' },
     { tab: 'discounts', icon: BadgePercent, label: 'Discounts' },
+    { tab: 'delivery', icon: Truck, label: 'Delivery' },
+    { tab: 'webhooks', icon: RefreshCcw, label: 'Webhooks', badge: metrics?.webhookFailuresCount ? String(metrics.webhookFailuresCount) : undefined },
     { tab: 'users', icon: Users, label: 'Users' },
     ...(canSeeTeam ? [{ tab: 'team' as Tab, icon: UsersRound, label: 'Team' }] : []),
   ];
@@ -195,6 +200,8 @@ export default function AdminDashboardPage() {
           {activeTab === 'discounts' && <DiscountsTab />}
           {activeTab === 'users' && <UserManagementTab currentUser={user} />}
           {activeTab === 'team' && <TeamManagementTab currentUser={user} />}
+          {activeTab === 'delivery' && <DeliverySettingsTab />}
+          {activeTab === 'webhooks' && <WebhookMonitorTab />}
         </div>
       </main>
     </div>
@@ -416,6 +423,21 @@ function OrdersTab({ search }: { search: string }) {
                             <Button size="sm" variant="outline" onClick={() => { setExpandedId(null); setUpdating(null); }}>Cancel</Button>
                           </div>
                           {updateStatus.isError && <p className="text-xs text-destructive mt-2">Failed to update status. Check allowed transitions.</p>}
+                          {/* PDF Receipt Download */}
+                          <div className="mt-3 pt-3 border-t border-border flex items-center gap-3">
+                            <a
+                              href={`/api/v1/admin/orders/${order.id}/receipt.pdf`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                            >
+                              📄 Download Receipt PDF
+                            </a>
+                          </div>
+                          {/* Refund Panel */}
+                          <div className="mt-4 pt-4 border-t border-border">
+                            <RefundPanel orderId={order.id} customerName={order.email} />
+                          </div>
                         </td>
                       </tr>
                     )}

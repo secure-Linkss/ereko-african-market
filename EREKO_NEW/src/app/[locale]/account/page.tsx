@@ -312,12 +312,19 @@ export default function AccountPage() {
                       </div>
                       <CardContent className="p-4 flex items-center justify-between">
                         <p className="text-sm text-muted-foreground">{order.items?.length ?? 0} item{(order.items?.length ?? 0) !== 1 ? 's' : ''}</p>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           <Link href={`/${locale}/track?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(profile?.email ?? '')}`}>
                             <Button variant="outline" size="sm" className="gap-1.5">
                               <PackageSearch className="w-3.5 h-3.5" /> Track
                             </Button>
                           </Link>
+                          {(order.status === 'PAID' || order.status === 'DELIVERED' || order.status === 'SHIPPED' || order.status === 'OUT_FOR_DELIVERY') && (
+                            <a href={`/api/v1/orders/${order.id}/receipt.pdf`} target="_blank" rel="noopener noreferrer">
+                              <Button variant="outline" size="sm" className="gap-1.5">
+                                📄 Receipt
+                              </Button>
+                            </a>
+                          )}
                           <Link href={`/${locale}/account/orders/${order.id}`}>
                             <Button variant="outline" size="sm">Details</Button>
                           </Link>

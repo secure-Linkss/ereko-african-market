@@ -15,7 +15,10 @@ import {
   DefaultValuePipe,
   BadRequestException,
   ForbiddenException,
+  Res,
+  NotFoundException,
 } from '@nestjs/common';
+import { Response } from 'express';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -34,6 +37,7 @@ import { AdminService } from './admin.service';
 import { UpdateOrderStatusDto, AdjustInventoryDto, ResolveReturnDto, OrderStatus } from './admin.dto';
 import { CargoService } from '../cargo/cargo.service';
 import { ReviewsService } from '../reviews/reviews.service';
+import { PdfService } from '../pdf/pdf.service';
 import { Request } from 'express';
 import { Req, Delete, UploadedFile, UseInterceptors as UseFileInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -55,6 +59,7 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly cargoService: CargoService,
     private readonly reviewsService: ReviewsService,
+    private readonly pdfService: PdfService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -370,6 +375,75 @@ export class AdminController {
       throw new ForbiddenException('Only owners and super admins can access the audit log');
     }
     return this.adminService.getAuditLog(staffId, limit);
+  }
+
+  // ── Stripe Webhook Monitoring ─────────────────────────────────────────────
+
+  @Get('webhooks/stripe')
+  @ApiOperation({ summary: 'List Stripe webhook event logs (admin/super admin)' })
+  @ApiQuery({ name: 'eventType', required: false })
+  @ApiQuery({ name: 'status', required: false, enum: ['received', 'processed', 'failed', 'ignored'] })
+  @ApiQuery({ name: 'fromDate', required: false, type: String })
+  @ApiQuery({ name: 'toDate', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  async listStripeWebhooks(
+    @Query('eventType') eventType?: string,
+    @Query('status') status?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('pageSize', new DefaultValuePipe(25), ParseIntPipe) pageSize = 25,
+  ) {
+    return this.adminService.listStripeWebhookLogs({ eventType, status, fromDate, toDate, page, pageSize });
+  }
+
+  @Get('webhooks/stripe/:logId')
+  @ApiOperation({ summary: 'Get full payload for a Stripe webhook event log' })
+  @ApiParam({ name: 'logId' })
+  async getStripeWebhookPayload(@Param('logId') logId: string) {
+    return this.adminService.getStripeWebhookLogPayload(logId);
+  }
+
+  @Post('webhooks/stripe/:logId/retry')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Retry processing a failed Stripe webhook event' })
+  @ApiParam({ name: 'logId' })
+  async retryStripeWebhook(@Param('logId') logId: string) {
+    return this.adminService.retryStripeWebhook(logId);
+  }
+
+  @Post('webhooks/stripe/:logId/resolve')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Mark a failed webhook event as resolved' })
+  @ApiParam({ name: 'logId' })
+  async resolveStripeWebhook(
+    @Param('logId') logId: string,
+    @CurrentUser('id') actorId: string,
+  ) {
+    return this.adminService.markStripeWebhookResolved(logId, actorId);
+  }
+
+  // ── PDF Receipt Download (Admin) ───────────────────────────────────────────
+
+  @Get('orders/:orderId/receipt.pdf')
+  @ApiOperation({ summary: 'Download PDF receipt for any order (admin/super admin)' })
+  @ApiParam({ name: 'orderId' })
+  async downloadOrderReceipt(
+    @Param('orderId') orderId: string,
+    @Res() res: Response,
+  ) {
+    const receiptData = await this.adminService.getOrderReceiptData(orderId);
+    if (!receiptData) throw new NotFoundException('Order not found');
+
+    const pdfBuffer = await this.pdfService.generateReceiptBuffer(receiptData);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="receipt-${receiptData.orderNumber}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.end(pdfBuffer);
   }
 
   // ── Custom Notification Send ───────────────────────────────────────────────

@@ -6,6 +6,7 @@ import { ContactModule } from '../contact/contact.module';
 import { CargoModule } from '../cargo/cargo.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PdfModule } from '../pdf/pdf.module';
 // InventoryModule is @Global() — InventoryService is available without importing here.
 // CacheModule is @Global() — CACHE_MANAGER token is available project-wide.
 
@@ -16,6 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     CargoModule,
     ReviewsModule,
     NotificationsModule,
+    PdfModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

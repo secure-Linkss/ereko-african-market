@@ -195,6 +195,44 @@ export class OrdersService {
     if (order.userId !== userId) throw new ForbiddenException('Access denied to this order');
     return buildTrackingResponse(order, order.events ?? [], order.items ?? []);
   }
+
+  async getReceiptData(userId: string, orderId: string): Promise<import('../pdf/pdf.service').ReceiptData | null> {
+    const full = await this.fetchOrderWithRelations(orderId);
+    if (!full) return null;
+    if (full.userId && full.userId !== userId) throw new ForbiddenException('Order does not belong to this user');
+
+    const shipping = (full.addresses ?? []).find((a: any) => a.type === 'shipping');
+    const billing = (full.addresses ?? []).find((a: any) => a.type === 'billing') ?? shipping;
+
+    let customerName: string = full.email;
+    if (full.userId) {
+      const { data: userRow } = await this.supabase.db.from('User').select('firstName, lastName').eq('id', full.userId).single();
+      if (userRow) customerName = [userRow.firstName, userRow.lastName].filter(Boolean).join(' ') || full.email;
+    }
+
+    return {
+      orderNumber: full.orderNumber,
+      placedAt: full.placedAt,
+      paidAt: full.paidAt ?? undefined,
+      customerName,
+      customerEmail: full.email,
+      billingAddress: billing ? { line1: billing.line1, line2: billing.line2, city: billing.city, postcode: billing.postcode, countryCode: billing.countryCode } : undefined,
+      shippingAddress: shipping ? { firstName: shipping.firstName, lastName: shipping.lastName, line1: shipping.line1, line2: shipping.line2, city: shipping.city, postcode: shipping.postcode, countryCode: shipping.countryCode } : undefined,
+      items: (full.items ?? []).map((i: any) => ({ description: `${i.title}${i.variantName ? ` — ${i.variantName}` : ''}`, sku: i.sku, quantity: i.quantity, unitPriceMinor: i.priceAmountMinor, totalMinor: i.priceAmountMinor * i.quantity })),
+      subtotalMinor: full.subtotalMinor,
+      deliveryFeeMinor: full.shippingMinor,
+      deliveryDistanceKm: full.deliveryDistanceKm ?? undefined,
+      discountMinor: full.discountMinor,
+      taxMinor: full.taxMinor,
+      totalMinor: full.totalMinor,
+      promoCode: full.promoCode ?? undefined,
+      stripePaymentIntentId: full.stripePaymentIntentId ?? undefined,
+      storeName: 'EREKO Market',
+      storeAddress: '5 Broadway, Barking, London, IG11 7LS',
+      storeEmail: 'hello@ereko.market',
+      storeWebsite: 'ereko-african-market.vercel.app',
+    };
+  }
 }
 
 const DELIVERY_STEPS = [
@@ -259,3 +297,5 @@ function buildTrackingResponse(order: any, events: any[], items: any[]) {
     collectionHours: isCollection ? 'Mon–Sat 9am–7pm, Sun 10am–5pm' : null,
   };
 }
+
+

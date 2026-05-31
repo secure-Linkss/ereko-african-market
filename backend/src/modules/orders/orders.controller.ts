@@ -9,6 +9,8 @@ import {
   ParseUUIDPipe,
   ParseIntPipe,
   DefaultValuePipe,
+  Res,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,17 +20,22 @@ import {
   ApiParam,
   ApiResponse,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { OrdersService } from './orders.service';
+import { PdfService } from '../pdf/pdf.service';
 import { CreateReturnDto } from './orders.dto';
 
 @ApiTags('Orders')
 @ApiBearerAuth('access-token')
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   /** Public — no auth, lookup by orderNumber + email */
   @Get('track')
@@ -98,5 +105,27 @@ export class OrdersController {
     @Body() dto: CreateReturnDto,
   ) {
     return this.ordersService.createReturn(userId, orderId, dto);
+  }
+
+  @Get(':id/receipt.pdf')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Download payment receipt PDF for an order' })
+  @ApiParam({ name: 'id', description: 'Order UUID' })
+  async downloadReceipt(
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const receiptData = await this.ordersService.getReceiptData(userId, id);
+    if (!receiptData) throw new NotFoundException('Order not found');
+
+    const pdfBuffer = await this.pdfService.generateReceiptBuffer(receiptData);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="receipt-${receiptData.orderNumber}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.end(pdfBuffer);
   }
 }

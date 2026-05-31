@@ -68,6 +68,21 @@ export class StripeWebhookController {
 
     this.logger.log(`Stripe event received: ${event.type} id=${event.id}`);
 
+    // Log webhook event to StripeWebhookLog
+    const webhookLogId = uuidv4();
+    try {
+      await this.supabase.db.from('StripeWebhookLog').upsert({
+        id: webhookLogId,
+        stripeEventId: event.id,
+        eventType: event.type,
+        status: 'received',
+        payload: event as any,
+        receivedAt: new Date().toISOString(),
+      }, { onConflict: 'stripeEventId' });
+    } catch (err: any) {
+      this.logger.warn(`Failed to log webhook event: ${err.message}`);
+    }
+
     // ── V4: Idempotency — deduplicate webhook events by Stripe event ID ────────
     const { data: existingEvent } = await this.supabase.db
       .from('OrderEvent')
@@ -78,22 +93,39 @@ export class StripeWebhookController {
 
     if (existingEvent && existingEvent.length > 0) {
       this.logger.debug(`Duplicate Stripe event ${event.id} — already processed, returning cached result`);
+      void this.supabase.db.from('StripeWebhookLog').update({ status: 'ignored', processedAt: new Date().toISOString() }).eq('id', webhookLogId);
       return { received: true, duplicate: true };
     }
 
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
-        break;
-      case 'payment_intent.payment_failed':
-        await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
-        break;
-      case 'charge.dispute.created':
-        await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
-        break;
-      default:
-        this.logger.debug(`Unhandled Stripe event type: ${event.type}`);
+    let processingError: string | null = null;
+    try {
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+          break;
+        case 'payment_intent.payment_failed':
+          await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+          break;
+        case 'charge.dispute.created':
+          await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
+          break;
+        default:
+          this.logger.debug(`Unhandled Stripe event type: ${event.type}`);
+          void this.supabase.db.from('StripeWebhookLog').update({ status: 'ignored', processedAt: new Date().toISOString() }).eq('id', webhookLogId);
+          return { received: true };
+      }
+    } catch (err) {
+      processingError = err.message;
+      this.logger.error(`Webhook processing error for ${event.id}: ${err.message}`);
+      void this.supabase.db.from('StripeWebhookLog').update({
+        status: 'failed',
+        processingError: processingError,
+        processedAt: new Date().toISOString(),
+      }).eq('id', webhookLogId);
+      throw err;
     }
+
+    void this.supabase.db.from('StripeWebhookLog').update({ status: 'processed', processedAt: new Date().toISOString() }).eq('id', webhookLogId);
 
     return { received: true };
   }

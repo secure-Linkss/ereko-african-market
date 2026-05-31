@@ -11,7 +11,9 @@ import Link from 'next/link';
 import { useProductDetails } from '@/services/products';
 import { useCartStore } from '@/store/cart';
 import { useWishlistStore } from '@/store/wishlist';
+import { useAuthStore } from '@/store/auth';
 import { motion } from 'framer-motion';
+import { apiClient } from '@/lib/api/client';
 
 const STORAGE_BADGE: Record<string, { label: string; variant: any }> = {
   ambient: { label: 'Ambient', variant: 'ambient' },
@@ -33,6 +35,30 @@ export default function ProductDetailPage() {
   const { data: product, isLoading, isError } = useProductDetails(slug);
   const addItem = useCartStore((s) => s.addItem);
   const { toggleWishlist, isInWishlist } = useWishlistStore();
+  const { user } = useAuthStore();
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifyStatus, setNotifyStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [notifyMsg, setNotifyMsg] = useState('');
+
+  async function handleNotifyMe() {
+    if (!product) return;
+    const email = notifyEmail || user?.email;
+    if (!email) { setNotifyMsg('Please enter your email address.'); setNotifyStatus('error'); return; }
+    setNotifyStatus('loading');
+    try {
+      const variant = product?.variants?.[selectedVariantIndex];
+      await apiClient.post('/api/v1/stock-notifications/subscribe', {
+        email,
+        productId: product.id,
+        variantId: variant?.id ?? undefined,
+      });
+      setNotifyStatus('success');
+      setNotifyMsg("We'll email you when this is back in stock.");
+    } catch (e: any) {
+      setNotifyStatus('error');
+      setNotifyMsg(e?.response?.data?.message ?? 'Failed to subscribe. Please try again.');
+    }
+  }
 
   const variant = product?.variants?.[selectedVariantIndex];
   const available = variant ? variant.stockOnHand - variant.stockReserved > 0 : false;
@@ -229,7 +255,36 @@ export default function ProductDetailPage() {
               <p className="text-sm text-amber-600 font-medium mb-4">Only {maxQty} left in stock!</p>
             )}
             {!available && (
-              <p className="text-sm text-destructive font-medium mb-4">Currently out of stock</p>
+              <div className="mb-4 space-y-3">
+                <p className="text-sm text-destructive font-medium">Currently out of stock</p>
+                {notifyStatus === 'success' ? (
+                  <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                    ✓ {notifyMsg}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    {!user?.email && (
+                      <input
+                        type="email"
+                        placeholder="Your email address"
+                        value={notifyEmail}
+                        onChange={e => setNotifyEmail(e.target.value)}
+                        className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNotifyMe}
+                      disabled={notifyStatus === 'loading'}
+                      className="whitespace-nowrap"
+                    >
+                      🔔 {notifyStatus === 'loading' ? 'Subscribing…' : 'Notify Me When Back in Stock'}
+                    </Button>
+                  </div>
+                )}
+                {notifyStatus === 'error' && <p className="text-xs text-destructive">{notifyMsg}</p>}
+              </div>
             )}
 
             <div className="flex items-center gap-4 mt-6">

@@ -10,6 +10,10 @@ import {
   orderStatusUpdateTemplate,
   adminNewOrderAlertTemplate,
   adminReturnAlertTemplate,
+  abandonedCartTemplate,
+  backInStockTemplate,
+  reviewRequestTemplate,
+  refundConfirmationTemplate,
   PasswordResetContext,
   OrderConfirmationContext,
   MagicLinkContext,
@@ -17,6 +21,10 @@ import {
   OrderStatusUpdateContext,
   AdminNewOrderAlertContext,
   AdminReturnAlertContext,
+  AbandonedCartContext,
+  BackInStockContext,
+  ReviewRequestContext,
+  RefundConfirmationContext,
 } from './email.templates';
 
 export interface SendEmailOptions {
@@ -199,5 +207,25 @@ export class NotificationsService implements OnModuleInit {
       html: opts.bodyHtml ?? `<p>${opts.bodyText}</p>`,
       text: opts.bodyText,
     });
+  }
+
+  async sendAbandonedCart(ctx: AbandonedCartContext & { email: string }): Promise<void> {
+    const template = abandonedCartTemplate(ctx);
+    await this.sendEmail({ to: ctx.email, subject: template.subject, html: template.html, text: template.text });
+  }
+
+  async sendBackInStock(ctx: BackInStockContext & { email: string }): Promise<void> {
+    const template = backInStockTemplate(ctx);
+    await this.sendEmail({ to: ctx.email, subject: template.subject, html: template.html, text: template.text });
+  }
+
+  async sendReviewRequest(ctx: ReviewRequestContext & { email: string }): Promise<void> {
+    const template = reviewRequestTemplate(ctx);
+    await this.sendEmail({ to: ctx.email, subject: template.subject, html: template.html, text: template.text });
+  }
+
+  async sendRefundConfirmation(ctx: RefundConfirmationContext & { email: string }): Promise<void> {
+    const template = refundConfirmationTemplate(ctx);
+    await this.sendEmail({ to: ctx.email, subject: template.subject, html: template.html, text: template.text });
   }
 }

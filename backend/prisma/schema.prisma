@@ -137,6 +137,18 @@ enum WebhookEventStatus {
   retrying
 }
 
+enum StripeWebhookStatus {
+  received
+  processed
+  failed
+  ignored
+}
+
+enum DeliveryPricingMode {
+  tiers
+  per_km
+}
+
 enum NotificationType {
   order_placed
   order_shipped
@@ -392,6 +404,9 @@ model Product {
   isPublished      Boolean          @default(false)
   version          Int              @default(1)
   ingredients      String?
+  discountEnabled  Boolean          @default(false)
+  discountPercent  Float?
+  discountBadge    String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   deletedAt        DateTime?
@@ -558,6 +573,8 @@ model Cart {
   loyaltyPointsRedeemed  Int        @default(0)
   loyaltyDiscountMinor   Int        @default(0)
   expiresAt              DateTime?
+  abandonedEmailSentAt   DateTime?
+  lastActiveAt           DateTime?
   createdAt              DateTime   @default(now())
   updatedAt              DateTime   @updatedAt
 
@@ -643,6 +660,10 @@ model Order {
   deliveredAt             DateTime?
   cancelledAt             DateTime?
   idempotencyKey          String?         @unique
+  discountCodeId          String?
+  deliveryDistanceKm      Float?
+  receiptPdfUrl           String?
+  reviewRequestSentAt     DateTime?
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
 
@@ -651,6 +672,7 @@ model Order {
   items                   OrderItem[]
   events                  OrderEvent[]
   returns                 Return[]
+  refunds                 OrderRefund[]
   deliverySlotBooking     DeliverySlotBooking?
 
   @@index([userId])
@@ -960,4 +982,173 @@ model WebhookEvent {
   @@index([endpointId])
   @@index([status])
   @@index([eventType])
+}
+
+// ─── CONTACT MESSAGES ────────────────────────────────────────────────────────
+
+model ContactMessage {
+  id        String    @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  phone     String?
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
+
+// ─── DISCOUNT CODES (separate from PromoCode — legacy table) ─────────────────
+
+model DiscountCode {
+  id                 String         @id @default(dbgenerated("(gen_random_uuid())::text"))
+  code               String         @unique
+  type               String
+  value              Float
+  minOrderValueMinor Int            @default(0)
+  maxUses            Int?
+  usesCount          Int            @default(0)
+  expiresAt          DateTime?
+  isActive           Boolean        @default(true)
+  customerId         String?
+  customerEmail      String?
+  description        String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @default(now())
+
+  @@index([code], map: "idx_discount_code")
+  @@index([isActive], map: "idx_discount_active")
+}
+
+model DiscountUsage {
+  id        String       @id @default(dbgenerated("(gen_random_uuid())::text"))
+  codeId    String
+  userId    String?
+  email     String?
+  orderId   String
+  usedAt    DateTime     @default(now())
+
+  @@unique([codeId, orderId], map: "uq_discount_usage_order")
+}
+
+// ─── STORE REVIEWS ────────────────────────────────────────────────────────────
+
+model StoreReview {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authorName   String    @map("author_name")
+  authorEmail  String?   @map("author_email")
+  rating       Int
+  comment      String
+  status       String    @default("pending")
+  source       String    @default("site")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+  moderatedAt  DateTime? @map("moderated_at")
+  moderatedBy  String?   @map("moderated_by")
+
+  @@map("StoreReview")
+}
+
+// ─── CARGO RATES ─────────────────────────────────────────────────────────────
+
+model cargo_rates {
+  id                 Int       @id @default(autoincrement())
+  mode               String    @unique @db.VarChar(20)
+  price_per_kg_minor Int       @default(0)
+  min_weight_kg      Decimal   @default(0.5) @db.Decimal(6, 2)
+  transit_days_min   Int       @default(7)
+  transit_days_max   Int       @default(14)
+  notes              String?
+  updated_at         DateTime? @default(now())
+  updated_by         String?   @db.VarChar(255)
+}
+
+// ─── DELIVERY DISTANCE SYSTEM ─────────────────────────────────────────────────
+
+model DeliverySettings {
+  id                String              @id @default(uuid())
+  storeId           String              @default("default") @unique
+  storePostcode     String              @default("E1 6RF")
+  maxRadiusKm       Float               @default(10)
+  pricingMode       DeliveryPricingMode @default(tiers)
+  perKmPriceMinor   Int?
+  baseFeePriceMinor Int?
+  isActive          Boolean             @default(true)
+  updatedAt         DateTime            @updatedAt
+  updatedBy         String?
+}
+
+model DeliveryTier {
+  id           String   @id @default(uuid())
+  label        String?
+  fromKm       Float
+  toKm         Float
+  priceMinor   Int
+  isActive     Boolean  @default(true)
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([fromKm, toKm])
+}
+
+// ─── ABANDONED CART LOG ───────────────────────────────────────────────────────
+
+model AbandonedCartLog {
+  id         String   @id @default(uuid())
+  cartId     String   @unique
+  email      String
+  sentAt     DateTime @default(now())
+  cartTotal  Int
+
+  @@index([email])
+}
+
+// ─── STOCK NOTIFICATIONS ──────────────────────────────────────────────────────
+
+model StockNotification {
+  id         String    @id @default(uuid())
+  email      String
+  productId  String
+  variantId  String?
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([email, productId, variantId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+// ─── STRIPE WEBHOOK LOG ───────────────────────────────────────────────────────
+
+model StripeWebhookLog {
+  id              String              @id @default(uuid())
+  stripeEventId   String              @unique
+  eventType       String
+  status          StripeWebhookStatus @default(received)
+  payload         Json
+  processingError String?
+  receivedAt      DateTime            @default(now())
+  processedAt     DateTime?
+
+  @@index([eventType])
+  @@index([status])
+  @@index([receivedAt])
+}
+
+// ─── ORDER REFUNDS ────────────────────────────────────────────────────────────
+
+model OrderRefund {
+  id                String   @id @default(uuid())
+  orderId           String
+  stripeRefundId    String?  @unique
+  amountMinor       Int
+  reason            String
+  notes             String?
+  processedBy       String
+  refundEmailSent   Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  order             Order    @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
 }

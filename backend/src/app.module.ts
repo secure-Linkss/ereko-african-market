@@ -35,6 +35,11 @@ import { SeoModule } from './modules/seo/seo.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { DiscountModule } from './modules/discounts/discount.module';
+import { DeliveryModule } from './modules/delivery/delivery.module';
+import { EmailJobsModule } from './modules/email-jobs/email-jobs.module';
+import { StockNotificationsModule } from './modules/stock-notifications/stock-notifications.module';
+import { PdfModule } from './modules/pdf/pdf.module';
+import { RefundsModule } from './modules/refunds/refunds.module';
 
 const hasRedis = (): boolean =>
   !!(process.env.REDIS_URL || process.env.REDIS_HOST);
@@ -128,6 +133,11 @@ function buildBullModule(): DynamicModule[] {
     ContactModule,
     ReviewsModule,
     DiscountModule,
+    DeliveryModule,
+    EmailJobsModule,
+    StockNotificationsModule,
+    PdfModule,
+    RefundsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SupabaseService } from '../../supabase/supabase.service';
 import { encodeCursor, decodeCursor } from '../../common/utils/pagination.util';
 import { v4 as uuidv4 } from 'uuid';
@@ -44,7 +45,10 @@ export interface WarehouseStockRow {
 export class InventoryService {
   private readonly logger = new Logger(InventoryService.name);
 
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async adjustStock(
     warehouseId: string,
@@ -64,7 +68,7 @@ export class InventoryService {
 
     const { data: variant } = await this.supabase.db
       .from('ProductVariant')
-      .select('id, stockOnHand, safetyStockThreshold')
+      .select('id, productId, stockOnHand, safetyStockThreshold')
       .eq('id', variantId)
       .single();
     if (!variant) throw new NotFoundException(`Variant ${variantId} not found`);
@@ -106,10 +110,16 @@ export class InventoryService {
       });
     }
 
+    const prevStockOnHand = variant.stockOnHand;
     await this.supabase.db
       .from('ProductVariant')
       .update({ stockOnHand: variant.stockOnHand + adjustmentQty, updatedAt: now })
       .eq('id', variantId);
+
+    // Emit back-in-stock event when stock transitions from 0 to positive
+    if (prevStockOnHand === 0 && adjustmentQty > 0) {
+      this.eventEmitter.emit('stock.restocked', { variantId, productId: variant.productId });
+    }
 
     // InventoryLedger has NO updatedAt column
     await this.supabase.db.from('InventoryLedger').insert({

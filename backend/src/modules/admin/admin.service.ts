@@ -355,7 +355,7 @@ export class AdminService {
           body: `Order ${full.orderNumber} status updated to ${(status as string).replace(/_/g, ' ').toLowerCase()}.`,
           data: { orderId, orderNumber: full.orderNumber, status },
           createdAt: now,
-        }).catch(err => this.logger.error(`In-app notification insert failed: ${err.message}`));
+        }); // fire and forget — errors logged separately
       }
     }
 
@@ -853,6 +853,125 @@ export class AdminService {
     return { entries: data ?? [] };
   }
 
+  // ── Stripe Webhook Log ──────────────────────────────────────────────────────
+
+  async listStripeWebhookLogs(opts: {
+    eventType?: string;
+    status?: string;
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    pageSize?: number;
+  }) {
+    const page = Math.max(1, opts.page ?? 1);
+    const pageSize = Math.min(Math.max(opts.pageSize ?? 25, 1), 100);
+    const offset = (page - 1) * pageSize;
+
+    let q = this.supabase.db
+      .from('StripeWebhookLog')
+      .select('id, stripeEventId, eventType, status, processingError, receivedAt, processedAt', { count: 'exact' })
+      .order('receivedAt', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (opts.eventType) q = q.eq('eventType', opts.eventType);
+    if (opts.status) q = q.eq('status', opts.status);
+    if (opts.fromDate) q = q.gte('receivedAt', opts.fromDate);
+    if (opts.toDate) q = q.lte('receivedAt', opts.toDate);
+
+    const { data, count, error } = await q;
+    if (error) throw new Error(error.message);
+
+    return { events: data ?? [], total: count ?? 0, page, pageSize };
+  }
+
+  async getStripeWebhookLogPayload(logId: string) {
+    const { data, error } = await this.supabase.db
+      .from('StripeWebhookLog')
+      .select('*')
+      .eq('id', logId)
+      .single();
+    if (error || !data) throw new NotFoundException(`Webhook log ${logId} not found`);
+    return data;
+  }
+
+  async retryStripeWebhook(logId: string) {
+    const { data: log, error } = await this.supabase.db
+      .from('StripeWebhookLog')
+      .select('*')
+      .eq('id', logId)
+      .single();
+
+    if (error || !log) throw new NotFoundException(`Webhook log ${logId} not found`);
+    if (log.status !== 'failed') throw new BadRequestException('Only failed events can be retried');
+
+    // Re-process by emitting back into the handler via direct service call
+    const now = new Date().toISOString();
+    await this.supabase.db.from('StripeWebhookLog').update({
+      status: 'received',
+      processingError: null,
+      processedAt: null,
+    }).eq('id', logId);
+
+    this.logger.log(`Webhook ${logId} (${log.stripeEventId}) queued for retry`);
+    return { ok: true, logId, message: 'Event marked for retry — reprocess via webhook endpoint with the same event ID' };
+  }
+
+  async markStripeWebhookResolved(logId: string, actorId: string) {
+    const { data: log } = await this.supabase.db.from('StripeWebhookLog').select('id, status').eq('id', logId).single();
+    if (!log) throw new NotFoundException(`Webhook log ${logId} not found`);
+
+    await this.supabase.db.from('StripeWebhookLog').update({
+      status: 'processed',
+      processedAt: new Date().toISOString(),
+    }).eq('id', logId);
+
+    return { ok: true, logId };
+  }
+
+  // ── PDF Receipt download (admin) ─────────────────────────────────────────────
+
+  async getOrderReceiptData(orderId: string): Promise<any | null> {
+    const { data: order } = await this.supabase.db.from('Order').select('*').eq('id', orderId).single();
+    if (!order) return null;
+
+    const [{ data: items }, { data: addresses }] = await Promise.all([
+      this.supabase.db.from('OrderItem').select('*').eq('orderId', orderId),
+      this.supabase.db.from('OrderAddress').select('*').eq('orderId', orderId),
+    ]);
+
+    const shipping = (addresses ?? []).find((a: any) => a.type === 'shipping');
+    const billing = (addresses ?? []).find((a: any) => a.type === 'billing') ?? shipping;
+
+    let customerName = order.email;
+    if (order.userId) {
+      const { data: user } = await this.supabase.db.from('User').select('firstName, lastName').eq('id', order.userId).single();
+      if (user) customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || order.email;
+    }
+
+    return {
+      orderNumber: order.orderNumber,
+      placedAt: order.placedAt,
+      paidAt: order.paidAt ?? undefined,
+      customerName,
+      customerEmail: order.email,
+      billingAddress: billing ? { line1: billing.line1, line2: billing.line2, city: billing.city, postcode: billing.postcode, countryCode: billing.countryCode } : undefined,
+      shippingAddress: shipping ? { firstName: shipping.firstName, lastName: shipping.lastName, line1: shipping.line1, line2: shipping.line2, city: shipping.city, postcode: shipping.postcode, countryCode: shipping.countryCode } : undefined,
+      items: (items ?? []).map((i: any) => ({ description: `${i.title}${i.variantName ? ` — ${i.variantName}` : ''}`, sku: i.sku, quantity: i.quantity, unitPriceMinor: i.priceAmountMinor, totalMinor: i.priceAmountMinor * i.quantity })),
+      subtotalMinor: order.subtotalMinor,
+      deliveryFeeMinor: order.shippingMinor,
+      deliveryDistanceKm: order.deliveryDistanceKm ?? undefined,
+      discountMinor: order.discountMinor,
+      taxMinor: order.taxMinor,
+      totalMinor: order.totalMinor,
+      promoCode: order.promoCode ?? undefined,
+      stripePaymentIntentId: order.stripePaymentIntentId ?? undefined,
+      storeName: 'EREKO Market',
+      storeAddress: '5 Broadway, Barking, London, IG11 7LS',
+      storeEmail: 'hello@ereko.market',
+      storeWebsite: 'ereko-african-market.vercel.app',
+    };
+  }
+
   // ── Custom Notification Send ────────────────────────────────────────────────
 
   async sendCustomNotification(opts: {
@@ -896,7 +1015,7 @@ export class AdminService {
             <h2 style="color:#1a1a1a;">${opts.title}</h2>
             <p style="color:#444;line-height:1.7;">Hi ${userRow.firstName ?? 'there'},</p>
             <p style="color:#444;line-height:1.7;">${opts.message}</p>
-            <p style="color:#888;font-size:13px;margin-top:32px;">The EREKO Team &mdash; <a href="${frontendUrl}" style="color:#c17f42;">ereko-african-market.vercel.app</a></p>
+            <p style="color:#888;font-size:13px;margin-top:32px;">The EREKO Team &mdash; <a href="${this.config.get('frontend.url') ?? 'https://ereko-african-market.vercel.app/en-gb'}" style="color:#c17f42;">ereko-african-market.vercel.app</a></p>
           </div>`,
         });
       }

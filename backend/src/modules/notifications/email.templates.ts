@@ -748,3 +748,199 @@ EREKO Admin Notifications
 
   return { subject: `🔄 Return Request: ${ctx.orderNumber}`, html, text };
 }
+
+// ─── Abandoned Cart ───────────────────────────────────────────────────────────
+
+export interface AbandonedCartItem {
+  title: string;
+  variantName: string;
+  quantity: number;
+  price: string;
+  imageUrl?: string;
+}
+
+export interface AbandonedCartContext {
+  firstName: string;
+  cartUrl: string;
+  cartSubtotal: string;
+  items: AbandonedCartItem[];
+  unsubscribeUrl: string;
+}
+
+export function abandonedCartTemplate(ctx: AbandonedCartContext): { subject: string; html: string; text: string } {
+  const firstName = escapeHtml(ctx.firstName);
+
+  const itemRows = ctx.items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid #f0ece8;font-size:14px;color:#444;">
+          ${escapeHtml(item.title)}${item.variantName ? ` — <span style="color:#888;">${escapeHtml(item.variantName)}</span>` : ''}
+        </td>
+        <td style="padding:12px 0;border-bottom:1px solid #f0ece8;font-size:14px;color:#888;text-align:center;">×${item.quantity}</td>
+        <td style="padding:12px 0;border-bottom:1px solid #f0ece8;font-size:14px;color:#c17f42;font-weight:700;text-align:right;">${escapeHtml(item.price)}</td>
+      </tr>`,
+    )
+    .join('');
+
+  const content = `
+    <h2 class="greeting">You left something behind 🛒</h2>
+    <p class="text">Hi ${firstName}, you left some great items in your cart. Your basket is still saved — complete your order before they sell out!</p>
+    <table class="order-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th style="text-align:center;">Qty</th>
+          <th style="text-align:right;">Price</th>
+        </tr>
+      </thead>
+      <tbody>${itemRows}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" style="font-size:14px;font-weight:700;color:#1a1a1a;padding-top:12px;">Subtotal</td>
+          <td style="font-size:14px;font-weight:700;color:#c17f42;text-align:right;padding-top:12px;">${escapeHtml(ctx.cartSubtotal)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${ctx.cartUrl}" class="btn" style="display:inline-block;background:#c17f42;color:#fff;font-size:16px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">Complete Your Order →</a>
+    </div>
+    <p class="small-text">This offer won't last forever. Grab your items before they sell out!</p>
+    <hr class="divider" />
+    <p class="small-text" style="text-align:center;"><a href="${ctx.unsubscribeUrl}" style="color:#aaa;">Unsubscribe from cart reminders</a></p>`;
+
+  const html = baseLayout('You left something behind', content);
+  const text = `Hi ${ctx.firstName},\n\nYou left items in your cart at EREKO Market.\n\nItems:\n${ctx.items.map((i) => `- ${i.title} (${i.variantName}) x${i.quantity} — ${i.price}`).join('\n')}\n\nSubtotal: ${ctx.cartSubtotal}\n\nComplete your order: ${ctx.cartUrl}\n\nUnsubscribe: ${ctx.unsubscribeUrl}`;
+
+  return { subject: "You left something behind 🛒", html, text };
+}
+
+// ─── Back-in-Stock ────────────────────────────────────────────────────────────
+
+export interface BackInStockContext {
+  firstName?: string;
+  productName: string;
+  productDescription?: string;
+  productPrice: string;
+  productUrl: string;
+  productImageUrl?: string;
+  unsubscribeUrl: string;
+}
+
+export function backInStockTemplate(ctx: BackInStockContext): { subject: string; html: string; text: string } {
+  const firstName = ctx.firstName ? escapeHtml(ctx.firstName) : 'there';
+
+  const content = `
+    <h2 class="greeting">${escapeHtml(ctx.productName)} is back in stock! 🎉</h2>
+    <p class="text">Hi ${firstName}, great news! An item on your wishlist is back in stock.</p>
+    ${ctx.productImageUrl ? `<div style="text-align:center;margin:16px 0;"><img src="${ctx.productImageUrl}" alt="${escapeHtml(ctx.productName)}" width="200" style="border-radius:12px;object-fit:cover;max-width:100%;" /></div>` : ''}
+    <div class="highlight-box">
+      <strong style="font-size:16px;">${escapeHtml(ctx.productName)}</strong><br />
+      ${ctx.productDescription ? `<span style="color:#666;">${escapeHtml(ctx.productDescription)}</span><br />` : ''}
+      <span style="color:#c17f42;font-weight:700;font-size:18px;margin-top:6px;display:inline-block;">${escapeHtml(ctx.productPrice)}</span>
+    </div>
+    <p class="small-text" style="color:#c17f42;font-weight:600;">⚡ This item is in limited supply — grab it before it sells out again.</p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${ctx.productUrl}" class="btn" style="display:inline-block;background:#c17f42;color:#fff;font-size:16px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">Shop Now →</a>
+    </div>
+    <hr class="divider" />
+    <p class="small-text" style="text-align:center;"><a href="${ctx.unsubscribeUrl}" style="color:#aaa;">Unsubscribe from stock alerts</a></p>`;
+
+  const html = baseLayout(`${ctx.productName} is back in stock!`, content);
+  const text = `Hi ${ctx.firstName ?? 'there'},\n\n${ctx.productName} is back in stock at EREKO Market!\n\nPrice: ${ctx.productPrice}\n\nShop now: ${ctx.productUrl}\n\nNote: Limited supply — grab it before it sells out again.\n\nUnsubscribe: ${ctx.unsubscribeUrl}`;
+
+  return { subject: `${ctx.productName} is back in stock! 🎉`, html, text };
+}
+
+// ─── Review Request ───────────────────────────────────────────────────────────
+
+export interface ReviewRequestProduct {
+  id: string;
+  title: string;
+  imageUrl?: string;
+  reviewUrl: string;
+}
+
+export interface ReviewRequestContext {
+  firstName: string;
+  orderNumber: string;
+  products: ReviewRequestProduct[];
+  unsubscribeUrl: string;
+}
+
+export function reviewRequestTemplate(ctx: ReviewRequestContext): { subject: string; html: string; text: string } {
+  const firstName = escapeHtml(ctx.firstName);
+
+  const starLinks = (productId: string, reviewUrl: string) =>
+    [1, 2, 3, 4, 5]
+      .map(
+        (n) =>
+          `<a href="${reviewUrl}&rating=${n}" style="font-size:28px;text-decoration:none;color:${n <= 4 ? '#f59e0b' : '#c17f42'};" title="${n} star${n > 1 ? 's' : ''}">${'★'}</a>`,
+      )
+      .join('');
+
+  const productCards = ctx.products
+    .map(
+      (p) => `
+    <div style="background:#faf7f4;border:1px solid #ece8e3;border-radius:12px;padding:20px;margin:12px 0;">
+      ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${escapeHtml(p.title)}" width="80" style="border-radius:8px;float:left;margin-right:16px;object-fit:cover;" />` : ''}
+      <div>
+        <strong style="font-size:15px;">${escapeHtml(p.title)}</strong><br />
+        <div style="margin:10px 0 4px;letter-spacing:2px;">${starLinks(p.id, p.reviewUrl)}</div>
+        <a href="${p.reviewUrl}" style="font-size:13px;color:#c17f42;font-weight:600;">Write a full review →</a>
+      </div>
+      <div style="clear:both;"></div>
+    </div>`,
+    )
+    .join('');
+
+  const content = `
+    <h2 class="greeting">How was your order? ⭐</h2>
+    <p class="text">Hi ${firstName}, your order <strong>#${escapeHtml(ctx.orderNumber)}</strong> has been delivered. We'd love to hear what you think!</p>
+    ${productCards}
+    <p class="text" style="margin-top:20px;">Your review helps other EREKO shoppers discover great African produce. Thank you for being part of our community! 🙏</p>
+    <hr class="divider" />
+    <p class="small-text" style="text-align:center;"><a href="${ctx.unsubscribeUrl}" style="color:#aaa;">Unsubscribe from review requests</a></p>`;
+
+  const html = baseLayout('How was your order?', content);
+  const text = `Hi ${ctx.firstName},\n\nYour order #${ctx.orderNumber} has been delivered. We'd love your feedback!\n\nReview your items:\n${ctx.products.map((p) => `- ${p.title}: ${p.reviewUrl}`).join('\n')}\n\nThank you for shopping with EREKO!\n\nUnsubscribe: ${ctx.unsubscribeUrl}`;
+
+  return { subject: "How was your order? Share your experience ⭐", html, text };
+}
+
+// ─── Refund Confirmation ──────────────────────────────────────────────────────
+
+export interface RefundConfirmationContext {
+  firstName: string;
+  orderNumber: string;
+  refundAmountFormatted: string;
+  reason: string;
+  supportEmail: string;
+  orderUrl: string;
+}
+
+export function refundConfirmationTemplate(ctx: RefundConfirmationContext): { subject: string; html: string; text: string } {
+  const firstName = escapeHtml(ctx.firstName);
+
+  const content = `
+    <h2 class="greeting">Your refund has been processed 💳</h2>
+    <p class="text">Hi ${firstName}, we've processed your refund for order <strong>#${escapeHtml(ctx.orderNumber)}</strong>.</p>
+    <div class="highlight-box">
+      <table style="width:100%;">
+        <tr><td style="font-size:14px;color:#666;padding:4px 0;">Order</td><td style="font-size:14px;font-weight:600;color:#1a1a1a;text-align:right;">#${escapeHtml(ctx.orderNumber)}</td></tr>
+        <tr><td style="font-size:14px;color:#666;padding:4px 0;">Refund Amount</td><td style="font-size:22px;font-weight:900;color:#c17f42;text-align:right;">${escapeHtml(ctx.refundAmountFormatted)}</td></tr>
+        <tr><td style="font-size:14px;color:#666;padding:4px 0;">Reason</td><td style="font-size:14px;color:#444;text-align:right;">${escapeHtml(ctx.reason)}</td></tr>
+        <tr><td style="font-size:14px;color:#666;padding:4px 0;">Timeline</td><td style="font-size:14px;color:#444;text-align:right;">3–5 business days</td></tr>
+      </table>
+    </div>
+    <p class="text">The refund will appear on your original payment method within <strong>3–5 business days</strong>, depending on your bank.</p>
+    <p class="text">If you have any questions, please don't hesitate to contact us at <a href="mailto:${ctx.supportEmail}" style="color:#c17f42;">${ctx.supportEmail}</a>.</p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${ctx.orderUrl}" class="btn" style="display:inline-block;background:#c17f42;color:#fff;font-size:16px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">View Order →</a>
+    </div>`;
+
+  const html = baseLayout('Refund Processed', content);
+  const text = `Hi ${ctx.firstName},\n\nYour refund for order #${ctx.orderNumber} has been processed.\n\nRefund Amount: ${ctx.refundAmountFormatted}\nReason: ${ctx.reason}\nTimeline: 3–5 business days\n\nQuestions? Email us at ${ctx.supportEmail}\n\nView your order: ${ctx.orderUrl}`;
+
+  return { subject: "Your refund has been processed 💳", html, text };
+}
