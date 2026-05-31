@@ -44,6 +44,17 @@ export interface StartCheckoutResponse {
   cart: Cart;
   stockReservedUntil: string; // ISO Timestamp (15 minute hold)
   availableDeliverySlots: DeliverySlot[];
+  deliveryFee?: {
+    distanceKm: number;
+    feeMinor: number;
+    feeLabel: string;
+  };
+  discount?: {
+    applied: boolean;
+    code: string;
+    discountAmountMinor: number;
+    message: string;
+  } | null;
 }
 
 export interface PaymentIntentRequest {
