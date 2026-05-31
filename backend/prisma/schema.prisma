@@ -1065,16 +1065,18 @@ model cargo_rates {
 // ─── DELIVERY DISTANCE SYSTEM ─────────────────────────────────────────────────
 
 model DeliverySettings {
-  id                String              @id @default(uuid())
-  storeId           String              @default("default") @unique
-  storePostcode     String              @default("E1 6RF")
-  maxRadiusKm       Float               @default(10)
-  pricingMode       DeliveryPricingMode @default(tiers)
-  perKmPriceMinor   Int?
-  baseFeePriceMinor Int?
-  isActive          Boolean             @default(true)
-  updatedAt         DateTime            @updatedAt
-  updatedBy         String?
+  id                         String              @id @default(uuid())
+  storeId                    String              @default("default") @unique
+  storePostcode              String              @default("IG11 7LS")
+  maxRadiusKm                Float               @default(15)
+  pricingMode                DeliveryPricingMode @default(tiers)
+  perKmPriceMinor            Int?
+  baseFeePriceMinor          Int?
+  nextDayPremiumMinor        Int                 @default(200)
+  freeDeliveryThresholdMinor Int                 @default(5500)
+  isActive                   Boolean             @default(true)
+  updatedAt                  DateTime            @updatedAt
+  updatedBy                  String?
 }
 
 model DeliveryTier {

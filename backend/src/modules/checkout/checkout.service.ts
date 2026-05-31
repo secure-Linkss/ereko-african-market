@@ -23,7 +23,7 @@ import { DiscountService } from '../discounts/discount.service';
 import { DeliveryService } from '../delivery/delivery.service';
 import { v4 as uuidv4 } from 'uuid';
 
-const FREE_SHIPPING_THRESHOLD = 5500;
+// FREE_SHIPPING_THRESHOLD removed — now stored in DeliverySettings.freeDeliveryThresholdMinor
 
 function generateOrderNumber(): string {
   const date = new Date();
@@ -286,14 +286,17 @@ export class CheckoutService {
 
     // Distance-based delivery fee (skip for Click & Collect — customer comes to store)
     const isClickAndCollect = dto.isClickAndCollect === true;
+    const deliverySpeed = dto.deliverySpeed ?? 'standard';
     await this.deliveryService.seedDefaultTiers();
     const deliveryResult = isClickAndCollect
-      ? { distanceKm: 0, feeMinor: 0, feeLabel: 'Free (Click & Collect)', withinRadius: true, blocked: false }
-      : await this.deliveryService.calculateDeliveryFee(dto.postcode);
+      ? { distanceKm: 0, feeMinor: 0, feeLabel: 'Free (Click & Collect)', withinRadius: true, blocked: false, freeDeliveryThresholdMinor: 5500, nextDayPremiumMinor: 200 }
+      : await this.deliveryService.calculateDeliveryFee(dto.postcode, deliverySpeed);
     if (deliveryResult.blocked) {
       throw new BadRequestException(deliveryResult.blockReason ?? 'Delivery not available to this area');
     }
-    const shipping = isClickAndCollect ? 0 : (discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : deliveryResult.feeMinor);
+    // Use DB-configured free delivery threshold (falls back to 5500 if not set)
+    const freeThreshold = deliveryResult.freeDeliveryThresholdMinor ?? 5500;
+    const shipping = isClickAndCollect ? 0 : (discountedSubtotal >= freeThreshold ? 0 : deliveryResult.feeMinor);
     const total = discountedSubtotal + shipping;
     const now = new Date().toISOString();
     const orderId = uuidv4();

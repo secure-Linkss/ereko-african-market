@@ -37,6 +37,7 @@ export interface StartCheckoutRequest {
   lastName?: string;
   discountCode?: string;
   isClickAndCollect?: boolean;
+  deliverySpeed?: 'standard' | 'nextday';
 }
 
 export interface StartCheckoutResponse {
@@ -49,6 +50,8 @@ export interface StartCheckoutResponse {
     distanceKm: number;
     feeMinor: number;
     feeLabel: string;
+    freeDeliveryThresholdMinor?: number;
+    nextDayPremiumMinor?: number;
   };
   discount?: {
     applied: boolean;

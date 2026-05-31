@@ -17,6 +17,8 @@ export interface DeliveryFeeResult {
   withinRadius: boolean;
   blocked: boolean;
   blockReason?: string;
+  freeDeliveryThresholdMinor?: number;
+  nextDayPremiumMinor?: number;
 }
 
 function haversineKm(a: GeoCoords, b: GeoCoords): number {
@@ -87,6 +89,8 @@ export class DeliveryService {
     if (dto.pricingMode !== undefined) settingsData.pricingMode = dto.pricingMode;
     if (dto.perKmPriceMinor !== undefined) settingsData.perKmPriceMinor = dto.perKmPriceMinor;
     if (dto.baseFeePriceMinor !== undefined) settingsData.baseFeePriceMinor = dto.baseFeePriceMinor;
+    if (dto.nextDayPremiumMinor !== undefined) settingsData.nextDayPremiumMinor = dto.nextDayPremiumMinor;
+    if (dto.freeDeliveryThresholdMinor !== undefined) settingsData.freeDeliveryThresholdMinor = dto.freeDeliveryThresholdMinor;
 
     if (existing) {
       await this.supabase.db.from('DeliverySettings').update(settingsData).eq('storeId', 'default');
@@ -137,11 +141,25 @@ export class DeliveryService {
         id: uuidv4(),
         storeId: 'default',
         storePostcode: 'IG11 7LS',
-        maxRadiusKm: 10,
+        maxRadiusKm: 15,
         pricingMode: 'tiers',
+        nextDayPremiumMinor: 200,
+        freeDeliveryThresholdMinor: 5500,
         isActive: true,
         updatedAt: now,
       });
+    } else {
+      // Backfill new columns on existing row if not set
+      const updates: Record<string, any> = {};
+      if ((settingsExist as any).nextDayPremiumMinor === null || (settingsExist as any).nextDayPremiumMinor === undefined) {
+        updates.nextDayPremiumMinor = 200;
+      }
+      if ((settingsExist as any).freeDeliveryThresholdMinor === null || (settingsExist as any).freeDeliveryThresholdMinor === undefined) {
+        updates.freeDeliveryThresholdMinor = 5500;
+      }
+      if (Object.keys(updates).length > 0) {
+        await this.supabase.db.from('DeliverySettings').update({ ...updates, updatedAt: now }).eq('storeId', 'default');
+      }
     }
   }
 
@@ -169,12 +187,23 @@ export class DeliveryService {
 
   // ─── Calculate Fee ────────────────────────────────────────────────────────────
 
-  async calculateDeliveryFee(customerPostcode: string): Promise<DeliveryFeeResult> {
+  async calculateDeliveryFee(
+    customerPostcode: string,
+    deliverySpeed: 'standard' | 'nextday' = 'standard',
+  ): Promise<DeliveryFeeResult> {
     const [settings, tiers] = await Promise.all([this.getSettings(), this.getTiers()]);
+
+    const freeThreshold = settings?.freeDeliveryThresholdMinor ?? 5500;
+    const nextDayPremium = settings?.nextDayPremiumMinor ?? 200;
 
     if (!settings) {
       this.logger.warn('No delivery settings found, using free delivery');
-      return { distanceKm: 0, feeMinor: 0, feeLabel: 'Standard delivery', withinRadius: true, blocked: false };
+      return {
+        distanceKm: 0, feeMinor: 0, feeLabel: 'Standard delivery',
+        withinRadius: true, blocked: false,
+        freeDeliveryThresholdMinor: freeThreshold,
+        nextDayPremiumMinor: nextDayPremium,
+      };
     }
 
     const storeCoords = await this.geocodePostcode(settings.storePostcode);
@@ -182,14 +211,15 @@ export class DeliveryService {
 
     if (!storeCoords || !customerCoords) {
       this.logger.warn(`Could not geocode postcodes: store=${settings.storePostcode} customer=${customerPostcode}`);
-      // Fallback: allow delivery with a standard fee to not block the checkout
-      const fallbackFee = tiers[0]?.priceMinor ?? 399;
+      const fallbackFee = (tiers[0]?.priceMinor ?? 399) + (deliverySpeed === 'nextday' ? nextDayPremium : 0);
       return {
         distanceKm: 0,
         feeMinor: fallbackFee,
-        feeLabel: 'Delivery',
+        feeLabel: deliverySpeed === 'nextday' ? 'Next Day Delivery' : 'Delivery',
         withinRadius: true,
         blocked: false,
+        freeDeliveryThresholdMinor: freeThreshold,
+        nextDayPremiumMinor: nextDayPremium,
       };
     }
 
@@ -203,32 +233,43 @@ export class DeliveryService {
         withinRadius: false,
         blocked: true,
         blockReason: `Sorry, we don't deliver to your area. Our current delivery radius is ${settings.maxRadiusKm} km.`,
+        freeDeliveryThresholdMinor: freeThreshold,
+        nextDayPremiumMinor: nextDayPremium,
       };
     }
 
-    let feeMinor = 0;
-    let feeLabel = 'Delivery';
+    let baseFeeMinor = 0;
+    let baseLabel = 'Delivery';
 
     if (settings.pricingMode === 'per_km') {
       const baseMinor = settings.baseFeePriceMinor ?? 0;
       const perKm = settings.perKmPriceMinor ?? 30;
-      feeMinor = baseMinor + Math.round(distanceKm * perKm);
-      feeLabel = `Delivery (${distanceKm.toFixed(1)} km × ${(perKm / 100).toFixed(2)}/km)`;
+      baseFeeMinor = baseMinor + Math.round(distanceKm * perKm);
+      baseLabel = `Delivery (${distanceKm.toFixed(1)} km × £${(perKm / 100).toFixed(2)}/km)`;
     } else {
-      // Tier-based pricing
       const matchedTier = tiers.find(
         (t: any) => distanceKm >= t.fromKm && distanceKm <= t.toKm,
       ) ?? tiers[tiers.length - 1];
 
       if (matchedTier) {
-        feeMinor = matchedTier.priceMinor;
-        feeLabel = `Delivery (${distanceKm.toFixed(1)} km)${matchedTier.label ? ` — ${matchedTier.label}` : ''}`;
+        baseFeeMinor = matchedTier.priceMinor;
+        baseLabel = `Delivery (${distanceKm.toFixed(1)} km)${matchedTier.label ? ` — ${matchedTier.label}` : ''}`;
       } else {
-        feeMinor = 399;
-        feeLabel = `Delivery (${distanceKm.toFixed(1)} km)`;
+        baseFeeMinor = 399;
+        baseLabel = `Delivery (${distanceKm.toFixed(1)} km)`;
       }
     }
 
-    return { distanceKm, feeMinor, feeLabel, withinRadius: true, blocked: false };
+    const premium = deliverySpeed === 'nextday' ? nextDayPremium : 0;
+    const feeMinor = baseFeeMinor + premium;
+    const feeLabel = deliverySpeed === 'nextday'
+      ? `Next Day Delivery (${distanceKm.toFixed(1)} km)`
+      : baseLabel;
+
+    return {
+      distanceKm, feeMinor, feeLabel, withinRadius: true, blocked: false,
+      freeDeliveryThresholdMinor: freeThreshold,
+      nextDayPremiumMinor: nextDayPremium,
+    };
   }
 }

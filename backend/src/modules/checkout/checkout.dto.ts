@@ -117,6 +117,11 @@ export class StartCheckoutDto {
   @IsOptional()
   @IsBoolean()
   isClickAndCollect?: boolean;
+
+  @ApiPropertyOptional({ enum: ['standard', 'nextday'], description: 'Delivery speed — affects fee calculation' })
+  @IsOptional()
+  @IsEnum(['standard', 'nextday'])
+  deliverySpeed?: 'standard' | 'nextday';
 }
 
 export class PaymentIntentDto {

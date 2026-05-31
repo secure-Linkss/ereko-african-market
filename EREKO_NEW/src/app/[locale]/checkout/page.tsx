@@ -11,6 +11,7 @@ import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
 import { useStartCheckout, useCreatePaymentIntent, useConfirmCheckout, useSyncCart, useConfirmInStore } from '@/services/checkout';
 import { useValidateDiscount, ValidateDiscountResponse } from '@/services/discounts';
+import { useDeliverySettings } from '@/services/admin';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useForm } from 'react-hook-form';
@@ -165,11 +166,36 @@ export default function CheckoutPage() {
 
   const subtotal = getSubtotalMinor();
   const isCollect = fulfillment === 'collect';
-  const activeShipping = subtotal >= 5500 ? 0 : shippingMinor;
-  // Use server-calculated delivery fee after checkout started; fall back to local estimate
+
+  // Fetch delivery settings to get real free threshold + next-day premium
+  const { data: deliverySettingsData } = useDeliverySettings();
+  // Server-returned delivery fee (set after startCheckout call)
   const [serverDeliveryFee, setServerDeliveryFee] = React.useState<{ feeMinor: number; feeLabel: string; distanceKm: number } | null>(null);
-  const deliveryFee = isCollect ? 0 : (serverDeliveryFee?.feeMinor ?? (activeShipping || 399));
-  const deliveryFeeLabel = isCollect ? 'Free (Click & Collect)' : (serverDeliveryFee?.feeLabel ?? 'Delivery');
+  // Free delivery threshold + next-day premium — from DB settings (fallback to sensible defaults)
+  const [freeThreshold, setFreeThreshold] = React.useState(
+    deliverySettingsData?.settings?.freeDeliveryThresholdMinor ?? 5500
+  );
+  const [nextDayPremium, setNextDayPremium] = React.useState(
+    deliverySettingsData?.settings?.nextDayPremiumMinor ?? 200
+  );
+  // Sync thresholds when settings load
+  React.useEffect(() => {
+    if (deliverySettingsData?.settings) {
+      setFreeThreshold(deliverySettingsData.settings.freeDeliveryThresholdMinor ?? 5500);
+      setNextDayPremium(deliverySettingsData.settings.nextDayPremiumMinor ?? 200);
+    }
+  }, [deliverySettingsData]);
+
+  // Watch delivery speed from address form to update pre-start estimate
+  const selectedDeliverySpeed = addressForm.watch('deliveryMethod') as 'standard' | 'nextday' | undefined;
+
+  // Base fee estimate (used before startCheckout; after startCheckout serverDeliveryFee takes over)
+  const baseShippingEstimate = subtotal >= freeThreshold ? 0 : (shippingMinor || 399);
+  const speedPremium = !isCollect && selectedDeliverySpeed === 'nextday' ? nextDayPremium : 0;
+  const estimatedDeliveryFee = isCollect ? 0 : (baseShippingEstimate > 0 ? baseShippingEstimate + speedPremium : 0);
+
+  const deliveryFee = isCollect ? 0 : (serverDeliveryFee !== null ? serverDeliveryFee.feeMinor : estimatedDeliveryFee);
+  const deliveryFeeLabel = isCollect ? 'Free (Click & Collect)' : (serverDeliveryFee?.feeLabel ?? (selectedDeliverySpeed === 'nextday' ? 'Next Day Delivery' : 'Delivery'));
   const promoDiscountMinor = promoResult?.valid ? promoResult.discountAmountMinor : 0;
   const total = Math.max(0, subtotal - promoDiscountMinor) + deliveryFee;
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
@@ -270,12 +296,19 @@ export default function CheckoutPage() {
         firstName: data.firstName,
         lastName: data.lastName,
         isClickAndCollect: isCollect,
+        deliverySpeed: isCollect ? 'standard' : ((data as any).deliveryMethod ?? 'standard'),
         discountCode: promoResult?.valid ? promoResult.code : (promoCode ?? undefined),
       });
 
-      // Update delivery fee from server response
+      // Update delivery fee and thresholds from server response
       if (startRes.deliveryFee) {
         setServerDeliveryFee(startRes.deliveryFee);
+        if (startRes.deliveryFee.freeDeliveryThresholdMinor != null) {
+          setFreeThreshold(startRes.deliveryFee.freeDeliveryThresholdMinor);
+        }
+        if (startRes.deliveryFee.nextDayPremiumMinor != null) {
+          setNextDayPremium(startRes.deliveryFee.nextDayPremiumMinor);
+        }
       }
 
       // 3a. Pay in store — skip Stripe, confirm directly
@@ -525,31 +558,56 @@ export default function CheckoutPage() {
                         {addressForm.formState.errors.city && <p className="text-xs text-destructive mt-1">{String(addressForm.formState.errors.city.message)}</p>}
                       </div>
 
-                      {/* Delivery Method */}
+                      {/* Delivery Speed */}
                       <div className="pt-2 border-t border-border">
                         <h3 className="font-semibold mb-3 flex items-center gap-2"><Truck className="w-4 h-4" /> Delivery Speed</h3>
                         <div className="space-y-3">
                           <label className="flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors hover:bg-muted/30 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                             <div className="flex items-center gap-3">
-                              <input type="radio" value="standard" className="text-primary w-4 h-4" {...addressForm.register('deliveryMethod')} />
+                              <input
+                                type="radio"
+                                value="standard"
+                                className="text-primary w-4 h-4"
+                                {...addressForm.register('deliveryMethod', { onChange: () => setServerDeliveryFee(null) })}
+                              />
                               <div>
                                 <p className="font-medium">Standard Delivery</p>
                                 <p className="text-sm text-muted-foreground">2–3 business days</p>
                               </div>
                             </div>
-                            <span className="font-bold text-sm">{subtotal >= 5500 ? <span className="text-emerald-600">FREE</span> : '£3.99'}</span>
+                            <span className="font-bold text-sm">
+                              {subtotal >= freeThreshold
+                                ? <span className="text-emerald-600">FREE</span>
+                                : baseShippingEstimate > 0 ? `£${(baseShippingEstimate / 100).toFixed(2)}` : '—'
+                              }
+                            </span>
                           </label>
                           <label className="flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors hover:bg-muted/30 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                             <div className="flex items-center gap-3">
-                              <input type="radio" value="nextday" className="text-primary w-4 h-4" {...addressForm.register('deliveryMethod')} />
+                              <input
+                                type="radio"
+                                value="nextday"
+                                className="text-primary w-4 h-4"
+                                {...addressForm.register('deliveryMethod', { onChange: () => setServerDeliveryFee(null) })}
+                              />
                               <div>
                                 <p className="font-medium">Next Day Delivery</p>
                                 <p className="text-sm text-muted-foreground">Order before 2PM</p>
                               </div>
                             </div>
-                            <span className="font-bold text-sm">£5.99</span>
+                            <span className="font-bold text-sm">
+                              {subtotal >= freeThreshold
+                                ? <span className="text-emerald-600">FREE</span>
+                                : baseShippingEstimate > 0 ? `£${((baseShippingEstimate + nextDayPremium) / 100).toFixed(2)}` : '—'
+                              }
+                            </span>
                           </label>
                         </div>
+                        {subtotal >= freeThreshold && (
+                          <p className="text-xs text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 mt-2">
+                            🎉 Free delivery on orders over £{(freeThreshold / 100).toFixed(0)}!
+                          </p>
+                        )}
                       </div>
                     </>
                   )}

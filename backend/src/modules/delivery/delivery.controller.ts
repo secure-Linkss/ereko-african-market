@@ -27,10 +27,10 @@ export class DeliveryController {
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post('calculate')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Calculate delivery fee for a postcode (public)' })
+  @ApiOperation({ summary: 'Calculate delivery fee for a postcode (public). Pass deliverySpeed=nextday for next-day fee.' })
   async calculateFee(@Body() dto: CalculateDeliveryFeeDto) {
     await this.deliveryService.seedDefaultTiers();
-    return this.deliveryService.calculateDeliveryFee(dto.customerPostcode);
+    return this.deliveryService.calculateDeliveryFee(dto.customerPostcode, dto.deliverySpeed ?? 'standard');
   }
 
   @ApiBearerAuth('access-token')

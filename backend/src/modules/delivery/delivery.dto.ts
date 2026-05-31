@@ -8,6 +8,11 @@ export class CalculateDeliveryFeeDto {
   @MaxLength(8, { message: 'Invalid postcode' })
   @Matches(/^[A-Z0-9 ]+$/i, { message: 'Invalid postcode format' })
   customerPostcode: string;
+
+  @ApiPropertyOptional({ enum: ['standard', 'nextday'], default: 'standard' })
+  @IsOptional()
+  @IsEnum(['standard', 'nextday'])
+  deliverySpeed?: 'standard' | 'nextday';
 }
 
 export class DeliveryTierDto {
@@ -70,6 +75,18 @@ export class UpdateDeliverySettingsDto {
   @IsNumber()
   @Min(0)
   baseFeePriceMinor?: number;
+
+  @ApiPropertyOptional({ example: 200, description: 'Extra charge in pence for next-day delivery (e.g. 200 = £2.00 on top of distance fee)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  nextDayPremiumMinor?: number;
+
+  @ApiPropertyOptional({ example: 5500, description: 'Cart subtotal in pence above which delivery is free (e.g. 5500 = £55.00)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  freeDeliveryThresholdMinor?: number;
 
   @ApiPropertyOptional({ type: [DeliveryTierDto] })
   @IsOptional()

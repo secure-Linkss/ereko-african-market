@@ -10,11 +10,13 @@ export function DeliverySettingsTab() {
   const { data, isLoading, refetch } = useDeliverySettings();
   const updateMutation = useUpdateDeliverySettings();
 
-  const [storePostcode, setStorePostcode] = useState('E1 6RF');
-  const [maxRadius, setMaxRadius] = useState(10);
+  const [storePostcode, setStorePostcode] = useState('IG11 7LS');
+  const [maxRadius, setMaxRadius] = useState(15);
   const [pricingMode, setPricingMode] = useState<'tiers' | 'per_km'>('tiers');
   const [perKmPrice, setPerKmPrice] = useState(30); // pence per km
   const [baseFee, setBaseFee] = useState(99); // pence base fee
+  const [nextDayPremium, setNextDayPremium] = useState(200); // pence
+  const [freeThreshold, setFreeThreshold] = useState(5500); // pence
   const [tiers, setTiers] = useState<DeliveryTier[]>([
     { fromKm: 0, toKm: 1, priceMinor: 99, label: 'Local' },
     { fromKm: 1, toKm: 3, priceMinor: 199, label: 'Nearby' },
@@ -26,11 +28,13 @@ export function DeliverySettingsTab() {
 
   useEffect(() => {
     if (data?.settings) {
-      setStorePostcode(data.settings.storePostcode ?? 'E1 6RF');
-      setMaxRadius(data.settings.maxRadiusKm ?? 10);
+      setStorePostcode(data.settings.storePostcode ?? 'IG11 7LS');
+      setMaxRadius(data.settings.maxRadiusKm ?? 15);
       setPricingMode(data.settings.pricingMode ?? 'tiers');
       setPerKmPrice(data.settings.perKmPriceMinor ?? 30);
       setBaseFee(data.settings.baseFeePriceMinor ?? 99);
+      setNextDayPremium((data.settings as any).nextDayPremiumMinor ?? 200);
+      setFreeThreshold((data.settings as any).freeDeliveryThresholdMinor ?? 5500);
     }
     if (data?.tiers?.length) {
       setTiers(data.tiers.map((t: any) => ({
@@ -58,10 +62,12 @@ export function DeliverySettingsTab() {
   const handleSave = async () => {
     setError('');
     try {
-      const body: UpdateDeliverySettingsRequest = {
+      const body: UpdateDeliverySettingsRequest & { nextDayPremiumMinor?: number; freeDeliveryThresholdMinor?: number } = {
         storePostcode,
         maxRadiusKm: maxRadius,
         pricingMode,
+        nextDayPremiumMinor: nextDayPremium,
+        freeDeliveryThresholdMinor: freeThreshold,
       };
       if (pricingMode === 'per_km') {
         body.perKmPriceMinor = perKmPrice;
@@ -111,6 +117,32 @@ export function DeliverySettingsTab() {
               onChange={e => setMaxRadius(parseFloat(e.target.value))}
             />
             <p className="text-xs text-muted-foreground mt-1">Orders outside this radius will be blocked at checkout</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
+            <div>
+              <label className="block text-sm font-medium mb-1">Next Day Delivery Premium (pence)</label>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={nextDayPremium}
+                onChange={e => setNextDayPremium(parseInt(e.target.value, 10) || 0)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Added on top of distance fee. e.g. 200 = £2.00 extra. Currently: <strong>£{(nextDayPremium / 100).toFixed(2)}</strong></p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Free Delivery Threshold (pence)</label>
+              <input
+                type="number"
+                min={0}
+                step={100}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={freeThreshold}
+                onChange={e => setFreeThreshold(parseInt(e.target.value, 10) || 0)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Cart subtotal for free delivery. e.g. 5500 = £55. Currently: <strong>£{(freeThreshold / 100).toFixed(0)}</strong></p>
+            </div>
           </div>
         </CardContent>
       </Card>
