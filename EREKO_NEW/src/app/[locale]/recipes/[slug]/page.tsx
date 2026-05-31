@@ -109,6 +109,11 @@ export default function RecipeDetailPage() {
 
   function handleAddToBasket() {
     if (!recipe) return;
+    // If no shoppable items, redirect to shop
+    if (shoppableCount === 0) {
+      window.location.href = `/${locale}/shop`;
+      return;
+    }
     let added = 0;
     recipe.ingredients.forEach((ing, idx) => {
       if (!checked[idx]) return;
@@ -131,8 +136,10 @@ export default function RecipeDetailPage() {
       added++;
     });
 
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 3000);
+    if (added > 0) {
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 3000);
+    }
   }
 
   const shoppableCount = recipe?.ingredients.filter((ing, idx) =>
@@ -298,14 +305,22 @@ export default function RecipeDetailPage() {
                       size="lg"
                       className="w-full shadow-lg gap-2"
                       onClick={handleAddToBasket}
-                      disabled={addedToCart || checkedCount === 0}
+                      disabled={addedToCart || shoppableCount === 0}
                     >
                       {addedToCart ? (
                         <><CheckCircle2 className="w-5 h-5" /> Added to Basket!</>
+                      ) : shoppableCount > 0 ? (
+                        <><ShoppingCart className="w-5 h-5" /> Add {shoppableCount} available item{shoppableCount !== 1 ? 's' : ''} to Basket</>
                       ) : (
-                        <><ShoppingCart className="w-5 h-5" /> Add {checkedCount > 0 ? `${checkedCount} ` : ''}to Basket</>
+                        <><ShoppingBag className="w-5 h-5" /> Browse Shop for Ingredients</>
                       )}
                     </Button>
+
+                    {shoppableCount === 0 && checkedCount > 0 && (
+                      <p className="text-xs text-center text-muted-foreground">
+                        None of the selected ingredients are currently stocked on EREKO. Browse our shop below to find alternatives.
+                      </p>
+                    )}
 
                     <Link href={`/${locale}/shop`} className="block">
                       <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
@@ -314,7 +329,7 @@ export default function RecipeDetailPage() {
                     </Link>
 
                     <p className="text-[11px] text-center text-muted-foreground">
-                      Tick ingredients you need, then add them to your EREKO basket in one click.
+                      Tick ingredients you need. Items with a stock badge can be added to your EREKO basket in one click.
                     </p>
                   </div>
                 </CardContent>
