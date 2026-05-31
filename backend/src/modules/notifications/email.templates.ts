@@ -37,6 +37,10 @@ export interface WelcomeContext {
 
 // ─── Base Layout ─────────────────────────────────────────────────────────────
 
+const EREKO_LOGO_URL = 'https://ereko-african-market.vercel.app/logo.jpeg';
+const EREKO_SITE_URL = 'https://ereko-african-market.vercel.app/en-gb';
+const EREKO_SUPPORT_EMAIL = 'hello@ereko.market';
+
 function baseLayout(title: string, content: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -52,19 +56,63 @@ function baseLayout(title: string, content: string): string {
       background-color: #f5f0eb;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       color: #1a1a1a;
+      -webkit-font-smoothing: antialiased;
     }
     .wrapper {
       max-width: 600px;
-      margin: 40px auto;
+      margin: 32px auto;
       background: #ffffff;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.10);
     }
     .header {
-      background: linear-gradient(135deg, #c17f42 0%, #8b5e2e 100%);
-      padding: 32px 40px;
+      background: linear-gradient(135deg, #c17f42 0%, #6b3f1f 100%);
+      padding: 28px 40px 24px;
       text-align: center;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #f4c87e, #e8a24b, #c17f42);
+    }
+    .header-logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+    .header-logo-img {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2.5px solid rgba(255,255,255,0.6);
+      object-fit: cover;
+      display: block;
+    }
+    .header-text {
+      text-align: left;
+    }
+    .header-logo-name {
+      font-size: 26px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 3px;
+      line-height: 1;
+      display: block;
+    }
+    .header-tagline {
+      color: rgba(255,255,255,0.75);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 3px;
+      display: block;
     }
     .header-logo {
       font-size: 28px;
@@ -72,11 +120,6 @@ function baseLayout(title: string, content: string): string {
       color: #ffffff;
       letter-spacing: 2px;
       text-decoration: none;
-    }
-    .header-tagline {
-      color: rgba(255,255,255,0.8);
-      font-size: 13px;
-      margin-top: 4px;
     }
     .body {
       padding: 40px;
@@ -194,19 +237,25 @@ function baseLayout(title: string, content: string): string {
 <body>
   <div class="wrapper">
     <div class="header">
-      <div class="header-logo">EREKO</div>
-      <div class="header-tagline">Taste of Africa, Delivered</div>
+      <a href="${EREKO_SITE_URL}" class="header-logo-wrap" style="text-decoration:none;display:inline-flex;align-items:center;gap:14px;">
+        <img src="${EREKO_LOGO_URL}" alt="EREKO" class="header-logo-img" width="52" height="52" style="border-radius:50%;border:2.5px solid rgba(255,255,255,0.6);width:52px;height:52px;object-fit:cover;" />
+        <div class="header-text">
+          <span class="header-logo-name" style="font-size:26px;font-weight:900;color:#ffffff;letter-spacing:3px;line-height:1;display:block;">EREKO</span>
+          <span class="header-tagline" style="color:rgba(255,255,255,0.75);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;display:block;">African Market</span>
+        </div>
+      </a>
     </div>
     <div class="body">
       ${content}
     </div>
     <div class="footer">
       <p class="footer-text">
-        &copy; ${new Date().getFullYear()} EREKO Market Ltd. All rights reserved.<br />
-        EREKO Market, London, United Kingdom<br />
-        <a href="https://ereko.market/unsubscribe">Unsubscribe</a> &middot;
-        <a href="https://ereko.market/privacy">Privacy Policy</a> &middot;
-        <a href="https://ereko.market/terms">Terms</a>
+        &copy; ${new Date().getFullYear()} EREKO Market Ltd &mdash; All rights reserved.<br />
+        5 Broadway, Barking, London, United Kingdom<br />
+        <a href="${EREKO_SITE_URL}">Shop</a> &middot;
+        <a href="mailto:${EREKO_SUPPORT_EMAIL}">Contact Us</a> &middot;
+        <a href="${EREKO_SITE_URL}/(legal)/privacy">Privacy Policy</a> &middot;
+        <a href="${EREKO_SITE_URL}/(legal)/terms">Terms</a>
       </p>
     </div>
   </div>

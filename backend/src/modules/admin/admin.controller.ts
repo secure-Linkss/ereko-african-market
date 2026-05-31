@@ -371,4 +371,32 @@ export class AdminController {
     }
     return this.adminService.getAuditLog(staffId, limit);
   }
+
+  // ── Custom Notification Send ───────────────────────────────────────────────
+
+  @Post('notifications/send')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send custom in-app + email notification to user(s) (owner/superAdmin)' })
+  async sendCustomNotification(
+    @CurrentUser() actor: any,
+    @Body() body: {
+      targetUserId?: string;       // single user — omit for broadcast to all customers
+      title: string;
+      message: string;
+      sendEmail?: boolean;         // also send email (default true)
+      emailSubject?: string;
+    },
+  ) {
+    if (!actor.isSuperAdmin && actor.teamRole !== 'owner' && actor.isAdmin !== true) {
+      throw new ForbiddenException('Admin access required to send notifications');
+    }
+    return this.adminService.sendCustomNotification({
+      targetUserId: body.targetUserId,
+      title: body.title,
+      message: body.message,
+      sendEmail: body.sendEmail !== false,
+      emailSubject: body.emailSubject,
+      actorId: actor.id,
+    });
+  }
 }

@@ -68,6 +68,19 @@ export class StripeWebhookController {
 
     this.logger.log(`Stripe event received: ${event.type} id=${event.id}`);
 
+    // ── V4: Idempotency — deduplicate webhook events by Stripe event ID ────────
+    const { data: existingEvent } = await this.supabase.db
+      .from('OrderEvent')
+      .select('id')
+      .eq('eventType', `stripe.${event.type}`)
+      .contains('payload', { stripeEventId: event.id })
+      .limit(1);
+
+    if (existingEvent && existingEvent.length > 0) {
+      this.logger.debug(`Duplicate Stripe event ${event.id} — already processed, returning cached result`);
+      return { received: true, duplicate: true };
+    }
+
     switch (event.type) {
       case 'payment_intent.succeeded':
         await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
@@ -109,12 +122,12 @@ export class StripeWebhookController {
       .update({ status: OrderStatus.PAID, stripePaymentStatus: pi.status, paidAt: now, updatedAt: now })
       .eq('id', order.id);
 
-    // OrderEvent has NO updatedAt column
+    // OrderEvent — immutable ledger entry (V4: never overwrite, always append)
     await this.supabase.db.from('OrderEvent').insert({
       id: uuidv4(),
       orderId: order.id,
-      eventType: 'payment.succeeded',
-      payload: { paymentIntentId: pi.id, amount: pi.amount, currency: pi.currency },
+      eventType: 'stripe.payment_intent.succeeded',
+      payload: { stripeEventId: pi.id, paymentIntentId: pi.id, amount: pi.amount, currency: pi.currency },
       createdAt: now,
     });
 
@@ -163,8 +176,9 @@ export class StripeWebhookController {
     await this.supabase.db.from('OrderEvent').insert({
       id: uuidv4(),
       orderId: order.id,
-      eventType: 'payment.failed',
+      eventType: 'stripe.payment_intent.payment_failed',
       payload: {
+        stripeEventId: pi.id,
         paymentIntentId: pi.id,
         lastPaymentError: pi.last_payment_error?.message ?? null,
         declineCode: pi.last_payment_error?.decline_code ?? null,
@@ -223,8 +237,9 @@ export class StripeWebhookController {
     await this.supabase.db.from('OrderEvent').insert({
       id: uuidv4(),
       orderId: order.id,
-      eventType: 'dispute.created',
+      eventType: 'stripe.charge.dispute.created',
       payload: {
+        stripeEventId: dispute.id,
         disputeId: dispute.id,
         amount: dispute.amount,
         reason: dispute.reason,

@@ -424,11 +424,16 @@ export class CheckoutService {
       }
     }
 
+    // V4: Log intent BEFORE making external API call (immutable ledger principle)
+    const piIdempotencyKey = `pi-${order.id}`;
+    this.logger.log(`V4: Recording payment intent BEFORE Stripe API call — order=${order.orderNumber} idempotencyKey=${piIdempotencyKey}`);
+
     const paymentIntent = await this.paymentsService.createPaymentIntent({
       amount: order.totalMinor,
       currency: order.currency.toLowerCase(),
       metadata: { orderId: order.id, orderNumber: order.orderNumber, userId: order.userId ?? 'guest' },
       paymentMethodTypes: [this.mapPaymentMethod(dto.paymentMethod)],
+      idempotencyKey: piIdempotencyKey,
     });
 
     await this.supabase.db

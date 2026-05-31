@@ -8,9 +8,11 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import {
   Users, Search, ChevronDown, ChevronUp, Shield, ShieldOff, Trash2,
   Star, Package, Phone, Mail, MapPin, AlertCircle, CheckCircle2, Crown,
-  UserX, UserCheck, Eye,
+  UserX, UserCheck, Eye, Send, Megaphone,
 } from 'lucide-react';
 import { useAdminUsers, useUpdateUserStatus, useAdminUserDetail, AdminUser } from '@/services/users';
+import { useMutation } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api/client';
 import type { UserProfile } from '@/types';
 
 const TIER_CONFIG: Record<string, { label: string; bg: string; text: string; icon: any }> = {
@@ -44,6 +46,38 @@ export function UserManagementTab({ currentUser }: Props) {
   const canSuspend = isSuperAdmin || !!isOwner;
   const canDelete = isSuperAdmin;
 
+  // Custom notification send
+  const [notifModal, setNotifModal] = useState<{ userId?: string; userName?: string; broadcast?: boolean } | null>(null);
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
+  const [notifSendEmail, setNotifSendEmail] = useState(true);
+  const [notifError, setNotifError] = useState('');
+  const [notifSuccess, setNotifSuccess] = useState('');
+
+  const sendNotif = useMutation({
+    mutationFn: async (payload: { targetUserId?: string; title: string; message: string; sendEmail: boolean }) => {
+      const res = await apiClient.post('/api/v1/admin/notifications/send', payload);
+      return res.data;
+    },
+  });
+
+  async function handleSendNotif() {
+    if (!notifTitle.trim() || !notifMessage.trim()) { setNotifError('Title and message are required.'); return; }
+    setNotifError('');
+    try {
+      const result = await sendNotif.mutateAsync({
+        targetUserId: notifModal?.userId,
+        title: notifTitle,
+        message: notifMessage,
+        sendEmail: notifSendEmail,
+      });
+      setNotifSuccess(`Sent to ${result.sent} user${result.sent !== 1 ? 's' : ''}${result.emailsSent ? ` (${result.emailsSent} emails)` : ''}.`);
+      setTimeout(() => { setNotifModal(null); setNotifTitle(''); setNotifMessage(''); setNotifSuccess(''); }, 2000);
+    } catch {
+      setNotifError('Failed to send notification. Please try again.');
+    }
+  }
+
   const { data, isLoading } = useAdminUsers({ q: search || undefined, role: roleFilter });
   const updateStatus = useUpdateUserStatus();
 
@@ -59,12 +93,23 @@ export function UserManagementTab({ currentUser }: Props) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black tracking-tight">User Management</h2>
-        <div className="h-1 w-24 bg-gradient-to-r from-primary to-primary/20 rounded-full" />
-        <p className="text-sm text-muted-foreground">
-          {isSuperAdmin ? 'Full access — all accounts visible.' : isOwner ? 'Owner access — customers and staff visible (super admins hidden).' : 'Staff access — customer accounts only, read-only.'}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-black tracking-tight">User Management</h2>
+          <div className="h-1 w-24 bg-gradient-to-r from-primary to-primary/20 rounded-full" />
+          <p className="text-sm text-muted-foreground">
+            {isSuperAdmin ? 'Full access — all accounts visible.' : isOwner ? 'Owner access — customers and staff visible (super admins hidden).' : 'Staff access — customer accounts only, read-only.'}
+          </p>
+        </div>
+        {(isSuperAdmin || isOwner || currentUser?.isAdmin) && (
+          <Button
+            onClick={() => setNotifModal({ broadcast: true })}
+            className="gap-2 shadow-sm flex-shrink-0"
+            variant="outline"
+          >
+            <Megaphone className="w-4 h-4" /> Broadcast Notification
+          </Button>
+        )}
       </div>
 
       {/* Controls */}
@@ -119,9 +164,11 @@ export function UserManagementTab({ currentUser }: Props) {
               onToggle={() => setExpandedId(expandedId === user.id ? null : user.id)}
               canSuspend={canSuspend}
               canDelete={canDelete}
+              canNotify={!!(isSuperAdmin || isOwner || currentUser?.isAdmin)}
               onSuspend={() => setConfirmAction({ userId: user.id, isActive: false, name: user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.email })}
               onActivate={() => setConfirmAction({ userId: user.id, isActive: true, name: user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.email })}
               onDelete={() => setDeleteConfirm(user.id)}
+              onSendNotif={() => setNotifModal({ userId: user.id, userName: user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.email })}
             />
           ))}
         </motion.div>
@@ -163,6 +210,64 @@ export function UserManagementTab({ currentUser }: Props) {
         )}
       </AnimatePresence>
 
+      {/* Send Notification modal */}
+      <AnimatePresence>
+        {notifModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-background rounded-3xl p-8 w-full max-w-md shadow-2xl space-y-5"
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  {notifModal.broadcast ? <Megaphone className="w-6 h-6 text-blue-600" /> : <Send className="w-6 h-6 text-blue-600" />}
+                </div>
+                <div>
+                  <p className="font-bold text-lg">{notifModal.broadcast ? 'Broadcast to All Customers' : `Notify ${notifModal.userName}`}</p>
+                  <p className="text-xs text-muted-foreground">{notifModal.broadcast ? 'Sends in-app + email to all active customers' : 'Sends in-app notification + optional email'}</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold">Title *</label>
+                  <input
+                    value={notifTitle}
+                    onChange={e => setNotifTitle(e.target.value)}
+                    placeholder="e.g. Special offer just for you!"
+                    className="w-full h-10 rounded-xl border border-border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold">Message *</label>
+                  <textarea
+                    value={notifMessage}
+                    onChange={e => setNotifMessage(e.target.value)}
+                    placeholder="Your message here..."
+                    rows={3}
+                    className="w-full rounded-xl border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background resize-none"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={notifSendEmail} onChange={e => setNotifSendEmail(e.target.checked)} className="accent-primary" />
+                  Also send email notification
+                </label>
+              </div>
+              {notifError && <p className="text-xs text-destructive">{notifError}</p>}
+              {notifSuccess && <p className="text-xs text-emerald-600 font-semibold">{notifSuccess}</p>}
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => { setNotifModal(null); setNotifTitle(''); setNotifMessage(''); setNotifError(''); setNotifSuccess(''); }}>Cancel</Button>
+                <Button className="flex-1 gap-2" disabled={sendNotif.isPending} onClick={handleSendNotif}>
+                  <Send className="w-4 h-4" />{sendNotif.isPending ? 'Sending...' : 'Send'}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Confirm delete modal */}
       <AnimatePresence>
         {deleteConfirm && (
@@ -191,7 +296,7 @@ export function UserManagementTab({ currentUser }: Props) {
   );
 }
 
-function UserRow({ user, expanded, onToggle, canSuspend, canDelete, onSuspend, onActivate, onDelete }: {
+function UserRow({ user, expanded, onToggle, canSuspend, canDelete, onSuspend, onActivate, onDelete, onSendNotif, canNotify }: {
   user: AdminUser;
   expanded: boolean;
   onToggle: () => void;
@@ -200,6 +305,8 @@ function UserRow({ user, expanded, onToggle, canSuspend, canDelete, onSuspend, o
   onSuspend: () => void;
   onActivate: () => void;
   onDelete: () => void;
+  onSendNotif: () => void;
+  canNotify: boolean;
 }) {
   const tierCfg = TIER_CONFIG[user.loyaltyTier ?? 'Member'] ?? TIER_CONFIG.Member;
   const TierIcon = tierCfg.icon;
@@ -252,6 +359,9 @@ function UserRow({ user, expanded, onToggle, canSuspend, canDelete, onSuspend, o
 
             {/* Actions */}
             <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+              {canNotify && !user.isAdmin && !user.isSuperAdmin && (
+                <button onClick={onSendNotif} title="Send notification" className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors"><Send className="w-4 h-4" /></button>
+              )}
               {canSuspend && !user.isAdmin && !user.isSuperAdmin && (
                 user.isActive
                   ? <button onClick={onSuspend} title="Suspend" className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 transition-colors"><ShieldOff className="w-4 h-4" /></button>

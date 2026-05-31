@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface CreatePaymentIntentOptions {
   amount: number;
@@ -9,6 +10,7 @@ export interface CreatePaymentIntentOptions {
   paymentMethodTypes?: string[];
   customerId?: string;
   paymentMethodId?: string;
+  idempotencyKey?: string; // V4: client-provided idempotency key to prevent duplicate charges
 }
 
 @Injectable()
@@ -53,8 +55,12 @@ export class PaymentsService implements OnModuleInit {
       params.payment_method = options.paymentMethodId;
     }
 
-    const paymentIntent = await this.stripe.paymentIntents.create(params);
-    this.logger.log(`PaymentIntent created: ${paymentIntent.id} amount=${paymentIntent.amount}`);
+    // V4: Pass idempotency key to Stripe to prevent duplicate charges on retries
+    const idempotencyKey = options.idempotencyKey ?? `pi-${options.metadata?.orderId ?? uuidv4()}`;
+    const paymentIntent = await this.stripe.paymentIntents.create(params, {
+      idempotencyKey,
+    });
+    this.logger.log(`PaymentIntent created: ${paymentIntent.id} amount=${paymentIntent.amount} idempotencyKey=${idempotencyKey}`);
     return paymentIntent;
   }
 

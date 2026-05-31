@@ -852,4 +852,93 @@ export class AdminService {
     if (error) throw new Error(error.message);
     return { entries: data ?? [] };
   }
+
+  // ── Custom Notification Send ────────────────────────────────────────────────
+
+  async sendCustomNotification(opts: {
+    targetUserId?: string;
+    title: string;
+    message: string;
+    sendEmail: boolean;
+    emailSubject?: string;
+    actorId: string;
+  }) {
+    const now = new Date().toISOString();
+    const frontendUrl = this.config.get<string>('frontend.url') ?? 'https://ereko-african-market.vercel.app/en-gb';
+
+    if (opts.targetUserId) {
+      // Single user notification
+      const { data: userRow } = await this.supabase.db
+        .from('User')
+        .select('id, email, firstName')
+        .eq('id', opts.targetUserId)
+        .single();
+
+      if (!userRow) throw new Error('User not found');
+
+      await this.supabase.db.from('Notification').insert({
+        id: uuidv4(),
+        userId: opts.targetUserId,
+        type: 'marketing',
+        title: opts.title,
+        body: opts.message,
+        data: { source: 'admin', actorId: opts.actorId },
+        createdAt: now,
+      });
+
+      if (opts.sendEmail) {
+        await this.notifications.sendGeneric({
+          email: userRow.email,
+          subject: opts.emailSubject ?? opts.title,
+          bodyText: `Hi ${userRow.firstName ?? 'there'},\n\n${opts.message}\n\nThe EREKO Team`,
+          bodyHtml: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+            <img src="https://ereko-african-market.vercel.app/logo.jpeg" width="52" height="52" style="border-radius:50%;margin-bottom:16px;" />
+            <h2 style="color:#1a1a1a;">${opts.title}</h2>
+            <p style="color:#444;line-height:1.7;">Hi ${userRow.firstName ?? 'there'},</p>
+            <p style="color:#444;line-height:1.7;">${opts.message}</p>
+            <p style="color:#888;font-size:13px;margin-top:32px;">The EREKO Team &mdash; <a href="${frontendUrl}" style="color:#c17f42;">ereko-african-market.vercel.app</a></p>
+          </div>`,
+        });
+      }
+
+      this.logger.log(`Custom notification sent to user ${opts.targetUserId} by ${opts.actorId}`);
+      return { success: true, sent: 1 };
+
+    } else {
+      // Broadcast to all active customers
+      const { data: users } = await this.supabase.db
+        .from('User')
+        .select('id, email, firstName')
+        .eq('isAdmin', false)
+        .eq('isActive', true)
+        .limit(500);
+
+      const targets = users ?? [];
+      let emailsSent = 0;
+
+      for (const u of targets) {
+        await this.supabase.db.from('Notification').insert({
+          id: uuidv4(),
+          userId: u.id,
+          type: 'marketing',
+          title: opts.title,
+          body: opts.message,
+          data: { source: 'admin_broadcast', actorId: opts.actorId },
+          createdAt: now,
+        }).catch(() => {});
+
+        if (opts.sendEmail) {
+          await this.notifications.sendGeneric({
+            email: u.email,
+            subject: opts.emailSubject ?? opts.title,
+            bodyText: `Hi ${u.firstName ?? 'there'},\n\n${opts.message}\n\nThe EREKO Team`,
+          }).catch(() => {});
+          emailsSent++;
+        }
+      }
+
+      this.logger.log(`Broadcast notification sent to ${targets.length} users by ${opts.actorId}`);
+      return { success: true, sent: targets.length, emailsSent };
+    }
+  }
 }
