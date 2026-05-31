@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Param, Body, UseGuards, HttpCode, HttpStatus,
-  ForbiddenException,
+  ForbiddenException, ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -18,7 +18,7 @@ export class RefundsController {
   @Get(':orderId/summary')
   @ApiOperation({ summary: 'Get order refund summary (items, existing refunds, max refundable amount)' })
   @ApiParam({ name: 'orderId' })
-  async getRefundSummary(@Param('orderId') orderId: string) {
+  async getRefundSummary(@Param('orderId', ParseUUIDPipe) orderId: string) {
     return this.refundsService.getOrderRefundSummary(orderId);
   }
 
@@ -27,7 +27,7 @@ export class RefundsController {
   @ApiOperation({ summary: 'Process a partial or full refund for an order' })
   @ApiParam({ name: 'orderId' })
   async processRefund(
-    @Param('orderId') orderId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
     @Body() body: Omit<CreateRefundDto, 'orderId'>,
     @CurrentUser() actor: any,
   ) {
@@ -41,7 +41,7 @@ export class RefundsController {
   @Get(':orderId/history')
   @ApiOperation({ summary: 'Get refund history for an order' })
   @ApiParam({ name: 'orderId' })
-  async getRefundHistory(@Param('orderId') orderId: string) {
+  async getRefundHistory(@Param('orderId', ParseUUIDPipe) orderId: string) {
     return this.refundsService.listRefundsForOrder(orderId);
   }
 }

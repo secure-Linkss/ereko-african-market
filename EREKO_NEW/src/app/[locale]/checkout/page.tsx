@@ -269,6 +269,7 @@ export default function CheckoutPage() {
         email: contactData!.email,
         firstName: data.firstName,
         lastName: data.lastName,
+        isClickAndCollect: isCollect,
         discountCode: promoResult?.valid ? promoResult.code : (promoCode ?? undefined),
       });
 

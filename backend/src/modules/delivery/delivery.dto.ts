@@ -1,10 +1,12 @@
-import { IsString, IsNumber, IsOptional, IsArray, ValidateNested, Min, IsEnum } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsArray, ValidateNested, Min, IsEnum, Matches, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CalculateDeliveryFeeDto {
   @ApiProperty({ example: 'SW1A 1AA' })
   @IsString()
+  @MaxLength(8, { message: 'Invalid postcode' })
+  @Matches(/^[A-Z0-9 ]+$/i, { message: 'Invalid postcode format' })
   customerPostcode: string;
 }
 

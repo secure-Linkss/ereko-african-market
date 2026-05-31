@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseIntPipe,
+  ParseUUIDPipe,
   DefaultValuePipe,
   BadRequestException,
   ForbiddenException,
@@ -401,7 +402,7 @@ export class AdminController {
   @Get('webhooks/stripe/:logId')
   @ApiOperation({ summary: 'Get full payload for a Stripe webhook event log' })
   @ApiParam({ name: 'logId' })
-  async getStripeWebhookPayload(@Param('logId') logId: string) {
+  async getStripeWebhookPayload(@Param('logId', ParseUUIDPipe) logId: string) {
     return this.adminService.getStripeWebhookLogPayload(logId);
   }
 
@@ -409,7 +410,7 @@ export class AdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Retry processing a failed Stripe webhook event' })
   @ApiParam({ name: 'logId' })
-  async retryStripeWebhook(@Param('logId') logId: string) {
+  async retryStripeWebhook(@Param('logId', ParseUUIDPipe) logId: string) {
     return this.adminService.retryStripeWebhook(logId);
   }
 
@@ -418,7 +419,7 @@ export class AdminController {
   @ApiOperation({ summary: 'Mark a failed webhook event as resolved' })
   @ApiParam({ name: 'logId' })
   async resolveStripeWebhook(
-    @Param('logId') logId: string,
+    @Param('logId', ParseUUIDPipe) logId: string,
     @CurrentUser('id') actorId: string,
   ) {
     return this.adminService.markStripeWebhookResolved(logId, actorId);
@@ -430,7 +431,7 @@ export class AdminController {
   @ApiOperation({ summary: 'Download PDF receipt for any order (admin/super admin)' })
   @ApiParam({ name: 'orderId' })
   async downloadOrderReceipt(
-    @Param('orderId') orderId: string,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
     @Res() res: Response,
   ) {
     const receiptData = await this.adminService.getOrderReceiptData(orderId);

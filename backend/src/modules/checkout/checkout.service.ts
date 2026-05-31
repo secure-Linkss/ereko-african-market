@@ -285,8 +285,7 @@ export class CheckoutService {
     const discountedSubtotal = Math.max(0, subtotal - cartDiscount);
 
     // Distance-based delivery fee (skip for Click & Collect — customer comes to store)
-    const isClickAndCollect = dto.deliveryMethod === 'click_and_collect' ||
-      (dto.postcode && ['IG11', 'IG1'].some(area => dto.postcode.trim().toUpperCase().startsWith(area)));
+    const isClickAndCollect = dto.isClickAndCollect === true;
     await this.deliveryService.seedDefaultTiers();
     const deliveryResult = isClickAndCollect
       ? { distanceKm: 0, feeMinor: 0, feeLabel: 'Free (Click & Collect)', withinRadius: true, blocked: false }

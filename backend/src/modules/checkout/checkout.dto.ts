@@ -112,6 +112,11 @@ export class StartCheckoutDto {
   @IsOptional()
   @IsString()
   discountCode?: string;
+
+  @ApiPropertyOptional({ description: 'True for Click & Collect — skips delivery radius check' })
+  @IsOptional()
+  @IsBoolean()
+  isClickAndCollect?: boolean;
 }
 
 export class PaymentIntentDto {

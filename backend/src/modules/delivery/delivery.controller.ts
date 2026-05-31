@@ -2,6 +2,7 @@ import {
   Controller, Get, Post, Put, Body, Query, UseGuards, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
@@ -23,6 +24,7 @@ export class DeliveryController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post('calculate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Calculate delivery fee for a postcode (public)' })

@@ -36,6 +36,7 @@ export interface StartCheckoutRequest {
   firstName?: string;
   lastName?: string;
   discountCode?: string;
+  isClickAndCollect?: boolean;
 }
 
 export interface StartCheckoutResponse {
