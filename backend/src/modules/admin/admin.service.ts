@@ -909,8 +909,8 @@ export class AdminService {
       const { data: users } = await this.supabase.db
         .from('User')
         .select('id, email, firstName')
-        .eq('isAdmin', false)
-        .eq('isActive', true)
+        .neq('isAdmin', true)       // includes isAdmin=false AND isAdmin=null
+        .neq('isActive', false)     // includes isActive=true AND isActive=null
         .limit(500);
 
       const targets = users ?? [];
