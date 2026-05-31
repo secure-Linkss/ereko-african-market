@@ -863,8 +863,8 @@ export class AdminService {
     emailSubject?: string;
     actorId: string;
   }) {
+    try {
     const now = new Date().toISOString();
-    const frontendUrl = this.config.get<string>('frontend.url') ?? 'https://ereko-african-market.vercel.app/en-gb';
 
     if (opts.targetUserId) {
       // Single user notification
@@ -960,6 +960,10 @@ export class AdminService {
         this.logger.error(`Broadcast notification error: ${err.message}`, err.stack);
         return { success: false, sent: 0, emailsSent: 0, error: err.message };
       }
+    }
+    } catch (outerErr) {
+      this.logger.error(`sendCustomNotification outer error: ${outerErr.message}`, outerErr.stack);
+      return { success: false, sent: 0, error: outerErr.message };
     }
   }
 }
